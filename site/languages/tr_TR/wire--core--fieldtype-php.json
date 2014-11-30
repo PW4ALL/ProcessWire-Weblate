@@ -1,0 +1,15 @@
+{
+    "file": "wire\/core\/Fieldtype.php",
+    "textdomain": "wire--core--fieldtype-php",
+    "translations": {
+        "a528ac2d2f326703f458dec14cba03e5": {
+            "text": "Otomatik Kat\u0131l"
+        },
+        "2af316156c9ea64d6d56bfe221486efd": {
+            "text": "\u0130\u015faretliyse, bu alan i\u00e7in veri her sayfada \u00f6rnek olarak y\u00fcklenecek, ne olursa olsun o anda kullan\u0131lan olsun. \u0130\u015faretli de\u011filse, sadece alana eri\u015fim olursa ve veri talep olursa y\u00fcklenecek."
+        },
+        "ad1bc8634063998074151ecfaaf2e6a1": {
+            "text": "\u0130\u015faretliyse, T\u00dcM sayfalar bu alan i\u00e7in zorunlu hale gelecek. Otomatik olarak alan-gruplar\u0131\/\u015fablonlarda yoksa eklenecek. Bu bu alan i\u00e7in bir de\u011ferin zorunlu oldu\u011fu anlam\u0131na gelmez, sadece d\u00fczenlenebilir bir alan\u0131n t\u00fcm sayfalarda yer alaca\u011f\u0131 anlam\u0131na gelir."
+        }
+    }
+}

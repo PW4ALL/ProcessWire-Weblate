@@ -1,0 +1,54 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageClone.module",
+    "textdomain": "wire--modules--process--processpageclone-module",
+    "translations": {
+        "5fb63579fc981698f97d55bfecb213ea": {
+            "text": "Kopyala"
+        },
+        "779e23d04b68b9515ffc345454994895": {
+            "text": "Sayfay\u0131 Kopyala"
+        },
+        "0ac579c02e8d96b65a4bff917771b245": {
+            "text": "Sayfa y\u00fcklenemiyor"
+        },
+        "3311bb66a5349309e01c99050e744f0b": {
+            "text": "Bu bir kopyas\u0131n\u0131 %s olu\u015fturacak"
+        },
+        "59eeb47edc78526e0e13dc0dfa8f6b07": {
+            "text": "Yeni sayfa ba\u015fl\u0131\u011f\u0131"
+        },
+        "415d40999f28fef452f65616dabfc7a0": {
+            "text": "Yeni sayfay\u0131 yay\u0131nlama?"
+        },
+        "2627956e008c08b8affd8608d7980ff4": {
+            "text": "E\u011fer i\u015faretliyse, yeni kopyalanan sayfa yay\u0131nlanmam\u0131\u015f durumunda olacak. \u0130nternet sayfan\u0131z\u0131n \u00f6n-sayfas\u0131nda g\u00f6r\u00fcnebilir olmayacak."
+        },
+        "5061c76f17ce15eb2a6092a51cb22aa3": {
+            "text": "Alt sayfalar\u0131da kopyala?"
+        },
+        "a6c4c88eb6c7d256bf2e4aa56df4430f": {
+            "text": "E\u011fer i\u015faretliyse, t\u00fcm alt sayfalar ve onlar\u0131nda alt sayfalar\u0131, vs., bu sayfayla birlikte kopyalanacak."
+        },
+        "06170efdb0d3840cd32dea984d32067a": {
+            "text": "Uyar\u0131: E\u011fer sayfalar \u00e7ok geni\u015f bir yap\u0131da ise, bu i\u015flem \u00e7ok zaman alacak yada tamamlanamayacak."
+        },
+        "6a26ee7a6d1234006bf3806ee697f7d0": {
+            "text": "Sayfa '%s' kopyalanam\u0131yor"
+        },
+        "7e263f9f6a65e1126c6a599ea015a27c": {
+            "text": "Kopyalanan sayfa (eski) \"%1$s\" den (yeni) \"%2$s\""
+        },
+        "366637b8eb1e99b85f6d6535e326a491": {
+            "text": "Sayfa Kopyala"
+        },
+        "fae7550bf964aa09e51752b154a6cb23": {
+            "text": "Y\u00f6netim panelinde sayfalar\u0131 kopyalamay\u0131\/\u00e7o\u011faltmay\u0131 sa\u011flar. SayfaListesinde kopyalam i\u015flemi yap\u0131lan t\u00fcm sayfalara \"copy\" eki ekler."
+        },
+        "0a198ede7ab46185f2e9fb2a3628419b": {
+            "text": "(kopyala)"
+        },
+        "884ba0e5457b084e152567fd52b66f6c": {
+            "text": "(kopyala %d)"
+        }
+    }
+}

@@ -1,0 +1,48 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldInteger.module",
+    "textdomain": "wire--modules--inputfield--inputfieldinteger-module",
+    "translations": {
+        "342fcaf76020389954d449ceec0a8a80": {
+            "text": "Min.: %d"
+        },
+        "96f5f93890f61d6ff4c07e2883833d72": {
+            "text": "Maks.: %d"
+        },
+        "ddf1608e4f7def4fd584f806267255d4": {
+            "text": "Numara Girdi Tipi (Input Type)"
+        },
+        "9dffbf69ffba8bc38bc4e01abf4b1675": {
+            "text": "Metin"
+        },
+        "edb082a8145b0705db7f2b843ed57471": {
+            "text": "Numara (HTML5)"
+        },
+        "339f8a8a3ec4255e3982690df6c764fc": {
+            "text": "\"Numara\" se\u00e7erek, taray\u0131c\u0131 destekli ise kull\u0131c\u0131 taraf\u0131nda baz\u0131 ek onaylamalar aktif edilecek."
+        },
+        "702a538a7348a9e52b08913558867f70": {
+            "text": "Minimum De\u011fer"
+        },
+        "e9aac774de6f4b2d481938ff2403e5a8": {
+            "text": "Bu alan i\u00e7in minimum izin verilen de\u011fer. G\u00f6rmezden gelmek i\u00e7in bo\u015f b\u0131rak\u0131n."
+        },
+        "48b0ece3cdd23c3605c8d7ee617c43ca": {
+            "text": "Maksimum De\u011fer"
+        },
+        "41f052267baa5d7342df9bad1b957733": {
+            "text": "Bu alan i\u00e7in maksimum izin verilen de\u011fer. G\u00f6rmezden gelmek i\u00e7in bo\u015f b\u0131rak\u0131n."
+        },
+        "a0faef0851b4294c06f2b94bb1cb2044": {
+            "text": "Tamsay\u0131 (Integer)"
+        },
+        "15b920388c8c88882ae50ac7e68a52ad": {
+            "text": "Tamsay\u0131(Integer) (pozitif veya negatif)"
+        },
+        "100b8cad7cf2a56f6df78f171f97a1ec": {
+            "text": "herhangibir"
+        },
+        "004d36e4fa95eec8357b066aa20e9d8d": {
+            "text": "Belirtilen de\u011fer %3$s silindi \u00e7\u00fcnk\u00fc, De\u011fer s\u0131n\u0131rlar\u0131n d\u0131\u015f\u0131nda (min=%1$s, maks=%2$s)"
+        }
+    }
+}

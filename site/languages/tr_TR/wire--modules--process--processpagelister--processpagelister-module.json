@@ -1,0 +1,102 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageLister\/ProcessPageLister.module",
+    "textdomain": "wire--modules--process--processpagelister--processpagelister-module",
+    "translations": {
+        "49ee3087348e8d44e1feda1917443987": {
+            "text": "\u0130sim"
+        },
+        "0eceeb45861f9585dd7a97a3e36f85c6": {
+            "text": "Olu\u015fturulma"
+        },
+        "35e0c8c0b180c95d4e122e55ed62cc64": {
+            "text": "D\u00fczenleme"
+        },
+        "a5e3d3ad4b54f37c48d9391d5ab35eed": {
+            "text": "D\u00fczenleyen"
+        },
+        "7b1255f8fdd0cb8751baee55621164e1": {
+            "text": "Olu\u015fturan"
+        },
+        "278c491bdd8a53618c149c4ac790da34": {
+            "text": "\u015eablon"
+        },
+        "ec53a8c4f07baed5d8825072c89799be": {
+            "text": "Durum"
+        },
+        "30269022e9d8f51beaabb52e5d0de2b7": {
+            "text": "Ebeveyn"
+        },
+        "7acdf85c69cc3c5305456a293524386e": {
+            "text": "Gizli"
+        },
+        "0774e163cd7df482edd2abd498189f8b": {
+            "text": "Yay\u0131nda De\u011fil"
+        },
+        "d0f2e5376298c880665077b565ffd7dd": {
+            "text": "Kilitli"
+        },
+        "a7e253cd8dd95da3e20daf45519a8dc2": {
+            "text": "\u00c7\u00f6pte"
+        },
+        "57c17efa48d527f45393fdbf800500a0": {
+            "text": "Tan\u0131mlanmayan yer imi yada yer imi art\u0131k aktif de\u011fil"
+        },
+        "f3f43e30c8c7d78c6ac0173515e57a00": {
+            "text": "Filtreler"
+        },
+        "860515850b6c6beae4343c42ecf3060f": {
+            "text": "Filtre Ekle"
+        },
+        "d050438ea9af830fff49ddbbad2218b0": {
+            "text": "Varsay\u0131lan S\u00fctunlar"
+        },
+        "6d0999f49ddabda93eae8276595abe62": {
+            "text": "Sayfa listesinde g\u00f6sterilecek h\u00fccreleri se\u00e7in ve s\u0131ralay\u0131n."
+        },
+        "97bff91e1e9c0a1d8a8cc9a0c1ae88fc": {
+            "text": "Kullan\u0131c\u0131 iste\u011fe ba\u011fl\u0131 olarak hangi h\u00fccreleri g\u00f6r\u00fcnt\u00fcleyece\u011fini de\u011fi\u015ftirebilir, bu ayarlar sadece varsay\u0131lan olarak kalacakt\u0131r."
+        },
+        "0e305a04b5eb6dc8bf502625710a74d3": {
+            "text": "Burada yapt\u0131\u011f\u0131n\u0131z de\u011fi\u015fiklikler a\u015fa\u011f\u0131daki sonu\u00e7lara hemen yans\u0131t\u0131lacakt\u0131r."
+        },
+        "60170ad1f8db03dc180ee0ced484b19f": {
+            "text": "Sonu\u00e7larda hangi sut\u00fcnlar g\u00f6r\u00fcnt\u00fclenecek"
+        },
+        "0c8ee3eeadc96eeeeb24e2a6dc9d4a5e": {
+            "text": "Hangi sayfalar g\u00f6r\u00fcnt\u00fclenecek"
+        },
+        "e4ef81cce7e4e10033ebb10962dfdd5e": {
+            "text": "Bo\u015f"
+        },
+        "de95b43bceeb4b998aed4aed5cef1ae7": {
+            "text": "d\u00fczenle"
+        },
+        "1bda80f2be4d3658e0baa43fbe7ae8c1": {
+            "text": "g\u00f6r\u00fcnt\u00fcle"
+        },
+        "22af645d1859cb5ca6da0c484f1f37ea": {
+            "text": "yeni"
+        },
+        "a5158728109d8e67ae31b7b02bdc8b86": {
+            "text": "%1$d - %2$d - %3$d"
+        },
+        "3b8769d187c6c3306c50729bc43a9903": {
+            "text": "Sonu\u00e7 bulunamad\u0131"
+        },
+        "ef7de3f485174ff47f061ad27d83d0ee": {
+            "text": "se\u00e7ili"
+        },
+        "7b0fb34fcab89b5e58429e5e917b98bb": {
+            "text": "T\u00fcm ayarlar s\u0131f\u0131rland\u0131."
+        },
+        "de9ced9bf5e9829de4a93ad8c9d7a170": {
+            "text": "Yeni Ekle"
+        },
+        "590345301b23eb45c176da0fc139b191": {
+            "text": "S\u00fctunlar"
+        },
+        "379a82f72eacfec4228f74d4e39f3eec": {
+            "text": "Alt Sayfa Say\u0131s\u0131"
+        }
+    }
+}

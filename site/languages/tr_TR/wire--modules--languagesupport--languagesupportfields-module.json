@@ -1,0 +1,21 @@
+{
+    "file": "wire\/modules\/LanguageSupport\/LanguageSupportFields.module",
+    "textdomain": "wire--modules--languagesupport--languagesupportfields-module",
+    "translations": {
+        "16d43921f6466356a5420de1d357ffb6": {
+            "text": "Dil Deste\u011fi \/ Bo\u015f Davran\u0131\u015f"
+        },
+        "d5984c66ace0dae1773e991655e79484": {
+            "text": "Bu alan\u0131n de\u011feri bo\u015f oldu\u011funda ne yap\u0131lmal\u0131?"
+        },
+        "2890518e61caa93e64ca13dbc48fd26a": {
+            "text": "\u0130nternet sitenizin \u00f6n sayfas\u0131nda sadece varsay\u0131lan dil olmayan de\u011ferleri uygular."
+        },
+        "b22ada5d7a2fc27462f6c477fc5c4dbd": {
+            "text": "Varsay\u0131lan dilden de\u011feri al"
+        },
+        "58d2e94541b468a4154422bbbc8a6ba5": {
+            "text": "Bo\u015f kals\u0131n"
+        }
+    }
+}

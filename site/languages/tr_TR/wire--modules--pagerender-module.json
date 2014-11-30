@@ -1,0 +1,21 @@
+{
+    "file": "wire\/modules\/PageRender.module",
+    "textdomain": "wire--modules--pagerender-module",
+    "translations": {
+        "3a160df105e3d9d54575466354bdd312": {
+            "text": "Sayfa Olu\u015fturma"
+        },
+        "d2c5ea4202c4c692852b7e10fbceabd3": {
+            "text": "Sayfaya olu\u015fturma metodu ekler ve sayfa \u00e7\u0131kt\u0131s\u0131n\u0131 \u00f6nbelle\u011fe al\u0131r."
+        },
+        "403c89515b16b3417cd2e426612b4a53": {
+            "text": "Sayfalardan %d temizlenen %d \u00f6nbellek dosyalar\u0131"
+        },
+        "0c22fad509c478c3442a310a7a2b2c52": {
+            "text": "Sayfa Olu\u015fturma \u00d6nbelle\u011fini Diskten Temizle?"
+        },
+        "b4999a543edcfefc8c56ed6eafdcb98f": {
+            "text": "Sayfalar\u0131 %d mevcut olarak \u00f6nbelle\u011fe al\u0131nd\u0131 %s"
+        }
+    }
+}

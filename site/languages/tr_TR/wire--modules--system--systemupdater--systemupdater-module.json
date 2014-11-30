@@ -1,0 +1,21 @@
+{
+    "file": "wire\/modules\/System\/SystemUpdater\/SystemUpdater.module",
+    "textdomain": "wire--modules--system--systemupdater--systemupdater-module",
+    "translations": {
+        "131f946cc232ed294bb1051fdb295d02": {
+            "text": "Sistem G\u00fcncelleyici"
+        },
+        "68b7f791d338e65dd897b4316c51a568": {
+            "text": "Sistem versiyonlar\u0131 ve y\u00fckseltmelerini y\u00f6net."
+        },
+        "2bb01c9e5f493e464bae4f127ac24891": {
+            "text": "Sistem G\u00fcncelleme Kayd\u0131"
+        },
+        "83d345108e3c4ebe46ec3d2de0b7e463": {
+            "text": "Sistem Versiyonu"
+        },
+        "e3087085dad248ad622f15449dc45832": {
+            "text": "Sistem s\u00fcr\u00fcm\u00fcn\u00fc d\u00fc\u015f\u00fcrerek yeni bir sistem g\u00fcncellemesi yapman\u0131za olanak sa\u011flar."
+        }
+    }
+}

@@ -1,0 +1,57 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldPageAutocomplete\/InputfieldPageAutocomplete.module",
+    "textdomain": "wire--modules--inputfield--inputfieldpageautocomplete--inputfieldpageautocomplete-module",
+    "translations": {
+        "0f6969d7052da9261e31ddb6e88c136e": {
+            "text": "kald\u0131r"
+        },
+        "111ce57a33643818f896c8ef5b78f923": {
+            "text": "Yeni eklemek i\u00e7in \"enter\" a bas\u0131n"
+        },
+        "a2324d16f834e2138b021bb90f1823dc": {
+            "text": "Otomatik Tamamlama Geli\u015fmi\u015f Ayaralar"
+        },
+        "5bd9a3b9fd04ef31e99e96b10ce5ac5f": {
+            "text": "Otomatik Tamamlama arama operat\u00f6r\u00fc"
+        },
+        "a711451766d79a07ee817f88cb63ca56": {
+            "text": "Otomatik tamamlama e\u015fle\u015fmelerinde API de kullan\u0131lan arama operat\u00f6r\u00fc."
+        },
+        "ddc1a98a2c8309eab3292b5fda7e0506": {
+            "text": "E\u011fer burada ne yap\u0131lmas\u0131n\u0131 istedi\u011finizden emin de\u011filseniz, varsay\u0131lan olaraka b\u0131rak\u0131n: *="
+        },
+        "6774b148e1f242760726e4c88d08931a": {
+            "text": "Tan\u0131m yada k\u0131smi keliyemi i\u00e7eriyor (tam-dizini kullanarak) - Tavsiye Edilen"
+        },
+        "10723caf0a8012a762b741f821060ea9": {
+            "text": "Tan\u0131m yada k\u0131smi keliyemi i\u00e7eriyor (BENZER (LIKE) kullan\u0131larak)"
+        },
+        "5aebeca1891bcef0142167dda686b4a7": {
+            "text": "Herhangibir s\u0131radaki t\u00fcm kelimeyi i\u00e7eriyor"
+        },
+        "0626526d691a7bf48a099a2330fde59f": {
+            "text": "Kelime\/tan\u0131m ile ba\u015fl\u0131yor"
+        },
+        "a606a68c3a2a799b75998b7be8d48aea": {
+            "text": "Kelime\/tan\u0131m ile bitiyor"
+        },
+        "0a06fd6fea29497256d43910fde22cd3": {
+            "text": "E\u015fittir[tam]"
+        },
+        "b956d301c10771357a356a80d9f0d3a5": {
+            "text": "Otomatik tamamlama i\u00e7in sorgulanacak alanlar"
+        },
+        "0c458f5b668cdb153d43ffa89c2f2393": {
+            "text": "Otomatik tamamlama metin sorgulama e\u015fle\u015fmesi i\u00e7in alanlar\u0131n adlar\u0131n\u0131 yaz\u0131n. Tipik olarak bu bir ba\u015fl\u0131k olan\u0131 olabilir, fakat di\u011ferlerinide herbirini bo\u015fluk ile ay\u0131rarak ekleyebilirsiniz. Not, Bu (yukar\u0131daki) \"Etiket Alan\u0131ndan\" farkl\u0131 olmal\u0131d\u0131r. Burada alanlar\u0131n nas\u0131l g\u00f6r\u00fcnece\u011fini de\u011fil, hangi alanlar\u0131n aranabilece\u011fini belirtebilirsiniz."
+        },
+        "8fdfe6e949b4c07d26317e3e2f99a14d": {
+            "text": "Listelenen yaz\u0131 alanlar \u015funlar\u0131 i\u00e7eriyor:"
+        },
+        "0e942985459c2961ee2ddd03061475e4": {
+            "text": "Sayfa Otomatik Tamamlama"
+        },
+        "f2f3cd9d4e91a577333b66f5818b9d3b": {
+            "text": "\u00c7oklu Sayfa se\u00e7me otomatik tamamlama ve s\u0131ralama yetene\u011fine sahiptir. "
+        }
+    }
+}

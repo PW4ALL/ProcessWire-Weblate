@@ -1,0 +1,18 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeComments\/CommentFilterAkismet.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypecomments--commentfilterakismet-module",
+    "translations": {
+        "4f56cc1383c1e4170dfe1e715a97f5d6": {
+            "text": "Yorum Filtreleme: Akismet"
+        },
+        "c6fbad5a67362793950bf96bd0e6dad5": {
+            "text": "SPAM yorumlar\u0131 tespit etmek i\u00e7in Akismet servisi kullan\u0131l\u0131. Yorum AlanTipi (Fieldtype) i\u00e7in mod\u00fcl eklentisi."
+        },
+        "00fee5e9143358a3b00c985f3ed3c43e": {
+            "text": "Akismet Anahtar\u0131"
+        },
+        "69dccaed52b0f6af3c11c97b72d0b963": {
+            "text": "E\u011fer yorumlar\u0131n otomatik olarak spam olup olmad\u0131\u011f\u0131n\u0131 kontrol etmek istiyorsan\u0131z, yorumlar alan-tipi (Comments fieldtype) bu kontrol\u00fc sa\u011flamak i\u00e7in Akismet servisini kullan\u0131r. Akismet servisini kullanabilmeniz i\u00e7in akismet.com internet sitesinden ald\u0131\u011f\u0131n\u0131z API anahtar\u0131n\u0131 girmeniz gerekiyor. Bu servisi iste\u011fe ba\u011fl\u0131 bir \u015fekilde kullanabilirsiniz, fakat tavsiyemiz kullanman\u0131z y\u00f6n\u00fcndedir."
+        }
+    }
+}

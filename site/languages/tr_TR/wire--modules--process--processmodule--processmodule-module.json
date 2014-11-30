@@ -1,0 +1,351 @@
+{
+    "file": "wire\/modules\/Process\/ProcessModule\/ProcessModule.module",
+    "textdomain": "wire--modules--process--processmodule--processmodule-module",
+    "translations": {
+        "801ab24683a4a8c433c6eb40c48bcd9d": {
+            "text": "\u0130ndir"
+        },
+        "418cab01f270b56053a218c414840ec9": {
+            "text": "\u0130ndir ve G\u00fcncelle"
+        },
+        "c83047e52e84102cde2e46c99f5f2fa5": {
+            "text": "\u0130ndir ve Y\u00fckle"
+        },
+        "cc3acbc843dd28f892ae2c9c1211b4cb": {
+            "text": "Yeni Mod\u00fcllere G\u00f6zat"
+        },
+        "b14c50cfbdf80ffa1e494282c306a467": {
+            "text": "Mod\u00fcl\u00fc Y\u00fckle"
+        },
+        "ea90a0c1864c51f82f862a6850c13951": {
+            "text": "Silinen mod\u00fcl dosyalar\u0131"
+        },
+        "9c67d775a708bbc2a042f878e78cfe2c": {
+            "text": "Site mod\u00fclleri i\u00e7in belirtilmi\u015ftir - \/site\/modules\/"
+        },
+        "4d90ec9a7117ef7ad9c02a90860d7122": {
+            "text": "Mod\u00fcl\u00fc silmek i\u00e7in, mod\u00fcl\u00fc d\u00fczenlemeye t\u0131klay\u0131n, 'kald\u0131r\" kutusunu i\u015faretleyin, kay\u0131t edin. Kald\u0131r\u0131lmadan \u00f6nce, mod\u00fcl dosyalar\u0131 \/site\/modules\/ klas\u00f6r\u00fcnden kald\u0131r\u0131labilir. E\u011fer listede hala g\u00f6r\u00fcn\u00fcyorsa, 'Yeni Mod\u00fcllere G\u00f6zat\" tu\u015funa t\u0131klay\u0131p ProcessWire'\u0131n de\u011fi\u015fiklikleri g\u00f6smesini sa\u011flayabilirsiniz."
+        },
+        "83168e6cb289d732cc78427b51f93153": {
+            "text": "\u00c7ekirdek"
+        },
+        "401aeb1b99895a172d78edfa183114e7": {
+            "text": "\/wire\/modules\/ - ProcessWire \u00e7ekirde\u011finin i\u00e7erdi\u011fi mod\u00fcller"
+        },
+        "03c2e7e41ffc181a4e84080b4710e81e": {
+            "text": "Yeni"
+        },
+        "0900a3f6adfa931e0130c02c436e7e7f": {
+            "text": "Mod\u00fcl S\u0131n\u0131f Ad\u0131"
+        },
+        "8de5f3b8fe691cf6304176b9a5ed54da": {
+            "text": "Mod\u00fcl klas\u00f6r\u00fcne bakabilirsiniz ve indirip y\u00fcklemek istedi\u011finiz mod\u00fclleri belirleyebilirisniz. Y\u00fcklemek istedi\u011finiz mod\u00fcl\u00fcn s\u0131n\u0131f ad\u0131n\u0131 yaz\u0131n veya yap\u0131\u015ft\u0131r\u0131n."
+        },
+        "3b0798392299a74418470d3f13b5eec2": {
+            "text": "Mod\u00fcl klas\u00f6r\u00fc burada '[modules.processwire.com](http:\/\/modules.processwire.com\/)' yer almaktad\u0131r"
+        },
+        "def68ae90aac3e065c37457bc36d22f8": {
+            "text": "Mod\u00fclS\u0131n\u0131fAd\u0131"
+        },
+        "5975f55a2bcd254c58d9fe16d7a21417": {
+            "text": "E\u011fer mod\u00fcl klas\u00f6r\u00fcne kendiniz mod\u00fcl aktard\u0131ysan\u0131z '\/site\/modules\/', bu tu\u015fu t\u0131klayarak onlar\u0131 bulabilirsiniz."
+        },
+        "56f298ec43e271496dd37302c5f2d023": {
+            "text": "Yeni mod\u00fcl bulunamad\u0131"
+        },
+        "844ced21eac449bca19cf378ae770720": {
+            "text": "Bilinmeyen mod\u00fcl ad\u0131: %s"
+        },
+        "addec426932e71323700afa1911f8f1c": {
+            "text": "daha"
+        },
+        "0d17be96c4c0a8f101dcaa0ce9c5ee7d": {
+            "text": "Sil %s?"
+        },
+        "b9c21fa0192c783c8c3d3c48cd251f6c": {
+            "text": "Yeni mod\u00fcl bul"
+        },
+        "8cd0d0c99b062b3d22e8c7188ba33ab2": {
+            "text": "Hepsini G\u00f6ster"
+        },
+        "8395847485c9a34007295da6a4f9d4cf": {
+            "text": "URL servisinden veri al\u0131n\u0131rken hata olu\u015ftur"
+        },
+        "8d68afb831b95c0dc23e1457385a983c": {
+            "text": "\u0130nternet servisi taraf\u0131ndan rapor edilen hata:"
+        },
+        "9e5fd09ae1c89e20aa28deee64d7f631": {
+            "text": "\u00d6z\u00fcr dileriz, mod\u00fcl tipi \"%s\u00e9 y\u00f6netim panelinden y\u00fcklenebilir de\u011fil."
+        },
+        "2b0c95ea68acdfcd4e4d995f89bf3b92": {
+            "text": "Bu mod\u00fcl ProcessWire versiyonu ile uyumlu de\u011fil. \u00c7al\u0131\u015fabilir, fakat bu mod\u00fcl\u00fc mod\u00fcl yazar\u0131yla kontrol etmek istebilirsin."
+        },
+        "5259630c836d951d40cd2771922dfb5e": {
+            "text": "\u015euanki y\u00fckl\u00fc versyionu zaten g\u00fcncel"
+        },
+        "356025c686f0f84759d1762a071903ad": {
+            "text": "Bu mod\u00fcl i\u00e7in bir g\u00fcncelleme mevcut!"
+        },
+        "18206c5add24b8898426959c811b779b": {
+            "text": "Daha Fazla Bilgi"
+        },
+        "eac35422501988079c78c4da694468ff": {
+            "text": "Proje Sayfas\u0131"
+        },
+        "49ec9b5c06ace9e448b8c7901304c036": {
+            "text": "Destek Sayfas\u0131"
+        },
+        "baa2c21bbd137636014e8f357698761e": {
+            "text": "Devam etmeden \u00f6nce kayna\u011f\u0131n g\u00fcvenilir oldu\u011fundan emin olun!"
+        },
+        "2d30ce478ce5e77c288d80f804617331": {
+            "text": "Bu mod\u00fcl i\u00e7in belirtilmi\u015f bir y\u00fckleme URL'si yok, manuel olarak y\u00fcklemeniz gerekiyor."
+        },
+        "ea4788705e6873b424c65e91c2846b19": {
+            "text": "\u0130ptal"
+        },
+        "013ba726c842150ec33822c5a6fc6196": {
+            "text": "\u0130ndirme iptal edildi"
+        },
+        "321a272463ceb9661e0951f1e3b639d5": {
+            "text": "\u0130ndirilen:"
+        },
+        "206fdb3626f498af4b830cbf6c2efc0a": {
+            "text": "%s y\u00fcklemeye haz\u0131r"
+        },
+        "5edb0eb1006e6be6d4cd5609357b4bb3": {
+            "text": "\u015eimdi Y\u00fckle"
+        },
+        "bfaf55307f89bbad2f781f3ea25fae91": {
+            "text": "Kald\u0131r\u0131lm\u0131\u015f B\u0131rak\u0131n"
+        },
+        "bb8985c9a93d30135e0a662d77228e87": {
+            "text": "G\u00fcncellendi:"
+        },
+        "5bee92e129673eefc19da149e2b58f15": {
+            "text": "%s ba\u015far\u0131yla g\u00fcncellendi."
+        },
+        "292287e744d21b09f577b3228ef5ce77": {
+            "text": "Mod\u00fcl ayarlar\u0131na devam et"
+        },
+        "4ca1ee2e55f304b56891e55fc0ff7844": {
+            "text": "Mod\u00fcl belirtilmedi"
+        },
+        "e45037779e7b459b4ea29944f1b2ef5c": {
+            "text": "Mod\u00fcl\u00fc kald\u0131r? Kald\u0131rd\u0131ktan sonra, mod\u00fcl dosyalar\u0131 di\u011fer mod\u00fcller taraf\u0131ndan kullan\u0131lm\u0131yor ise mod\u00fcl dosyalar\u0131n\u0131 serverdan kald\u0131rabilirsiniz."
+        },
+        "a0ab914bff40f68598d99e99d39d859c": {
+            "text": "Bu ayn\u0131 zamanda di\u011fer mod\u00fclleride kald\u0131racak"
+        },
+        "1f698ebf835d58ef66a38c20e1496fa2": {
+            "text": "(Devre D\u0131\u015f\u0131)"
+        },
+        "c19eca215de858fb52f1067064dc4bba": {
+            "text": "Mod\u00fcl silinemiyor"
+        },
+        "7c4ba7a5c907fd803087ccd0da925c45": {
+            "text": "\u00d6ncelikle di\u011fer mod\u00fclleri kald\u0131rman\u0131z gerekiyor"
+        },
+        "c6ac99bad720428d69928c160e87c55e": {
+            "text": "Bu mod\u00fcl yap\u0131land\u0131rma i\u00e7in herhangibir alan i\u00e7ermiyor"
+        },
+        "aadb23a524b84262538be0a416d5868f": {
+            "text": "Kald\u0131r\u0131lan Mod\u00fcl"
+        },
+        "9b60baa546e5c978341fd2907b1d5dc9": {
+            "text": "Kay\u0131t Edilen Mod\u00fcl"
+        },
+        "9c098768612f6e24d58eae6fb38ae756": {
+            "text": "g\u00fcncellemeleri kontrol et"
+        },
+        "bf17ac149e2e7a530c677e9bd51d3fd2": {
+            "text": "Mod\u00fcller"
+        },
+        "b7e2c8a0dd9e5f4ac8848dc0ff32ba0f": {
+            "text": "Mod\u00fclleri listele, d\u00fczenle yada y\u00fckle\/kald\u0131r"
+        },
+        "70d2b9e888cc1816db79833873ff3a93": {
+            "text": "Mod\u00fcl"
+        },
+        "27a35aaa9bc34010a2a8b5f6e72bc59c": {
+            "text": "Versiyon"
+        },
+        "397433048c1c0bf93e5c0b270e178cb5": {
+            "text": "\u00d6zet"
+        },
+        "ab216fc1fc240e6ae4a8d9e632b75177": {
+            "text": "Gereksinimler"
+        },
+        "d79883f0aa4bbfa29cfade81d86f4914": {
+            "text": "Ayr\u0131ca Y\u00fckler"
+        },
+        "7dadd48b9d04ac2c725c773fb9b845e6": {
+            "text": "Y\u00fckle"
+        },
+        "abc3baafc079141ff12cc709fd46f471": {
+            "text": "Sil"
+        },
+        "5ef031b334adbb931cf113da0bd6dcea": {
+            "text": "Ayarlar"
+        },
+        "16cc8e66dedb68f1f49e919c348e3de5": {
+            "text": "Hen\u00fcz De\u011fi\u015f"
+        },
+        "874966d700b2e2cca2577a2eac1d28f0": {
+            "text": "S\u0131n\u0131f"
+        },
+        "f660f5f5478044f06b7c4ff7faf94e22": {
+            "text": "Versiyon"
+        },
+        "64e220482c5957a4bc72eb93fa23c97d": {
+            "text": "Y\u00fcklendi?"
+        },
+        "adface9f151f3625734957af4cc90bdc": {
+            "text": "Yazar"
+        },
+        "e5f2ca40c235fae5ac687e306de83787": {
+            "text": "\u00d6zet"
+        },
+        "e6b6277ba8181bbd1527a9862aac46ec": {
+            "text": "Yay\u0131n Durumu"
+        },
+        "8cdfd203b4ed8d5355ee6f7e2819f1f7": {
+            "text": "Uyumluluk"
+        },
+        "6e3ecdf50e3929756d31a4f4a80179da": {
+            "text": "Ba\u011flant\u0131lar"
+        },
+        "48b843a3e9c0825de5170cc33048043f": {
+            "text": "ZIP Dosyas\u0131"
+        },
+        "89f479678076a540904291ac97e7b29c": {
+            "text": "L\u00fctfen Not"
+        },
+        "6d1e927236b37ef520bf1e0c06162c61": {
+            "text": "Kald\u0131r"
+        },
+        "1ac54e3228009efa1fcf80b8709e1288": {
+            "text": "Ba\u015fl\u0131k"
+        },
+        "6499bebe581347fb21854f07912f1f65": {
+            "text": "S\u0131n\u0131f"
+        },
+        "db91f2b6a497a7f2f78f5ef53cc47fab": {
+            "text": "Dosya"
+        },
+        "289aa00733ebcfd0bae827af29d01356": {
+            "text": "Versiyon"
+        },
+        "f09023872796deae6f1373d8a9d31a1e": {
+            "text": "Yazar"
+        },
+        "633ce9b9b1a0e5b2f37bcc433eda6073": {
+            "text": "\u00d6zet"
+        },
+        "a954570dccb58d6a3edeb19736234655": {
+            "text": "Gereksinimler"
+        },
+        "c3beb2f9b875c79f76cf703ad3659d68": {
+            "text": "Gerek Duyanlar"
+        },
+        "4d9ea4616e8b425d256a718c7686ed2b": {
+            "text": "Gereksinim \u0130zinleri"
+        },
+        "76ff1156be021b9f8cc2597febd46133": {
+            "text": "Kancalar"
+        },
+        "3ffe0dd3025d49ed76beaaf53f4889ac": {
+            "text": "Daha Fazla Bilgi"
+        },
+        "da50401ad6d0a7e3ec13844538e10864": {
+            "text": "Mod\u00fcl Bilgisi"
+        },
+        "fadeae979278b23b0c0245fe143813ca": {
+            "text": "Klas\u00f6rden Mod\u00fcl Ekle"
+        },
+        "91412465ea9169dfd901dd5e7c96dd99": {
+            "text": "Y\u00fckle"
+        },
+        "a97f194fe643428c6e0e5b1d3ea79dbd": {
+            "text": "Y\u00fckleyerek Mod\u00fcl Ekle"
+        },
+        "5e3f8e6adc33178f32cc7beb6ad19072": {
+            "text": "URL den Mod\u00fcl Ekle"
+        },
+        "98dd43dfae05b11befe1f140e0ec787a": {
+            "text": "Y\u00fcklenen"
+        },
+        "19d1a8e075651f072ba0771e6cbc831b": {
+            "text": "Mod\u00fcl dizinini g\u00f6r\u00fcnt\u00fcle %s"
+        },
+        "94e84ea867143991751f06bad2b5da30": {
+            "text": "Son saat i\u00e7erisinde"
+        },
+        "a0d5ca48d2aafbe0c044daeedc4ca0e5": {
+            "text": "Son g\u00fcn i\u00e7erisinde"
+        },
+        "dc52e914c681bc112d4a36ed38e37299": {
+            "text": "Son hafta i\u00e7erisinde"
+        },
+        "12db5f4485378bd2b028b8f67a61533e": {
+            "text": "Son ay i\u00e7erisinde"
+        },
+        "21f29ba58fe9059dae498577efb26435": {
+            "text": "\u015eimdi Bulunan ve Y\u00fcklenen Mod\u00fcller"
+        },
+        "dc975a9e6b0112228c42a6abbe82ae93": {
+            "text": "Kaynak ZIP dosyas\u0131n\u0131n g\u00fcvenilir oldu\u011fundan kesinlikle emin olun."
+        },
+        "d5f38db4e3d76c9a7cda57c660ac0dad": {
+            "text": "Mod\u00fcl ZIP dosya URL si"
+        },
+        "29b21610722fa13430132a8d4e757d1f": {
+            "text": "Mod\u00fcl\u00fc i\u00e7eren bir ZIP dosyas\u0131 indir. E\u011fer indirdi\u011finiz mod\u00fcl zaten y\u00fckl\u00fcyse, indirilen versiyon y\u00fckl\u00fc olan versiyon \u00fczerine yaz\u0131lacak."
+        },
+        "617650497438099e992520bf3a664ba6": {
+            "text": "http:\/\/baglanti.com\/ModuleAdi.zip"
+        },
+        "e7aef889dd1b168dc269e9ddff6a57a5": {
+            "text": "Mod\u00fcl ZIP Dosyas\u0131"
+        },
+        "6010e3962902142283df28e6d1a1d897": {
+            "text": "Mod\u00fcl dosyalar\u0131n\u0131 i\u00e7eren ZIP dosyas\u0131n\u0131 indirin. E\u011fer var olan bir mod\u00fcl\u00fc y\u00fcklerseniz, y\u00fckledi\u011finiz mod\u00fcl var olan mod\u00fcl \u00fczerine yaz\u0131lacak."
+        },
+        "230420a05edcb2323c858d6c410d93cf": {
+            "text": "Mod\u00fcl bulunamad\u0131."
+        },
+        "5d695cc28c6a7ea955162fbdd0ae42b9": {
+            "text": "Bulundu"
+        },
+        "f629d0ec5b19860b76ae88da3ea10273": {
+            "text": "Web setvisinden JSON \u00e7\u00f6z\u00fcmlenirken hata olu\u015ftu"
+        },
+        "822213aa38da92d8819e5c3b4ebe4c71": {
+            "text": "\u00f6nceki y\u00fcklenen versiyondan daha eski!"
+        },
+        "67f02952b064d6064216f2639a516eca": {
+            "text": "Y\u00fcklenebilmesi i\u00e7in, ihtiya\u00e7 duyulan mod\u00fcl \"%s\""
+        },
+        "63a6a88c066880c5ac42394a22803ca6": {
+            "text": "Yenile"
+        },
+        "f1206f9fadc5ce41694f69129aecac26": {
+            "text": "Ayarla"
+        },
+        "349838fb1d851d3e2014b9fe39203275": {
+            "text": "Y\u00fckle"
+        },
+        "385accc7e6612e8dba4e99f22b6876b1": {
+            "text": "Mod\u00fcl bu ayarlanabilir se\u00e7eneklere sahip"
+        },
+        "8c3466d7f1cc1dc4c01a040fe64573d5": {
+            "text": "Dosya sisteminde y\u00fcklenmemi\u015f mod\u00fcller"
+        },
+        "fd50b49603c0cfa8d50d7c2933cc052c": {
+            "text": "Y\u00fckle %s?"
+        },
+        "de9ced9bf5e9829de4a93ad8c9d7a170": {
+            "text": "Yeni Ekle"
+        }
+    }
+}

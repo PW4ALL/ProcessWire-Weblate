@@ -1,0 +1,18 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldCheckboxes\/InputfieldCheckboxes.module",
+    "textdomain": "wire--modules--inputfield--inputfieldcheckboxes--inputfieldcheckboxes-module",
+    "translations": {
+        "d3f3236393ce7a48198cde99acaed365": {
+            "text": "\u0130\u015faretleme Kutucu (Checkbox) Kolonlar\u0131"
+        },
+        "50bad9e0658dd79a35545ebcd18f92ac": {
+            "text": "E\u011fer i\u015faretleme kutular\u0131n\u0131n (checkboxes) kolonlarda g\u00f6r\u00fcnt\u00fclenmesini istiyorsan\u0131z, ka\u00e7 tane kolon kullanmak istiyorsan\u0131z girin (10 taneye kadar). \u0130\u015faretleme kutular\u0131n\u0131 yan-yana g\u00f6r\u00fcnt\u00fclemek i\u00e7in."
+        },
+        "c425f296c6b905c91fb3f6da1a1702b6": {
+            "text": "\u0130\u015faretleme Kutular\u0131 (Checkboxes)"
+        },
+        "632ae34b804c1914c3a51af327a3379d": {
+            "text": "\u00c7oklu i\u015faretleme kutular\u0131 (Checkboxes)"
+        }
+    }
+}

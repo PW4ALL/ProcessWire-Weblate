@@ -31,6 +31,9 @@
         },
         "141e30f2de96660020efd996cc916413": {
             "text": "Fehlerhafte Modul Abh\u00e4ngigkeit: %s ben\u00f6tigt %s"
+        },
+        "de7a358da1292f56861c726d3c860dc0": {
+            "text": "Ben\u00f6tigtes Modul kann nicht installiert werden"
         }
     }
 }

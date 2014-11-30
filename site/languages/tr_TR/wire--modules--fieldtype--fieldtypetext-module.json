@@ -1,0 +1,12 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeText.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypetext-module",
+    "translations": {
+        "82829c5912f395b029a87c565359835c": {
+            "text": "Metin Bi\u00e7emleyicileri (Text Formatters)"
+        },
+        "965a2e6ce23bd9e9ca5122fb9862be60": {
+            "text": "E\u011fer alan \u00e7\u0131kt\u0131 i\u00e7in haz\u0131land\u0131\u011f\u0131nda alan i\u00e7in herbangibir otomatik formatlama uygulamak istiyorsan\u0131z, yukar\u0131dan bir yada daha fazla metin bi\u00e7emleyeci se\u00e7in. E\u011fer birden fazla se\u00e7ecekseniz, uygulanma d\u00fczenine g\u00f6re ta\u015f\u0131y\u0131p s\u0131ralay\u0131n."
+        }
+    }
+}

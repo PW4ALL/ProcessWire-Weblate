@@ -1,0 +1,66 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageEditImageSelect\/ProcessPageEditImageSelect.module",
+    "textdomain": "wire--modules--process--processpageeditimageselect--processpageeditimageselect-module",
+    "translations": {
+        "5d13ae1a65403891ac0fe044f3acc865": {
+            "text": "Bu sayfada resim alan\u0131 yok. Resim se\u00e7mek i\u00e7in ba\u015fka bir resim alan\u0131 olan sayfa se\u00e7in."
+        },
+        "64a201e91bd521f5640318d844920b31": {
+            "text": "Y\u00fcklenen resim yok. Pencereyi kapat\u0131n ve resim y\u00fckleyin, yada ba\u015fka bir resim olan sayfadan resim se\u00e7in."
+        },
+        "83ea3ed3245ed2ce30aabecdc6b4d354": {
+            "text": "Sayfadaki Resimler:"
+        },
+        "48448404ecc9e95975b334dbe421c0bd": {
+            "text": "E\u011fer ba\u015fka bir sayfadan resim se\u00e7mek istiyorsan\u0131z, resim y\u00fcklemek istedi\u011finiz sayfay\u0131 se\u00e7in."
+        },
+        "48ccf48dcf2218a413ce473262f21a0c": {
+            "text": "Geni\u015flik:"
+        },
+        "e933dc24fb245d863a43b4fefe9b45f5": {
+            "text": "Y\u00fckseklik:"
+        },
+        "4e641cf2fc3e46719b2e78d8ab8c6c2e": {
+            "text": "Resmi ayn\u0131 zamanda, sa\u011f alt k\u00f6\u015feden ta\u015f\u0131y\u0131p b\u0131rakarak yeniden boyutland\u0131rabilirsiniz."
+        },
+        "b5a7adde1af5c87d7fd797b6245c2a39": {
+            "text": "A\u00e7\u0131klama"
+        },
+        "e853a6aca1b442d161c2642e88346bf9": {
+            "text": "Hizalama"
+        },
+        "811398cb1e49b4f45851cc25fcc6501f": {
+            "text": "Sola Hizala"
+        },
+        "ad68675da1db2fb44a8d1cabcbbbb65e": {
+            "text": "Sa\u011fa Hizala"
+        },
+        "e36098607b9dd3b6d7107a449b6a25bd": {
+            "text": "Merkeze Hizala"
+        },
+        "d7e02762cdb4621a77388689b2ee53c0": {
+            "text": "B\u00fcy\u00fck Versiyonuna Ba\u011flant\u0131 Olu\u015ftur?"
+        },
+        "36171be725b020fde0f22b3ceb047280": {
+            "text": "Se\u00e7meyi ge\u00e7mek i\u00e7in alan adlar\u0131"
+        },
+        "fd8d17a2ebc3643f78fc97b8e5c3a7f3": {
+            "text": "Bu mod\u00fcl taraf\u0131ndan se\u00e7ilmesini istemedi\u011finiz resim alanlar\u0131n\u0131 (bo\u015fluk ile ay\u0131rarak) belirtin."
+        },
+        "63c7dee42e04e2757472031aa7164d81": {
+            "text": "Geni\u015flik ve Y\u00fckseklik niteliklerini resim etiketine ekleme?"
+        },
+        "5a8f9d5840811602e6806392ffef0523": {
+            "text": "Varsay\u0131lan olarak, bu mod\u00fcl <img> etiketi i\u00e7inde geni\u015flik y\u00fckseklik niteliklerini i\u00e7erir. E\u011fer responsive resimler kullan\u0131yor iseniz, bu \u00f6zelli\u011fi devre d\u0131\u015f\u0131 b\u0131rakabilirsiniz. Geni\u015flik ve y\u00fckseklik niteliklerini i\u00e7ermesini istemiyorsan\u0131z kutuyu i\u015faretleyip kay\u0131t edin."
+        },
+        "9909fb0aacb4a219f4b3cb8f57f63a87": {
+            "text": "Resim Sola Hizalama S\u0131n\u0131f\u0131 (Class)"
+        },
+        "5e37ad68682589a77a924cdffb018f23": {
+            "text": "Resim Sa\u011fa Hizalama S\u0131n\u0131f\u0131 (Class)"
+        },
+        "9d2836f3ff372cd7964b90d118710202": {
+            "text": "Resim Merkeze Hizalama S\u0131n\u0131f\u0131 (Class)"
+        }
+    }
+}

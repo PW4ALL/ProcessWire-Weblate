@@ -1,0 +1,72 @@
+{
+    "file": "wire\/modules\/Process\/ProcessRecentPages\/ProcessRecentPages.module",
+    "textdomain": "wire--modules--process--processrecentpages--processrecentpages-module",
+    "translations": {
+        "fda27fd4e8f31d46c37d6ebb661d4975": {
+            "text": "E\u015fle\u015fen Sayfa Yok (Hen\u00fcz)"
+        },
+        "0f1af93a396987467471642622b4f372": {
+            "text": "Bu \u00f6zellik sayfa-listeleme (page-lister) izinleri gerektiriyor"
+        },
+        "0e5b1a043c91a3077c73b747d2c1ff4c": {
+            "text": "Sayfa', '"
+        },
+        "8c4253ea75831d8428247d4ed4768403": {
+            "text": "Ebeveyn', '"
+        },
+        "e6a78bb4d444f48714efc6843d845a58": {
+            "text": "\u015eablon', '"
+        },
+        "0dd379d3118ab5ba184663c0fd8993be": {
+            "text": "Olu\u015fturulma', '"
+        },
+        "b5ffcdce39decf84181029761a562434": {
+            "text": "D\u00fczenlenme', '"
+        },
+        "e8ec3c5a66a1458617d385c211485937": {
+            "text": "Sayfalar yak\u0131n zamanda %s taraf\u0131ndan olu\u015fturuldu"
+        },
+        "6164ab6f0d40bf0dbb4d016d70f22451": {
+            "text": "Yak\u0131n zamanda olu\u015fturulan sayfalar"
+        },
+        "0fa9b1da7af6dc7c17300d2696d4e840": {
+            "text": "Sayfalar yak\u0131n zamanda %s taraf\u0131ndan d\u00fczenlendi"
+        },
+        "727d0685214d2e29837bf220bd336876": {
+            "text": "Yak\u0131n zamanda d\u00fczenlenen sayfalar"
+        },
+        "0d52952360bedad458af277a8f2aeb1e": {
+            "text": "%s"
+        },
+        "854a4e1057837e016fa0fd26de810760": {
+            "text": "Ba\u015fka ekle"
+        },
+        "587e304d5de9c56ac7833cb11fbbbcf9": {
+            "text": "Ayn\u0131 tipte ba\u015fka bir \u00f6\u011fe eklemek i\u00e7in t\u0131klay\u0131n"
+        },
+        "67ed6ddb7d890b23166c1bef771e9451": {
+            "text": "D\u00fczenlendi"
+        },
+        "0eceeb45861f9585dd7a97a3e36f85c6": {
+            "text": "Olu\u015fturuldu"
+        },
+        "2ff3c4fe971c877ac58d0d2ae6d21a1f": {
+            "text": "Taraf\u0131mdan d\u00fczenlenen"
+        },
+        "1914dedd048465ec232e765349041af5": {
+            "text": "Taraf\u0131mdan olu\u015fturulan"
+        },
+        "df286bfb6dd8fa62b0271fac208797fe": {
+            "text": "\u015eablon"
+        },
+        "615d41dc9054191178b392de366b7168": {
+            "text": "Ebeveyn"
+        },
+        "7a194bb4dc7991f70455c1068bc10d94": {
+            "text": "Son Olu\u015fturulan"
+        },
+        "dae52b80711ee1029c7006f95018d300": {
+            "text": "Son Zamanda"
+        }
+    }
+}

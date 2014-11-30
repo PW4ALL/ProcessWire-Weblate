@@ -1,0 +1,30 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageTrash.module",
+    "textdomain": "wire--modules--process--processpagetrash-module",
+    "translations": {
+        "90e829a463f2e23bdd11a7d8dddabe7e": {
+            "text": "\u00c7\u00f6p bo\u015falt\u0131ld\u0131"
+        },
+        "2f8f6dfb12d1ccfb64a4bc419130dd5a": {
+            "text": "\u00c7\u00f6p bo\u015f"
+        },
+        "b93325ff37316801eaf36f95c25a75e3": {
+            "text": "Takip eden sayfalar \u00e7\u00f6pte"
+        },
+        "206c3d86254559ad3cd3b88e8e002113": {
+            "text": "\u00c7\u00f6p\u00fc bo\u015falt"
+        },
+        "80a9994143f3ef28a7ba4fd1dd67436a": {
+            "text": "L\u00fctfen \u00e7\u00f6p\u00fc bo\u015faltmak istedi\u011finizi onaylay\u0131n."
+        },
+        "1012544490a2eae7e9782116062941b6": {
+            "text": "E\u011fer \u00e7\u00f6pte \u00e7ok fazla \u00f6\u011fe var ise, birden fazla bo\u015faltma i\u015flemini yapabilirsiniz."
+        },
+        "76c155bf8de0fe17853a8d8c231f72b0": {
+            "text": "\u00c7\u00f6p Sayfa"
+        },
+        "920202a83e840023ebf5ac6e31ccfbf3": {
+            "text": "Sayfalar\u0131n \u00e7\u00f6pten bo\u015falt\u0131lmas\u0131n\u0131 sa\u011flar"
+        }
+    }
+}

@@ -1,0 +1,69 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageList\/ProcessPageList.module",
+    "textdomain": "wire--modules--process--processpagelist--processpagelist-module",
+    "translations": {
+        "f4ec5f57bd4d31b803312d873be40da9": {
+            "text": "Muuta"
+        },
+        "ea4788705e6873b424c65e91c2846b19": {
+            "text": "Peruuta"
+        },
+        "e0626222614bdee31951d84c64e5e9ff": {
+            "text": "Valitse"
+        },
+        "46b816f573557a53c93ac78bbcfa9493": {
+            "text": "Poista valinta"
+        },
+        "d3da97e2d9aee5c8fbe03156ad051c99": {
+            "text": "Lis\u00e4\u00e4"
+        },
+        "d95deddfb80310ff0d1d63013611777c": {
+            "text": "Siirr\u00e4 raahaamalla"
+        },
+        "7dce122004969d56ae2e0245cb754d35": {
+            "text": "Muokkaa"
+        },
+        "4351cfebe4b61d8aa5efa1d020710005": {
+            "text": "Katso"
+        },
+        "03c2e7e41ffc181a4e84080b4710e81e": {
+            "text": "Uusi"
+        },
+        "6bc362dbf494c61ea117fe3c71ca48a5": {
+            "text": "Siirr\u00e4"
+        },
+        "ce2c8aed9c2fa0cfbed56cbda4d8bf07": {
+            "text": "Tyhjenn\u00e4"
+        },
+        "f413b7eb4ef50a382b0fe0cfe04fdc30": {
+            "text": "Roskakori auki: raahaa sivut alapuolelle poistaaksesi ne"
+        },
+        "de306d89ec101aba6fb73c6879710e6c": {
+            "text": "404 Sivua ei l\u00f6ytynyt"
+        },
+        "e3afed0047b08059d0fada10f400c1e5": {
+            "text": "Yll\u00e4pito"
+        },
+        "a7e253cd8dd95da3e20daf45519a8dc2": {
+            "text": "Roskakori"
+        },
+        "8593fb74b02478b2734e442f86507d7b": {
+            "text": "Voit halutessasi yliajaa t\u00e4m\u00e4n asetuksen sivupohjakohtaisesti kunkin sivupohjan \"lis\u00e4asetukset\" -v\u00e4lilehdell\u00e4."
+        },
+        "94d3f06b64640bda750ee1d7c7527fe4": {
+            "text": "Animaation pituus (millisekunteina)"
+        },
+        "453420e78223c3c2ff7a28bfc3a44dde": {
+            "text": "M\u00e4\u00e4rit\u00e4 sivukartan animoinnin nopeus. Mit\u00e4 pienempi luku, sit\u00e4 nopeampi animaatio. Jos et halua animointia, m\u00e4\u00e4rit\u00e4 arvoksi 0."
+        },
+        "43da4fffe875f34908241df94ccb535b": {
+            "text": "N\u00e4ytett\u00e4vien sivujen m\u00e4\u00e4r\u00e4 ennen sivunumeroiden k\u00e4ytt\u00f6\u00f6nottoa"
+        },
+        "157fa6b945671169a76bc677977f368d": {
+            "text": "N\u00e4ytett\u00e4v\u00e4n kent\u00e4n nimi"
+        },
+        "ae9945c00ae261445f0277fbae516179": {
+            "text": "Sivulistassa jokainen sivu tunnistetaan omalla nimell\u00e4\u00e4n, joka on tyypillisesti otsikko. Voit m\u00e4\u00e4ritt\u00e4\u00e4 mit\u00e4 kentt\u00e4\u00e4 listauksessa k\u00e4ytet\u00e4\u00e4n. Valitaksesi useita kentti\u00e4, erota kenttien nimet v\u00e4lily\u00f6nnill\u00e4. Jos kentt\u00e4 sis\u00e4lt\u00e4\u00e4 viittauksen objektiin (kuten toiseen sivuun), m\u00e4\u00e4rit\u00e4 lis\u00e4ksi ominaisuus pisteell\u00e4, esim. toinensivu.title. Huomaa, ett\u00e4 jos m\u00e4\u00e4ritelty kentt\u00e4 on tyhj\u00e4, ProcessWire k\u00e4ytt\u00e4\u00e4 \"name\"-kentt\u00e4\u00e4."
+        }
+    }
+}

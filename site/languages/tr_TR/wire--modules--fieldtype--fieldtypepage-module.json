@@ -1,0 +1,42 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypePage.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypepage-module",
+    "translations": {
+        "7b438db8547ac1c9ab6c7ba6cb1532db": {
+            "text": "\u00c7oklu sayfa (PageArray)"
+        },
+        "a24fcc695edbc57c60c768a732d2f30d": {
+            "text": "E\u011fer hi\u00e7biri se\u00e7iliyse tek sayfa (sayfa) yada boolean false"
+        },
+        "94a53712b9a34f922a776fc5aa68d31f": {
+            "text": "E\u011fer hi\u00e7biri se\u00e7iliyse tek Sayfa (Sayfa) yada bo\u015f sayfa (NullPage)"
+        },
+        "7d5f7f76b51ac880e91da28dbc52df35": {
+            "text": "Yay\u0131nda olmayan sayfalara izin ver?"
+        },
+        "58b4f6dae2009a3d22a395a94de85360": {
+            "text": "\u0130\u015faretliyse, yay\u0131nda olmayan sayfalar\u0131n alan de\u011ferinde kullan\u0131lmalar\u0131na izin verilecek. D\u00fczenleme yetkisi olmayan kullan\u0131c\u0131lar d\u0131\u015f\u0131nda, yay\u0131nda olmayan sayfalar \u00f6n-sayfa da g\u00f6r\u00fcnt\u00fclenmeyecek."
+        },
+        "2d6565614947b2a6daba1a06515124da": {
+            "text": "Yetim kalm\u0131\u015f sayfa referanslar\u0131n\u0131 bul ve temizle"
+        },
+        "35a326c72a6584f3c7d70109b5cd45f1": {
+            "text": "Uyar\u0131: Bunu \u00e7al\u0131\u015ft\u0131rmadan \u00f6nce g\u00fcvenli\u011finiz i\u00e7in veritaban\u0131 yede\u011finizi alman\u0131z\u0131 \u00f6neririz."
+        },
+        "081c14de091c8761b82f930fd59c8f16": {
+            "text": "Bulunuyor ve temizleniyor..."
+        },
+        "e28f86b62065207ceeb0b5057eb98537": {
+            "text": "E\u011fer alan\u0131n\u0131z birden fazla sayfa i\u00e7erecekse, ilk alan\u0131 se\u00e7meniz gerekecek (PageArray). E\u011fer alan\u0131n\u0131z sadece tek sayfa i\u00e7erecekse, tek Sayfa se\u00e7ene\u011fini se\u00e7in (E\u011fer hangisini se\u00e7ece\u011finizden emin de\u011filseniz, sonuncu se\u00e7ene\u011fi se\u00e7in)."
+        },
+        "f7e35a334f1501cc0365458563f90cf5": {
+            "text": "Eski ProcessWire d\u00fcr\u00fcmlerinden gelen bir sorun i\u00e7in yetim sayfalar\u0131 temizleme ve silme i\u015flemi yapar. E\u011fer sayfa bulma sonu\u00e7lar\u0131nda yanl\u0131\u015f bilgi al\u0131yorsan\u0131z (\u00f6zellikle pageref.count se\u00e7icisi ile), bu se\u00e7ene\u011fi \u00e7al\u0131\u015ft\u0131rabilirsiniz."
+        },
+        "393e717c8215abdbe581b21180abfa2b": {
+            "text": "Sayfa bulunam\u0131yor"
+        },
+        "34a56e6d474c258bb9f4553aae0c7b81": {
+            "text": "\u015eablon bulunam\u0131yor"
+        }
+    }
+}

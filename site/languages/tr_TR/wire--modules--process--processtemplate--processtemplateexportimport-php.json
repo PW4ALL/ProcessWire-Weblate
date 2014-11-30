@@ -1,0 +1,156 @@
+{
+    "file": "wire\/modules\/Process\/ProcessTemplate\/ProcessTemplateExportImport.php",
+    "textdomain": "wire--modules--process--processtemplate--processtemplateexportimport-php",
+    "translations": {
+        "adb6c5041788e54ab20e2a3ef58fbe6e": {
+            "text": "D\u0131\u015far\u0131 aktarmak istedi\u011finiz \u015fablonlar\u0131 se\u00e7in"
+        },
+        "ad32e604e17467fc435538334fbddf3e": {
+            "text": "\u0130S\u0130M"
+        },
+        "6f434c508ad901b8667ed22f713e52bb": {
+            "text": "ET\u0130KET"
+        },
+        "60f5cde0d3f7fde81ba481a6a2ea2c49": {
+            "text": "ALANLAR"
+        },
+        "40e3819215b52841e19a7cac06b5f065": {
+            "text": "D\u00dcZENLEME"
+        },
+        "e5d07991c975607a12edce23c0da9824": {
+            "text": "Dizi se\u00e7imi i\u00e7in Shift+T\u0131klama kullan\u0131n. Ayr\u0131 ayr\u0131 se\u00e7mek i\u00e7in Ctrl+T\u0131klama (yada Cmd+T\u0131klama) kullan\u0131n. Hepsini se\u00e7mek i\u00e7in Ctrl+A (yada Cmd+A). "
+        },
+        "2f1fb3d9f25082e7fdb0befdad16da5f": {
+            "text": "Veriyi D\u0131\u015far\u0131 Aktar"
+        },
+        "6af8cf07d769a110f0b2483692ef424c": {
+            "text": "Bu veriyi ba\u015fka bir y\u00fcklemede \"i\u00e7eri aktarmak\" i\u00e7in veriyi kopyalay\u0131p i\u00e7eri aktarmak istedi\u011finiz kuruluma yap\u0131\u015ft\u0131r\u0131n."
+        },
+        "9d823cda278191490c2a99bbb912cc9d": {
+            "text": "Kutu i\u00e7erinde herhangibir yere t\u0131klayarak d\u0131\u015far\u0131 aktar\u0131lacak verinin hepsini se\u00e7in. Se\u00e7ildi\u011findei veriyi kopyalamak i\u00e7in Ctrl+C (yada Cmd + C) k\u0131sa yollar\u0131n\u0131 kullan\u0131n."
+        },
+        "dce8c8fe6bdf804f2a98384dedea1360": {
+            "text": "D\u0131\u015far\u0131 Aktar dan kopyalad\u0131\u011f\u0131n\u0131z veriyi buraya Ctrl+V (yada Cmd+V) kullanarak yap\u0131\u015ft\u0131r\u0131n."
+        },
+        "139ef19d3b2f902827257b2ebc33d708": {
+            "text": "Ba\u015fka y\u00fcklemenin d\u0131\u015far\u0131 aktar sekmesinden kopyalad\u0131\u011f\u0131n\u0131z veriyi a\u015fa\u011f\u0131daki kutuya Ctrl+V (yada Cmd+V) k\u0131sa yollar\u0131n\u0131 kullanarak yap\u0131\u015ft\u0131r\u0131n."
+        },
+        "31fde7b05ac8952dacf4af8a704074ec": {
+            "text": "\u00d6n \u0130zleme"
+        },
+        "22af645d1859cb5ca6da0c484f1f37ea": {
+            "text": "yeni"
+        },
+        "c112bb3542e98308d12d5ecb10a67abc": {
+            "text": "De\u011fi\u015fiklikler"
+        },
+        "5ad234cb2cde4266195252a23ca7d84e": {
+            "text": "M\u00fclkiyet (Property)"
+        },
+        "56f05ff480907494bd933f4ad4faf9e2": {
+            "text": "Eski De\u011fer"
+        },
+        "943f335b83ec6549ef45388ececff4e1": {
+            "text": "Yeni DE\u011fer"
+        },
+        "34eb90456e45e06048e287f649c4fba0": {
+            "text": "Bekleyen yeni de\u011fi\u015fiklik yok."
+        },
+        "10683c4dcfaf72824f906297f56bf7a5": {
+            "text": "Bu \u015fablonu d\u00fczenle?"
+        },
+        "8ed3116cc653ca014c306d4750f6fdb4": {
+            "text": "Bu \u015fablonu olu\u015ftur?"
+        },
+        "83e14aace19687fe9e1fbb8f913bf569": {
+            "text": "evete t\u0131klayarak de\u011fi\u015fiklikleri g\u00f6r\u00fcnt\u00fcle"
+        },
+        "47a35a358887cc2c9994fb517d6a2b0b": {
+            "text": "Bazen t\u00fcm de\u011fi\u015fiklikler uygulanmadan \u00f6nce iki i\u015flemeden ge\u00e7ebilir. L\u00fctfen a\u015fa\u011f\u0131daki bekleyen de\u011fi\u015fikliklere g\u00f6zat\u0131n ve ihtiyac\u0131n\u0131z var ise bunlar\u0131 i\u015fleyin."
+        },
+        "b2ba5835eaaa55607da59f696dcd4a87": {
+            "text": "L\u00fctfen a\u015fa\u011f\u0131daki de\u011fi\u015fiklikleri inceleyin ve haz\u0131r oldu\u011funda bunlar\u0131 i\u015fleyin. E\u011fer herhangibir de\u011fi\u015fiklik uygulamak istemiyorsan\u0131z, uygun kutucuklardaki i\u015faretleri kald\u0131r\u0131n."
+        },
+        "b604e6f64e19eea098f6d87c63552c53": {
+            "text": "De\u011fi\u015fiklikleri \u0130\u015fle"
+        },
+        "16babeb0401a3e00da9891b97e94d6fe": {
+            "text": "De\u011fi\u015fiklikleriniz uyguland\u0131!"
+        },
+        "15055fb4c054396bf293c21c12c578be": {
+            "text": "De\u011fi\u015fiklik bulunamad\u0131"
+        },
+        "426de2596501a3cff8977e60c271889c": {
+            "text": "Kaydedildi:"
+        },
+        "9e8f440807ceee9139987ab8fc6af288": {
+            "text": "Eklendi:"
+        },
+        "c5537dee88da6f333d20bfd49cfe1ce4": {
+            "text": "D\u00fczenlendi:"
+        },
+        "19b7fb53a85de3c8ba85672a91a7398b": {
+            "text": "D\u0131\u015far\u0131 Aktar"
+        },
+        "722034114c47bfa859a1be8200469fcf": {
+            "text": "Tamam"
+        },
+        "12c658575040446e9b2ffdfaaf7bc115": {
+            "text": "\u0130\u00e7eri Aktar"
+        },
+        "a7820bfdb5b31eb4ee4165f2c8bef779": {
+            "text": "Evet"
+        },
+        "1354eb301e2c7c55f79a7f13adb363e3": {
+            "text": "Hay\u0131r"
+        },
+        "1de056630a16e4be557e090c25f5791e": {
+            "text": "%d uyar\u0131"
+        },
+        "f96edcbe75239be800209c48ae9beb65": {
+            "text": "%d uyar\u0131lar"
+        },
+        "8ba486983cfbf272f154102c788863e6": {
+            "text": "Uygulanacak \u00f6zellik %d bulundu."
+        },
+        "dbda450b59595e4fd37fd581d205334f": {
+            "text": "Uygulanacak \u00f6zellikler %d bulundu."
+        },
+        "55c3a7525ed259e874a6d8f5e7e1b951": {
+            "text": "\u015eablondaki %d uyar\u0131lar"
+        },
+        "c444fb69a513bb955e7fc6d2743259c0": {
+            "text": "\u015eablonlardaki %d uyar\u0131lar"
+        },
+        "941d6506a00bb692b6fef9cd4ae4b5e1": {
+            "text": "Yeni eklenecek \u015fablon %s bulundu"
+        },
+        "5788268970dc1d50bc88a88494487e11": {
+            "text": "Yeni eklenecek \u015fablonlar %s bulundu"
+        },
+        "6c0ca3ff5408385efd5418b46d06cd85": {
+            "text": "Var olan \u015fablon %d i\u00e7in g\u00fcncelleme bulundu"
+        },
+        "b51b8d4de5d4fd2422af0fb2ad529875": {
+            "text": "Var olan \u015fablonlar %d i\u00e7in g\u00fcncelleme bulundu"
+        },
+        "9b64d9a70291ddd3f6c42edec1bb9866": {
+            "text": "Eklenen %d \u00f6\u011fe"
+        },
+        "0f1a6168f03f3ac45f46090fef3bf688": {
+            "text": "Eklenen %d \u00f6\u011feler"
+        },
+        "1992f81aea256b7d907c455b395d5ea4": {
+            "text": "D\u00fczenlenen %d \u00f6\u011fe"
+        },
+        "91cfce0d08404cef27087ea2d7c9043a": {
+            "text": "D\u00fczenlenen %d \u00f6\u011feler"
+        },
+        "c95e1b7b8cdab666cefec077890996f5": {
+            "text": "Atlanan %d \u00f6\u011fe"
+        },
+        "fc9475948584941277524f1216bb18ff": {
+            "text": "Atlanan %d \u00f6\u011feler"
+        }
+    }
+}

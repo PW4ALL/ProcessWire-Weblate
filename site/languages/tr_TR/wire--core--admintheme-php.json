@@ -1,0 +1,15 @@
+{
+    "file": "wire\/core\/AdminTheme.php",
+    "textdomain": "wire--core--admintheme-php",
+    "translations": {
+        "1e7f9a369b1d2688c0a9de0ba9adeb43": {
+            "text": "Bu temay\u0131 kullanmak i\u00e7in, kullan\u0131c\u0131 profilinizden temay\u0131 se\u00e7in."
+        },
+        "e3d8856720f3539d3fd3e02238f095ef": {
+            "text": "Alan \"y\u00f6netici_temas\u0131na\" y\u00fcklendi ve kullan\u0131c\u0131 profil ayarlar\u0131na eklendi."
+        },
+        "40c0ca08425d862d797f41d0fe0ff368": {
+            "text": "Alan sistemdeki \"y\u00f6netici_temas\u0131ndan\" kald\u0131r\u0131ld\u0131."
+        }
+    }
+}

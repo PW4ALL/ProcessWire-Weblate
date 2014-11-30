@@ -1,0 +1,93 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldPageTable\/InputfieldPageTable.module",
+    "textdomain": "wire--modules--inputfield--inputfieldpagetable--inputfieldpagetable-module",
+    "translations": {
+        "9ad1067becc6f575ac4c13c7294fdffe": {
+            "text": "\u00d6rnek: Ymd:His sayfa adlar\u0131nda iyi bir tarih\/zaman format\u0131."
+        },
+        "fd77179553ab23331a3bb360662cbf47": {
+            "text": "ProFields: Sayfa Tablosu"
+        },
+        "0a897fae6e81285f1da55dd87457ec94": {
+            "text": "Inputfield - FieldtypePageTable a e\u015flik edecek"
+        },
+        "ab11deae48aaa0e5cadf227120ed4ade": {
+            "text": "Ad"
+        },
+        "848656e110ec0bd90b47b5bf7c961c95": {
+            "text": "Olu\u015fturuldu"
+        },
+        "872db811a5e431cc819ba322361af380": {
+            "text": "D\u00fczenlendi"
+        },
+        "036eabaedf4f638437a5ecdf7582d541": {
+            "text": "D\u00fczenleyen"
+        },
+        "5058207150146a31a3722ea410dac987": {
+            "text": "Olu\u015fturan"
+        },
+        "fab3cb63defc8837e34f8ff45d16299f": {
+            "text": "Yol"
+        },
+        "df286bfb6dd8fa62b0271fac208797fe": {
+            "text": "\u015eablon"
+        },
+        "615d41dc9054191178b392de366b7168": {
+            "text": "Ebeveyn"
+        },
+        "1817eacf444b166d0c26160f2176ae96": {
+            "text": "Alt Sayfalar"
+        },
+        "8e1c1f71742a04abf811af399e149b72": {
+            "text": "Durum"
+        },
+        "d02df721111f58d691538543749d7ce0": {
+            "text": "Yeni Ekle"
+        },
+        "140092f149378fe66bcd1b7e472cde79": {
+            "text": "L\u00fctfen kullanmadan \u00f6nce, \u015fablon se\u00e7imi ile alan ayarlar\u0131n\u0131 yap\u0131n."
+        },
+        "541d5efe9732bde27704a4d578691629": {
+            "text": "L\u00fctfen kullanmadan \u00f6nce alan ayarlar\u0131na bir yada birden fazla s\u00fctun girin."
+        },
+        "6a73e132a6818bc067a0cdec443689a1": {
+            "text": "d-m-Y H:i"
+        },
+        "9ea0c76f6c8f1bc93ccb7f5825d8da15": {
+            "text": "Panelde g\u00f6r\u00fcnt\u00fclenecek"
+        },
+        "420fb882b998481add0d526522ffff81": {
+            "text": "Tablo s\u00fctununda g\u00f6r\u00fcnt\u00fclenmesini istedi\u011finiz alanlar\u0131n ad\u0131n\u0131 girin (her bir sat\u0131ra i\u00e7in 1 alan-ad\u0131). Alan i\u00e7in s\u00fctun geni\u015fli\u011fi tan\u0131mlamak i\u00e7in, \"alan_adi=30\"  \"30\" burada s\u00fctun geni\u015fli\u011fi (y\u00fczde oalrak) belirtirlir. Geni\u015flikleri belirtti\u011finizde, t\u00fcm s\u00fctunlar\u0131n toplam\u0131n\u0131n 100 oldu\u011funa emin olun."
+        },
+        "290cc1b749092b6f62035343a4e4f9eb": {
+            "text": "Herhangibir yerle\u015fik yada \u00f6zel alan tan\u0131mlayabilirsiniz. Ayn\u0131 zamanda \u00e7oklu alan \u00f6zelliklerinde,  alt alanlar (alan.alt-alan) kullanabilirsiniz, sayfa referanslar\u0131 gibi."
+        },
+        "8ea5a88f78fabcfdc906c9cb8ec013f2": {
+            "text": "Burada m\u00fcmk\u00fcn olarak \u00f6zel alanlar\u0131 g\u00f6rmek i\u00e7in, Detaylar tab\u0131ndan bir \u015fablon se\u00e7in, Kay\u0131t Edin, ve tekrar buraya gelin."
+        },
+        "34ff6bbc0c075f35e92dc68a218b7cc2": {
+            "text": "Otomatik Sayfa Ad\u0131 Format\u0131"
+        },
+        "9264201faa8a6ca75fc27583eafe1e88": {
+            "text": "\u0130\u015faretlendi\u011finde, Kullan\u0131c\u0131 \"Yeni Ekle\" tu\u015funa t\u0131klad\u0131\u011f\u0131nda sayfalar olu\u015fturulurken bu ad format\u0131n\u0131 kullanacak. E\u011fer bo\u015f b\u0131rak\u0131rsan\u0131z, Kullan\u0131c\u0131dan sayfa olu\u015fturulmadan \u00f6nce ad girilmesi istenecek."
+        },
+        "e4f63a8ac32b32675310ab45dd15e6cb": {
+            "text": "E\u011fer ad format\u0131 alfan\u00fcmerik olmayan karakterler i\u00e7eriyorsa, [PHP tarih](http:\/\/www.php.net\/manual\/en\/function.date.php) format\u0131nda kabul edilecek. E\u011fer sadece alfan\u00fcmerik karakterler i\u00e7eriyorsa direk olarak kullan\u0131lacak, teklik sa\u011flamak i\u00e7in sonuna bir say\u0131 (gerekli oldu\u011funda) eklenecek."
+        },
+        "c775db1b4b86e060f703a4e7cedc292f": {
+            "text": "Se\u00e7ti\u011finiz \u015fablona atanan \u00f6zel alanlar \u015funlard\u0131r:"
+        },
+        "30069b6e08c01b280dea5aec4bf871e0": {
+            "text": "[bo\u015f]"
+        },
+        "ff63ad7fe05686c64e062c5c034ad04f": {
+            "text": "Bu tabloya eklenebilecek alt sayfa bulundu. Eklemek istedi\u011finiz sayfay\u0131 i\u015faretleyin."
+        },
+        "4c41e0bd957698b58100a5c687d757d9": {
+            "text": "Hepsini Se\u00e7"
+        },
+        "3c59f93c033e789777be18c1ad66b13b": {
+            "text": "Tabloya eklenen varolan sayfa %d"
+        }
+    }
+}

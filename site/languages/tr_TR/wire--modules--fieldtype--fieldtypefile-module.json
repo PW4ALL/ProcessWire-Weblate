@@ -1,0 +1,90 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeFile.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypefile-module",
+    "translations": {
+        "435ed7e9f07f740abf511a62c00eef6e": {
+            "text": "dosya-ad\u0131"
+        },
+        "abc5c518b64936be795f070ed2adf84f": {
+            "text": "Ge\u00e7erli Dosya Uzant\u0131lar\u0131"
+        },
+        "b3f2fb9ff683cc6bb4e353a8c443260c": {
+            "text": "Bu y\u00fckleme alan\u0131nda izin verilecek olan t\u00fcm dosya uzant\u0131lar\u0131n\u0131 girin. Herbir uzant\u0131y\u0131 bo\u015fluk ile ay\u0131r\u0131n. Hi\u00e7bir noktalama veya virg\u00fcl kullanmay\u0131n. Bu alan k\u00fc\u00e7\u00fck harfe duyarl\u0131 de\u011fildir."
+        },
+        "6231c154d164f467041abbb0151816dc": {
+            "text": "Maksimum \u0130zin Verilen Dosya"
+        },
+        "3fc82a72e38b059cea88dcfbdaeafff8": {
+            "text": "Etiketleri Kullan?"
+        },
+        "3a37a820d95c0f598d6ea38f34716c31": {
+            "text": "\u0130\u015faretli ise, bu alan ayn\u0131 zamanda a\u00e7\u0131klamaya ek olarak bir etiket i\u00e7erecek."
+        },
+        "00f6c76a7a83b1d7aab61a93e513e9d5": {
+            "text": "Girdi-Alan\u0131 Tipi (Inputfield Type)"
+        },
+        "23f8d89e38fb131310ab885bad04b966": {
+            "text": "Girdi toplamak i\u00e7in kullan\u0131lacak alan tipi."
+        },
+        "91f3a2c0e4424c87689525da44c4db11": {
+            "text": "Dosyalar"
+        },
+        "2cb39a29b55cb3b4480c782dbe367518": {
+            "text": "Bu alan bir yada daha fazla dosya bar\u0131nd\u0131rabilir"
+        },
+        "3e560c05ba6d07bcd41ac1053b5b9437": {
+            "text": "Alan \"%s\" hen\u00fcz kullan\u0131ma haz\u0131r de\u011fil ve ayarlanmas\u0131 gerekiyor."
+        },
+        "a8d5114d10f7846bf0263c4e4207137e": {
+            "text": "Ayarlar hen\u00fcz taahh\u00fct edilmemi\u015ftir."
+        },
+        "d950e30995efd1abcc2dc812404f03c5": {
+            "text": "Bu sayfay\u0131 kaydetmeden \u00f6nce sayfada bulunan ayarlara l\u00fctfen g\u00f6z at\u0131n (her hangibir de\u011fi\u015fiklik yapmazsan\u0131z varsay\u0131lan ayarlar\u0131 kabul etmi\u015f olacaks\u0131n\u0131z)."
+        },
+        "2383ea51d67a0b84eda10737be272a9e": {
+            "text": "0=Limit Yok"
+        },
+        "f217d0fdc1aad53234d09e7107b25316": {
+            "text": "Bi\u00e7imlendirilmi\u015f de\u011fer"
+        },
+        "f09906b55a7a66786de08cb25550a2c8": {
+            "text": "\u0130nternet sitenizin \u00f6n sayfas\u0131ndan API \u00fczerinden sayfaya eri\u015filmek istendi\u011finde g\u00f6sterilecek de\u011fer tipini se\u00e7in."
+        },
+        "ffb520d31a51841782cf1cba617fc875": {
+            "text": "\u00c7\u0131kt\u0131 bi\u00e7imi kapal\u0131 (output formating) ise, alan de\u011fer her zaman array olacak (WireArray)"
+        },
+        "6e7e8b4097cb9c2651e291b007b8efad": {
+            "text": "Otomatik (tek \u00f6\u011fe yada null maksimun dosya 1 olarak ayarland\u0131\u011f\u0131nda, \u00f6\u011feler dizi (array) olacak)"
+        },
+        "b93d9ddf4fe98458456fa4a117acf665": {
+            "text": "\u00d6\u011feler Dizisi (Array)"
+        },
+        "fd392fe52f347bbf7391f791b963416d": {
+            "text": "Tek \u00f6\u011fe (e\u011fer bo\u015f ise null)"
+        },
+        "6f836d738a527f80156286edc9d1f829": {
+            "text": "Metin dizesine \u00e7evrilmi\u015f (talep etti\u011finiz)"
+        },
+        "ad3f5d66e216a4f1b65654b8b70d592f": {
+            "text": "Metin dizesine \u00e7evrilmi\u015f"
+        },
+        "fefb41e13016890d511b8d55d8057c37": {
+            "text": "Bu alan i\u00e7in uygulanacak metin i\u00e7in i\u015flenecek \u00e7\u0131kt\u0131 bi\u00e7imini belirtin. E\u011fer alan birden fazla \u00f6\u011fe i\u00e7eriyorsa, metin birden fazla kez i\u015flenecek. E\u011fer alan \u00f6\u011fe i\u00e7ermiyorsa, bo\u015f metin kullan\u0131lacak."
+        },
+        "839047fe3f6109257399fe301ddb7912": {
+            "text": "Takip eden etiketleri kullanabilirsiniz:"
+        },
+        "a1ede0a9a3c447cb83c7b6598dc556ff": {
+            "text": "Varsay\u0131lan de\u011fer (bo\u015f oldu\u011funda)"
+        },
+        "05ac72cc4df427baf9db44228a577ed7": {
+            "text": "\u0130ste\u011fe ba\u011fl\u0131 bir sayfa se\u00e7in, bu sayfa varsay\u0131lan de\u011ferleri i\u00e7erecek (ayn\u0131 alanda). Bunun i\u00e7in \u00f6zel bir sayfa olu\u015fturmak isteyebilirsiniz."
+        },
+        "b17288f2ed130badc7ac8919f95fd5f1": {
+            "text": "Yaz\u0131 bi\u00e7imlendirici (dosya a\u00e7\u0131klamalar\u0131 i\u00e7in)"
+        },
+        "8d664d296530bbabc76043e4e499b272": {
+            "text": "Bir yada birden fazla yaz\u0131 bi\u00e7imlendirici se\u00e7ebilirsiniz (ve s\u0131ralamas\u0131n\u0131) \u00e7\u0131kt\u0131 format\u0131 a\u00e7\u0131k oldu\u011funda bu dosya a\u00e7\u0131klamas\u0131 i\u00e7in uygulanacak. HTML Entity Encode minimun olarak tavsiye edilmektedir."
+        }
+    }
+}

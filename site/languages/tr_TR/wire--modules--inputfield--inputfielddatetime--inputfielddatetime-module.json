@@ -1,0 +1,93 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldDatetime\/InputfieldDatetime.module",
+    "textdomain": "wire--modules--inputfield--inputfielddatetime--inputfielddatetime-module",
+    "translations": {
+        "b69f42ea4444ae5aa888b53cf6045710": {
+            "text": "\/wire\/modules\/Jquery\/JqueryUI\/i18n\/jquery.ui.datepicker-xx.js \u00c7eviri dosyas\u0131"
+        },
+        "6f6cb72d544962fa333e2e34ce64f719": {
+            "text": "Boyut"
+        },
+        "49e0e66405106d4f9cf741207255476f": {
+            "text": "Bu alan i\u00e7in g\u00f6r\u00fcnt\u00fclenebilir geni\u015flik (karakterler i\u00e7inde)."
+        },
+        "566235c7913fdded5a84d4578758515f": {
+            "text": "Tarih Se\u00e7ici"
+        },
+        "7962180f3333f0ccaa9e208cccaac049": {
+            "text": "Tarih\/zaman Se\u00e7ici Yok"
+        },
+        "edcc19a354ad1b61e258b993a1ff09c4": {
+            "text": "Tarih\/zaman se\u00e7ici tu\u015f t\u0131klamas\u0131nda"
+        },
+        "aa547f01eea89a5b845b6db3870ba757": {
+            "text": "Tarih\/zaman se\u00e7ici alan t\u0131klamas\u0131nda"
+        },
+        "c3119c40400e0c55178bba8a9b8e36d8": {
+            "text": "Herzaman g\u00f6r\u00fcnen tarih se\u00e7ici (zaman se\u00e7ici yok)"
+        },
+        "c1a4d7df2061b105045dc92d2dff78f2": {
+            "text": "Tarih Se\u00e7ici (Y\u0131l Aral\u0131\u011f\u0131)"
+        },
+        "a1af5f0718bfae275ce162362d0e43c5": {
+            "text": "Tarihzaman"
+        },
+        "d27357121209bd712604d8af46cd2460": {
+            "text": "Girdi-Alan\u0131 (Inputfiled) tarih ve opsiyonel olarak zaman girdilerine izin verir"
+        },
+        "062e5153dad257d2a6a1560033719e9b": {
+            "text": "Tarih se\u00e7ici kullan\u0131ld\u0131\u011f\u0131nda, size \u015fuanki y\u0131ldan itibaren eksi (-10 y\u0131l) ve art\u0131 (+10 y\u0131l) aral\u0131\u011f\u0131n\u0131 se\u00e7ilebilir k\u0131lacak. Y\u0131l aral\u0131\u011f\u0131n\u0131 geni\u015fletmek yada daraltmak i\u00e7in, y\u0131llar\u0131 \u00f6ncesi ve sonras\u0131 olarak belirtin, [current_year] \u015fu formatta olmal\u0131d\u0131r: \"-30:+20\", burada 30 y\u0131l \u00f6ncesine, \u015fimdi, 20 y\u0131l sonras\u0131na kadar se\u00e7im inkan\u0131 verirsiniz."
+        },
+        "26fe23eafa82406bc0d0cd216a734d73": {
+            "text": "Y\u0131l aral\u0131\u011f\u0131 g\u00f6sterildi\u011finde, de\u011fer olmad\u0131\u011f\u0131 zaman varsay\u0131lan \"-10:+10\" dur. 10 y\u0131l \u00f6ncesi ve 10 y\u0131l sonras\u0131 olmak \u00fczeri."
+        },
+        "53e628836cd60f6dbb5fe56320f776ef": {
+            "text": "Tarih\/Zaman Girdi Formatlar\u0131"
+        },
+        "38322714c2bfe9eba81ea980714fd0a6": {
+            "text": "Tarih Girdi Format\u0131"
+        },
+        "7656e28d6e435ffecc453794149e6a0d": {
+            "text": "Kullan\u0131c\u0131n\u0131n bu alan i\u00e7in kullan\u0131lanaca\u011f\u0131 tarih format\u0131 se\u00e7in. Se\u00e7imiz bu alana doldurulacakt\u0131r, e\u011fer ihtiya\u00e7 duyarsan\u0131z \u00f6zelle\u015ftirebilirsiniz."
+        },
+        "6adf97f83acf6453d4a6a4b1070f3754": {
+            "text": "Hi\u00e7biri"
+        },
+        "91c0a51785efc109b0fdb5d710a2656e": {
+            "text": "Zaman Girdi Format\u0131"
+        },
+        "44d9d932f51a771c8c76c2dc6ff57e1f": {
+            "text": "Kullan\u0131c\u0131n\u0131n bu alan i\u00e7in kullan\u0131lanaca\u011f\u0131 zaman format\u0131 se\u00e7in. E\u011fer kullan\u0131l\u0131rsa, takvim se\u00e7ene\u011finde zaman se\u00e7icide yer alacak."
+        },
+        "4dc865ad9218b271e212f2656a4415e4": {
+            "text": "Tarih Girdi Format Kodu"
+        },
+        "20f706119fa58d0787ea397d413bf1e0": {
+            "text": "D\u00fczenleyene kadar, bu tarih se\u00e7iminde otomatik olarak olu\u015fturulacak."
+        },
+        "e87ce06927649f8cdfff9e27c4ac8e3d": {
+            "text": "Tarih formatlar\u0131n\u0131 nas\u0131l \u00f6zelle\u015ftirebilece\u011finiz hakk\u0131nda daha fazla bilgi i\u00e7in [PHP tarih](http:\/\/www.php.net\/manual\/en\/function.date.php) fonsiyonuna bak\u0131n\u0131z."
+        },
+        "3668c3ec43f4b401c6de009e3abb73f9": {
+            "text": "Di\u011fer diller i\u00e7in burada iste\u011fe ba\u011fl\u0131 olarak tarih formatlar\u0131 belirleyebilirsiniz. Bo\u015f b\u0131rakt\u0131\u011f\u0131n\u0131z her dil i\u00e7in varsay\u0131lan ayar kullan\u0131lacak."
+        },
+        "b3641a0b694cd7a82856611ce58d4979": {
+            "text": "Zaman Girdi Format Kodu"
+        },
+        "3dd984b18a5880f9279e17ff2e53a5de": {
+            "text": "D\u00fczenleyene kadar, bu zaman se\u00e7iminde otomatik olarak olu\u015fturulacak."
+        },
+        "be7e95b42b8aff2713adf794a2eb666b": {
+            "text": "Varsay\u0131lan bug\u00fcn\u00fcn tarihi?"
+        },
+        "1feebee2f4ca4af215e8b47f37695f99": {
+            "text": "E\u011fer i\u015faretliyse,"
+        },
+        "6485c7641245873388f0170f472183c6": {
+            "text": "Yer Tutucu (Placeholder) Metni"
+        },
+        "70bf9b371944c2d5b1adf809a356f607": {
+            "text": "Alan bo\u015f oldu\u011funda g\u00f6sterilecek iste\u011fe ba\u011fl\u0131 yer tutucu (placeholder) metni."
+        }
+    }
+}

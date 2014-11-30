@@ -1,0 +1,30 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldEmail.module",
+    "textdomain": "wire--modules--inputfield--inputfieldemail-module",
+    "translations": {
+        "70d9be9b139893aa6c69b5e77e614311": {
+            "text": "Onay"
+        },
+        "082e55a73f10496681c84231dc1c88f7": {
+            "text": "E-Posta"
+        },
+        "16f09bacbf690906417db0a60cda359c": {
+            "text": "L\u00fctfen do\u011fru bir e-posta adresi girin"
+        },
+        "729be41e3a896b691a703fda562f4c98": {
+            "text": "Bu girdi\u011finiz e-posta adresi e\u015fle\u015fmiyor, l\u00fctfen tekrar girin"
+        },
+        "afce6fcb2d736e43b0bf509e385d477a": {
+            "text": "E-posta adresini onayla?"
+        },
+        "f98e5e5fd93bc01f60e2a0a30c90618a": {
+            "text": "\u0130\u015faretlendi\u011finde, iki e-posta alan\u0131 g\u00f6r\u00fcnt\u00fclenecek ve kullan\u0131c\u0131 e-posta adresini onaylamak i\u00e7in e-posta adresini iki kere girecek. Yaz\u0131m hatalas\u0131 olas\u0131l\u0131\u011f\u0131n\u0131 azaltmaya yard\u0131mc\u0131 olur."
+        },
+        "ce8ae9da5b7cd6c3df2929543a9af92d": {
+            "text": "E-Posta"
+        },
+        "3918809b01dd88b1c1c892aec102512b": {
+            "text": "Do\u011fru bir formatta E-Posta Adresi"
+        }
+    }
+}

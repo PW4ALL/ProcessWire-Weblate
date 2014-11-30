@@ -1,0 +1,15 @@
+{
+    "file": "wire\/core\/Fieldgroups.php",
+    "textdomain": "wire--core--fieldgroups-php",
+    "translations": {
+        "abce719a5ff28157e0e92337d8dcf8bd": {
+            "text": "Alan Bulunam\u0131yor: %s"
+        },
+        "f1d3c736f589a82f1519c711fd4123c0": {
+            "text": "Alan ba\u011flam\u0131 belirlemek i\u00e7in alan bulunam\u0131yor: %s"
+        },
+        "fdd1e49a5de74a22586acf7420fcbd8d": {
+            "text": "Uyar\u0131, t\u00fcm alanlar\u0131n verileri tamamen silinecek (l\u00fctfen onaylay\u0131n): %s"
+        }
+    }
+}

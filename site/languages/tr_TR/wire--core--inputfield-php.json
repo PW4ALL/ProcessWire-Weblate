@@ -1,0 +1,72 @@
+{
+    "file": "wire\/core\/Inputfield.php",
+    "textdomain": "wire--core--inputfield-php",
+    "translations": {
+        "efdf8051d64766330e13627274b01787": {
+            "text": "Ko\u015fullar \"alan=de\u011fer\" olarak belirtilmelidir. Se\u00e7ici e\u015fle\u015fme i\u00e7in alanlar ve de\u011ferleri kullan\u0131r. \u00c7oklu ko\u015fullar virg\u00fcl ile ayr\u0131lmal\u0131d\u0131r."
+        },
+        "2d7ff3fa8a1a844b270d96878d358762": {
+            "text": "Daha fazla bilgi i\u00e7in : [Bunu nas\u0131l kullanabilirime](http:\/\/processwire.com\/api\/selectors\/inputfield-dependencies\/) g\u00f6zat\u0131n."
+        },
+        "1729a56cfc89021478498fe0c89a843a": {
+            "text": "G\u00f6r\u00fcn\u00fcrl\u00fck"
+        },
+        "c7bc3fddddb62d5b656adc30cea77a55": {
+            "text": "Tan\u0131t\u0131m"
+        },
+        "49632d1c8309d42371ab31fe84d56c91": {
+            "text": "Bu alan edit\u00f6rde nas\u0131l g\u00f6sterilmeli?"
+        },
+        "604b97c67341baddd9547c714add721c": {
+            "text": "Herzaman a\u00e7\u0131k (varsay\u0131lan)"
+        },
+        "d7a1a486818eebace651ff191e42984f": {
+            "text": "Sadece bo\u015f oldu\u011funda kapal\u0131"
+        },
+        "996d9abb10eeff734a994fcd5b449db6": {
+            "text": "Dolu oldu\u011funda kapal\u0131"
+        },
+        "c0b4e286b96d6d694cb7ecb152fe3e9d": {
+            "text": "Herzaman kapal\u0131, a\u00e7\u0131lmas\u0131 i\u00e7in t\u0131klanmas\u0131 gerekiyor."
+        },
+        "8263d549648f539508587a67f38d008b": {
+            "text": "Gizli, edit\u00f6rde g\u00f6sterme"
+        },
+        "3c5df14c7c43b1d43c41b15476154474": {
+            "text": "Herzaman kapal\u0131 ve d\u00fczenlenemez (kilitli)"
+        },
+        "5b6a6f08f86510a9580df3bb8b31bb2a": {
+            "text": "Dolu oldu\u011funda a\u00e7\u0131k ve d\u00fczenlenemez (kilitli)"
+        },
+        "3cfa4a6238e2b559d3f52474e7545485": {
+            "text": "Bu alan\u0131 sadece .... ise g\u00f6ster"
+        },
+        "3b57940d51a0ed7f2d5c49363114bd0e": {
+            "text": "Alan\u0131n hangi ko\u015fullar alt\u0131nda g\u00f6sterilece\u011fini girin."
+        },
+        "a785c32894aad6d7c1dc826a4bc0a4a3": {
+            "text": "S\u00fctun Geni\u015fli\u011fi (%d%%)"
+        },
+        "0eb0b305235144ffe99e247b24200b09": {
+            "text": "Bu alan\u0131n gen\u015fli\u011fi (10% - 100%) aras\u0131ndad\u0131r. E\u011fer daralt\u0131l\u0131rsa di\u011fer alanlar bu alan\u0131n yan\u0131na gelecektir."
+        },
+        "8387772e28e9c2b81fa8cb674e569663": {
+            "text": "Not t\u00fcm alanlar daralt\u0131lm\u0131\u015f geni\u015flikte \u00e7al\u0131\u015fmayabilir, de\u011fi\u015fiklikleri yapt\u0131ktan sonra test edebilirsiniz."
+        },
+        "6e18e908568ef24580d93bfd3e0f40d7": {
+            "text": "Zorunlumu?"
+        },
+        "c48c7243fc307fd425df738c9f0f4324": {
+            "text": "E\u011fer i\u015faretli ise, bu alan i\u00e7in bir de\u011fer girilmesi zorunlu olacak."
+        },
+        "8183d67b5c53c5fb254741c64ae6f98d": {
+            "text": "Zorunlu e\u011fer..."
+        },
+        "bb0df4a2d5e0d99eaba53f152ff7f0f7": {
+            "text": "Bu alan i\u00e7in hangi de\u011ferin girilmesinin zorunlu oldu\u011funa dair ko\u015ful girin."
+        },
+        "c412235f3700a685388546e557292a7e": {
+            "text": "Her zaman a\u00e7\u0131k ve kapat\u0131lamaz"
+        }
+    }
+}

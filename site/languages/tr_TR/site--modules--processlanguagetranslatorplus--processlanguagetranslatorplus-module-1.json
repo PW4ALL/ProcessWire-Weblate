@@ -1,0 +1,24 @@
+{
+    "file": "site\/modules\/ProcessLanguageTranslatorPlus\/ProcessLanguageTranslatorPlus.module",
+    "textdomain": "site--modules--processlanguagetranslatorplus--processlanguagetranslatorplus-module",
+    "translations": {
+        "d76d3048463e83883159be944da2aee8": {
+            "text": "ProcessWire i\u00e7in \u00e7ekirder ve mod\u00fcller i\u00e7in dil \u00e7evirisi sa\u011flar. Orjinal Dil \u00c7evirisi ile a\u015fa\u011f\u0131 yukar\u0131 ayn\u0131 \u00f6zellikleri bar\u0131nd\u0131r\u0131r. \u00c7evirisi olmayan diller i\u00e7in a\u015fa\u011f\u0131 a\u00e7\u0131lan men\u00fc se\u00e7ene\u011fi sunar ve \u00e7evirisi yap\u0131lmam\u0131\u015f dil dosyalar\u0131n\u0131 bu men\u00fcden se\u00e7menize olanak sa\u011flar."
+        },
+        "136ee5ad08312ae69139526aafd91cfd": {
+            "text": "A\u015fa\u011f\u0131dan \u00e7evirmek istedi\u011finiz ba\u015fka bir dil se\u00e7in"
+        },
+        "2cf6e71bd5609d437467dd85fdf3e78a": {
+            "text": "A\u015fa\u011f\u0131daki listeden \u00e7evirisi bulunmayan Dosyalar\u0131 se\u00e7in."
+        },
+        "04dd7adce1255ce19feb354ee3226296": {
+            "text": "\u00c7eviri Dosyas\u0131 Olu\u015ftur ve Edit\u00f6rde a\u00e7"
+        },
+        "c9da2d30fdf7b4a62ef738ff1130772e": {
+            "text": "%d dosya hen\u00fcz \u00e7evirisi yap\u0131lmam\u0131\u015f %s"
+        },
+        "053f1583913d818386ee1ce39d717ff1": {
+            "text": "%d dosya hen\u00fcz \u00e7evirisi yap\u0131lmam\u0131\u015f %s"
+        }
+    }
+}

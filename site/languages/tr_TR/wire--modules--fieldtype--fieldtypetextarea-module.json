@@ -1,0 +1,24 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeTextarea.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypetextarea-module",
+    "translations": {
+        "00f6c76a7a83b1d7aab61a93e513e9d5": {
+            "text": "Girdi-Alan\u0131 Tipi (Inputfield Type)"
+        },
+        "127852afa67b41673ab8ea17b383847c": {
+            "text": "Girdi toplamak i\u00e7in kullan\u0131lacak alan tipi (Yaz\u0131-Alan\u0131 (Textarea) varsay\u0131land\u0131r). Not: Bunu de\u011fi\u015ftirip g\u00f6nderdi\u011finizde, kullan\u0131labilir yap\u0131land\u0131rma se\u00e7enekleri \"girdi (input)\" tab\u0131nda de\u011fi\u015ftirilebilir olacak."
+        },
+        "2effa58f13159d138a634233e246713d": {
+            "text": "\u0130\u00e7erik Tipi (Content Type)"
+        },
+        "88183b946cc5f0e8c96b2e66e1c74a7e": {
+            "text": "Bilinmeyen"
+        },
+        "5d85f44b69f9d7e86c7f3f473f97f771": {
+            "text": "Bi\u00e7imlendirme(Markup)\/HTML"
+        },
+        "1991cfd60d0287cfb130420da34fcbef": {
+            "text": "Bi\u00e7imlendirme(Markup)\/HTML se\u00e7ene\u011fi zengin metin edit\u00f6rleri (TinyMCE, CKEditor, etc.)  i\u00e7in tavsiye edilen se\u00e7enektir ve bunlar HTML i\u00e7ermektedir. Bu kalite g\u00fcncesi i\u00e7in ek filtreleme se\u00e7ene\u011fi sa\u011flar."
+        }
+    }
+}

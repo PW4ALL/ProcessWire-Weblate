@@ -1,0 +1,30 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeDatetime.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypedatetime-module",
+    "translations": {
+        "eb44c7b0eebc98a8441abb862a254b3d": {
+            "text": "Tarih \u00c7\u0131kt\u0131 Format\u0131"
+        },
+        "e7033eefffec056f8898dab5295ef2f6": {
+            "text": "Bu alan i\u00e7in tarih \u00e7\u0131kt\u0131s\u0131 yap\u0131lacak format\u0131 se\u00e7in"
+        },
+        "6adf97f83acf6453d4a6a4b1070f3754": {
+            "text": "Hi\u00e7biri"
+        },
+        "8a4b7daad69389d978a2ea6bab5b07f8": {
+            "text": "Zaman \u00c7\u0131kt\u0131 Format\u0131"
+        },
+        "cce774e589c4c23ce9c8cc7cb958861a": {
+            "text": "E\u011fer tarihe ek alarak zaman \u00e7\u0131kt\u0131s\u0131n\u0131da istiyorsan\u0131z, bu alan i\u00e7in zaman \u00e7\u0131kt\u0131s\u0131 yap\u0131lacak format\u0131 se\u00e7in. Tarih format\u0131 ile birle\u015ftirilecek."
+        },
+        "c1a326c2753f410fad585781390da97f": {
+            "text": "Tarih\/Zaman \u00c7\u0131kt\u0131 Format Kodu"
+        },
+        "7b9ea642d1b10d7efc18d2c64a8940f8": {
+            "text": "Tarih\/Zaman \u00e7\u0131kt\u0131s\u0131 a\u015fa\u011f\u0131daki bi\u00e7imde olacakt\u0131r. Bu otomatik olarak tarih\/zaman se\u00e7iminden olu\u015fturulmaktad\u0131r, fakat bunu ihtiyac\u0131n\u0131za g\u00f6rede \u00f6zelle\u015ftirebilirsiniz."
+        },
+        "e606a86ec2852d83f2ea4622de245889": {
+            "text": "Nas\u0131l \u00f6zelle\u015ftirebilece\u011finiz hakk\u0131nda [PHP tarih](http:\/\/www.php.net\/manual\/en\/function.date.php) se\u00e7eneklerine g\u00f6zat\u0131n, e\u011fer lokalizasyon i\u00e7in ise [PHP strftime](http:\/\/www.php.net\/manual\/en\/function.strftime.php) format\u0131n\u0131 kullanabilirsiniz."
+        }
+    }
+}

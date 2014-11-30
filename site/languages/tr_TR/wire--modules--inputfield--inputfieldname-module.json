@@ -1,0 +1,15 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldName.module",
+    "textdomain": "wire--modules--inputfield--inputfieldname-module",
+    "translations": {
+        "49ee3087348e8d44e1feda1917443987": {
+            "text": "Ad"
+        },
+        "05241f55e363027bb20f4669d784c28e": {
+            "text": "Herhangibir karakter (a-z), numara (0-9) ve alt-tire (bo\u015fluksuz)"
+        },
+        "e5e43bcb90e7ae502c28ecb1089b3aa7": {
+            "text": "Metin Girdisi ProcessWire ad alan\u0131 olarak onaylanm\u0131\u015ft\u0131r"
+        }
+    }
+}

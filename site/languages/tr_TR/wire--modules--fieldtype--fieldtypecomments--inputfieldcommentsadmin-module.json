@@ -1,0 +1,51 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeComments\/InputfieldCommentsAdmin.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypecomments--inputfieldcommentsadmin-module",
+    "translations": {
+        "f2a6c498fb90ee345d997f888fce3b18": {
+            "text": "Sil"
+        },
+        "5150f466372999feb1c31b868e087dfc": {
+            "text": "Alan ayarlar\u0131nda belirtilen s\u00fcre i\u00e7erisinde spam otomatik olarak silinecek."
+        },
+        "193a4762fa2301d6e5d9fac2730dbe71": {
+            "text": "Bu \u00f6\u011fe onay yada silinmek i\u00e7in bekliyor."
+        },
+        "95742f3daaebcf075ad53961b11fc0dd": {
+            "text": "Yorum #%1$d, G\u00f6nderilme %2$s, Yazar %3$s"
+        },
+        "6f9e04c43332fd4945f2c933c8eea611": {
+            "text": "Al\u0131nt\u0131"
+        },
+        "082e55a73f10496681c84231dc1c88f7": {
+            "text": "E-Posta"
+        },
+        "15bbb9d0bbf25e8d2978de1168c749dc": {
+            "text": "\u0130nternet Sitesi"
+        },
+        "9dffbf69ffba8bc38bc4e01abf4b1675": {
+            "text": "Metin"
+        },
+        "ece9015e4facb7c419ce80abecfd6852": {
+            "text": "G\u00f6r\u00fcnt\u00fclenecek \u00f6\u011fe bulunamad\u0131."
+        },
+        "dea78eecface40ce1489d1acdc31eae4": {
+            "text": "Silinen yorum #%d"
+        },
+        "58b6f822b062991647cf2e70b0140352": {
+            "text": "#%d yorumu, %s g\u00fcncellendi"
+        },
+        "4da50726e74180c03ab1cfe637bb590b": {
+            "text": "Yorum Y\u00f6netimi"
+        },
+        "9e1775dd11710f1858dc1f9c21174ec8": {
+            "text": "Yorumlarla \u00e7al\u0131\u015f\u0131rken y\u00f6netim aray\u00fcz\u00fc sa\u011flar"
+        },
+        "a12b241da69948907eecb3786cedc5a3": {
+            "text": "Onayland\u0131"
+        },
+        "af4a8ef24b938b7857109b49e38c8969": {
+            "text": "Beklemede"
+        }
+    }
+}

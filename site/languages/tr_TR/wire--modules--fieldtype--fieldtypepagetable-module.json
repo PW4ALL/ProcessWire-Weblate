@@ -1,0 +1,81 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypePageTable.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypepagetable-module",
+    "translations": {
+        "cc338cc1f9035c657183288e8a8679c4": {
+            "text": "L\u00fctfen, \u015fablon se\u00e7tikten sonra kaydet tu\u015funa bas\u0131n ve Girdi (Input) tab\u0131 se\u00e7eneklerinde daha fazla se\u00e7enek g\u00f6receksiniz."
+        },
+        "280bdbf9e514764e2b558c5a45b03ba3": {
+            "text": "\u00d6\u011ferleri \u00e7in ebeveyn se\u00e7in"
+        },
+        "0aa782b2995bb478abdc16ebbb4a3e12": {
+            "text": "T\u00fcm \u00f6\u011feler olu\u015fturuldu ve"
+        },
+        "fcb2facea33821286bfd4cad3f7ac76d": {
+            "text": "Sayfa silindi\u011finde \u00f6\u011feleri \u00e7\u00f6pe at?"
+        },
+        "08f53f44f5a22058682ec7c305c2f37b": {
+            "text": "\u0130\u015faretlendi\u011finde, sayfa silindi\u011finde olu\u015fturulan\/y\u00f6netilen \u00f6\u011feler otomatik olarak \u00e7\u00f6pe g\u00f6nderilecek. E\u011fer i\u015faretlenmezse, \u00f6\u011feler se\u00e7ilen ebeveyn alt\u0131nda yer alacak."
+        },
+        "276fe80c8306b8f1211c933c5b0789dd": {
+            "text": "Bu se\u00e7enek sadece bir ebeveyn se\u00e7iliyse ge\u00e7erli olacak."
+        },
+        "56d29e2358c489ca2ba085412d22b543": {
+            "text": "Bir yada daha fazla \u015fablon \u00f6\u011fesi se\u00e7in"
+        },
+        "23eb7651d596fbeec11e64a6c67925d9": {
+            "text": "Bu \u015fablonlar alan taraf\u0131ndan y\u00f6netilen \u015fablonlarda kullan\u0131lacak. Bu alan\u0131n ihtiya\u00e7lar\u0131 i\u00e7in yeni bir \u015fablon olu\u015fturabilirsiniz."
+        },
+        "5243227b5f4a58e7cc1be6b30f4bbce8": {
+            "text": "E\u011fer ebeveyn se\u00e7ilmemi\u015f ise, \u00f6\u011feler d\u00fczenlenen sayfa i\u00e7in alt \u00f6\u011fe olarak yerle\u015ftirilecek."
+        },
+        "f80a4ad87fee7c9fdc19b7769495fdb5": {
+            "text": "Hi\u00e7biri"
+        },
+        "4cfd1fcdeecdd1e6acb46393d787316c": {
+            "text": "\u00c7\u00f6pe g\u00f6nder"
+        },
+        "6ac9a034dc3a8b4cf5a3902d2b7755d4": {
+            "text": "Sil"
+        },
+        "eb2f5e1930872f2aed78a2ffca4af260": {
+            "text": "Yay\u0131ndan kald\u0131r"
+        },
+        "8840e48a3c2b71738f5a52d5ae1e084f": {
+            "text": "Gizle"
+        },
+        "f2a6c498fb90ee345d997f888fce3b18": {
+            "text": "Sil"
+        },
+        "88ab1471027561ff02fc8cfbd073ebc2": {
+            "text": "Bu \"%s\" \u00f6\u011feleri i\u00e7eren sayfa tamamen silindi\u011finde ne yap\u0131lmas\u0131n\u0131 istiyorsunuz?"
+        },
+        "a7e253cd8dd95da3e20daf45519a8dc2": {
+            "text": "\u00c7\u00f6p"
+        },
+        "bdea0eb389c61e57930d661c74b21423": {
+            "text": "Bu \"%s\"  \u00f6\u011feleri i\u00e7eren sayfa \u00e7\u00f6pe g\u00f6nderildi\u011finde ne yap\u0131lmas\u0131n\u0131 istiyorsunuz?"
+        },
+        "181e9a13059454fb2212f1bf10f394ac": {
+            "text": "Yay\u0131nlanmam\u0131\u015f"
+        },
+        "22b094a7d09fdb1839dbfe384a0f4fac": {
+            "text": "Bu \"%s\" \u00f6\u011feleri i\u00e7eren sayfa yay\u0131nlanmad\u0131\u011f\u0131nda ne yap\u0131lmas\u0131n\u0131 istiyorsunuz?"
+        },
+        "7a25f2fb1df8b415ae376a1bc744ddc1": {
+            "text": "Sayfa Davran\u0131\u015flar\u0131"
+        },
+        "113931420c7a2560f63fcd9af198df3f": {
+            "text": "Alanlar\u0131 s\u0131rala"
+        },
+        "b72b1e7470d1bbec8cb9ae2eb8843131": {
+            "text": "Tablonuzla s\u0131ralama yapmak i\u00e7in alan ad\u0131n\u0131 giriniz. Azalan s\u0131ralama i\u00e7in, alan ad\u0131n\u0131 tire ile yaz\u0131n, \u00f6rnek: \"tarih\" yerine \"-tarih\""
+        },
+        "bad3d943c1f7443d2205de6edd995d6e": {
+            "text": "Birden fazla alan s\u0131ralayabilirsiniz, herbir alan\u0131 virg\u00fcl ile ay\u0131rman\u0131z gerekiyor, \u00f6rnek: \"soyad, ad, -dogum_tarihi\"."
+        },
+        "8198f788c0d53d819605c0dcdfdfe413": {
+            "text": "Manuel olarak ta\u015f\u0131-ve-b\u0131rak y\u00f6ntemiyle s\u0131ralamak i\u00e7in bo\u015f b\u0131rak\u0131n (varsay\u0131lan)"
+        }
+    }
+}

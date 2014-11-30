@@ -1,0 +1,12 @@
+{
+    "file": "wire\/modules\/Textformatter\/TextformatterEntities.module",
+    "textdomain": "wire--modules--textformatter--textformatterentities-module",
+    "translations": {
+        "895d280780a54e8c5561dea1f6a4b34d": {
+            "text": "HTML Kay\u0131t \u015eifreleme (htmlspecialchars)"
+        },
+        "f34604edab8aa5bdc9e452d3e4693952": {
+            "text": "Girdi i\u015faretlerini kodla, t\u0131rnak i\u015faretleri (tek ve \u00e7ift) ve b\u00fcy\u00fckt\u00fcr\/k\u00fc\u00e7\u00fckt\u00fcr htmlspecialchars(str, ENT_QUOTES) kullan\u0131yor. i\u015faretleri Mardown ve zengin metin edit\u00f6r\u00fc kullanan metin\/metin-alanlar\u0131yla (text\/textarea) kullan\u0131lmas\u0131n\u0131 tavsiye ederiz."
+        }
+    }
+}

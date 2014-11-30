@@ -1,0 +1,207 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageEdit\/ProcessPageEdit.module",
+    "textdomain": "wire--modules--process--processpageedit--processpageedit-module",
+    "translations": {
+        "7ba9fe21b073af37b16f989e23112967": {
+            "text": "Bilinmeyen sayfa"
+        },
+        "b8e75fd085c6615286cee6fdc4e880ec": {
+            "text": "Bu sayfa d\u00fczenleme i\u00e7in kilitli"
+        },
+        "386397f000925f7d90c87a913a678eed": {
+            "text": "D\u00fczenleme i\u00e7in eri\u015fiminiz yok"
+        },
+        "7b9bb8a9e6b0d2b64837e652485e11c9": {
+            "text": "Sayfay\u0131 D\u00fczenle: %s"
+        },
+        "30b78fb546fe9686f84a740a5e5524a3": {
+            "text": "Sayfa URL ad\u0131n\u0131 \"%s\" de\u011fi\u015ftir, \u00e7\u00fcnk\u00fc istenilen sayfa zaten al\u0131nm\u0131\u015f."
+        },
+        "df74a326081d841aef061c999c7979f3": {
+            "text": "De\u011fi\u015ftir: %s"
+        },
+        "c0df350b3d4fe22546834d74cdc77023": {
+            "text": "Yay\u0131nlanan Sayfa: %s"
+        },
+        "9ce0bc0d85071636f750e39ea86f86c0": {
+            "text": "Kay\u0131t Edilen Sayfa: %s"
+        },
+        "421318b075c43ddcd5426197f778c43c": {
+            "text": "Hatalar d\u00fczeltilene kadar yay\u0131nlanamaz"
+        },
+        "f15c1cae7882448b3fb0404682e17e61": {
+            "text": "\u0130\u00e7erik"
+        },
+        "a1c508c8dcf832bde214942a479c63e5": {
+            "text": "Bu sayfa \u00c7\u00f6pte"
+        },
+        "2cb4bb1ee54691377c8778a8823eb4dd": {
+            "text": "Bu sayfa \u015fuanda yay\u0131nlanmam\u0131\u015f"
+        },
+        "404dd23de1c6c7edc7927e5262b93a1b": {
+            "text": "Yay\u0131nlanmam\u0131\u015f Kaydet + Koru"
+        },
+        "110a4b01beabd53b661a47d4b44bd7a8": {
+            "text": "Yay\u0131nla"
+        },
+        "c9cc8cce247e49bae79f15173ce97354": {
+            "text": "Kaydet"
+        },
+        "64e4aca4297806247f62a7b5f8cbd3df": {
+            "text": "Alt Sayfalar"
+        },
+        "9b30437c5e1e966fa90525c93356fd3f": {
+            "text": "\u00c7ocuk \/ Alt Sayfalar"
+        },
+        "b5c4bc5ddd4b490f3e2bf5abc0945f1d": {
+            "text": "Bu sayfaya ekli a\u015fa\u011f\u0131da \u015fuan hi\u00e7bir \u00e7ocuk\/alt-sayfa yok."
+        },
+        "fcdd8c7fe4647ee6186ea45dd69d425d": {
+            "text": "Alt sayfalar \u015fablon ayar\u0131nda \"%\" g\u00f6re s\u0131ralan\u0131yor."
+        },
+        "a13cc55582da47cab1f7cc7518700c6e": {
+            "text": "Buraya Yeni Sayfa Ekle"
+        },
+        "7e92f49c92e3f91ed88f03063fc34748": {
+            "text": "S\u0131ralama Ayarlar\u0131"
+        },
+        "f4f70727dc34561dfde1a3c529b6205c": {
+            "text": "Ayarlar"
+        },
+        "278c491bdd8a53618c149c4ac790da34": {
+            "text": "\u015eablon"
+        },
+        "30269022e9d8f51beaabb52e5d0de2b7": {
+            "text": "Ebeveyn"
+        },
+        "1ad359c38781f8fc924a380559d60c42": {
+            "text": "Kullan\u0131c\u0131 Taraf\u0131ndan Olu\u015fturuldu"
+        },
+        "567d412904b379e49382b6e3b90881ca": {
+            "text": "Olu\u015fturan %1$s, %2$s tarihinde"
+        },
+        "1dec6a532601f755520b9567091e1bf8": {
+            "text": "Son d\u00fczenleme %1$s, tarihinde %2$s"
+        },
+        "4059b0251f66a18cb56f544728796875": {
+            "text": "Bilgi"
+        },
+        "cacab211629daeffac10e13574e49d9e": {
+            "text": "Gizli: Listeleme ve arama kapsam\u0131nda"
+        },
+        "ab4b835121255016ef73bea7f4ea45a7": {
+            "text": "Kilitli: D\u00fczenlenemez"
+        },
+        "0fdd10ee950975e58b122abb2de3a49b": {
+            "text": "Yay\u0131nda De\u011fil: \u0130nternet sayfas\u0131nda g\u00f6r\u00fcnmez"
+        },
+        "ec53a8c4f07baed5d8825072c89799be": {
+            "text": "Durum"
+        },
+        "f2a6c498fb90ee345d997f888fce3b18": {
+            "text": "Sil"
+        },
+        "aa47bb0913144619a0a9abc59d59d6ed": {
+            "text": "Kal\u0131c\u0131 Olarak Sil"
+        },
+        "7a289ea949902e8fa53efb4b3b4ccea0": {
+            "text": "\u00c7\u00f6pe Ta\u015f\u0131"
+        },
+        "62a92c8e1a013dc0c9a67f2769642e9f": {
+            "text": "Bunu yapmak istedi\u011finize dair kutuyu i\u015faretleyin."
+        },
+        "70d9be9b139893aa6c69b5e77e614311": {
+            "text": "Onayla"
+        },
+        "6e2e3de95055596f315a073f771342e3": {
+            "text": "Bu sayfa \u015fuanda silinemiyor"
+        },
+        "4351cfebe4b61d8aa5efa1d020710005": {
+            "text": "G\u00f6r\u00fcnt\u00fcle"
+        },
+        "d2387a51d9f67d60dfc2cbb23bd04af2": {
+            "text": "Bu sayfaya kim eri\u015febilir?"
+        },
+        "bbbabdbe1b262f75d99d62880b953be1": {
+            "text": "Roller"
+        },
+        "36c2b914f293a142343cba0f3157d748": {
+            "text": "Ne yapabilirler"
+        },
+        "13944cf77acdf1b9e49f6383c101ae89": {
+            "text": "(herkes)"
+        },
+        "ea1a60a080fc428d2c18d9e6d33ded08": {
+            "text": "E\u011fer belirlenmi\u015f bir alan taraf\u0131ndan \u015fuanki ve gelecekteki alt sayfalar\u0131 s\u0131ralamak istiyorsan\u0131z, alan\u0131 se\u00e7in ve iste\u011fe ba\u011fl\u0131 olarak 'tersine' kutusunu i\u015faretleyerek s\u0131ralamay\u0131 azalt\u0131n. E\u011fer kendiniz ta\u015f\u0131-ve-b\u0131rak y\u00f6ntemiyle s\u0131ralamak istiyorsan\u0131z s\u0131ralama alan\u0131n\u0131 bo\u015f b\u0131rak\u0131n."
+        },
+        "eec429d33814974270e5ab8a04a3d23e": {
+            "text": "Bu sayfan\u0131n \u015fablonuna eri\u015fim engellendi: %s"
+        },
+        "17f8097b4af11ef352554fc7dd416c34": {
+            "text": "\u015eablona '%s' izin verilmiyor"
+        },
+        "c4101b17a6f3bb8ffbe40eb9edef2347": {
+            "text": "Bu sayfa silinemez"
+        },
+        "827884bd1b673b7e58def7d09bf59b8b": {
+            "text": "Silinen sayfa: %s"
+        },
+        "a419fb9d9fe259c36eb1e4a99462bd1f": {
+            "text": "\u00c7\u00f6pe ta\u015f\u0131nan sayfa: %s"
+        },
+        "6c86eb040dbb20b1c6e1e891774b27ac": {
+            "text": "\u00c7\u00f6pe ta\u015f\u0131nam\u0131yor"
+        },
+        "8f1db4fbdd736bfc472e99f61be9e56f": {
+            "text": "\u015eablonu de\u011fi\u015ftir (eski) \"%1$s\" den (yeni) \"%2$s\""
+        },
+        "11daf8e4f72e87c440ed3e0cac443157": {
+            "text": "\u015eablon de\u011fi\u015fikli\u011fini onayla"
+        },
+        "48af63aeec834982fcf91e325aaea998": {
+            "text": "Uyar\u0131, bu \u015fablonu silmeniz takip eden alanlar\u0131 silecek:"
+        },
+        "729a51874fe901b092899e9e8b31c97a": {
+            "text": "Emin misiniz?"
+        },
+        "e4c2fcbaac781d00fe1e192a4d94c0e9": {
+            "text": "L\u00fctfen anlad\u0131\u011f\u0131n\u0131z\u0131 onaylamak i\u00e7in a\u015fa\u011f\u0131daki kutuyu i\u015faretleyin."
+        },
+        "6b102e11bd33fb8f4be6a6cecf2c491b": {
+            "text": "Sayfadaki bu \u015fablonu de\u011fi\u015ftirme izniniz yok."
+        },
+        "854de5f33bda667c67117b0aaee5a9cf": {
+            "text": "Bu \u015fablona izin verilmiyor"
+        },
+        "d4ad7f8661990f191def1fb3a6accbd9": {
+            "text": "De\u011fi\u015ftirilen \u015fablon '%s'"
+        },
+        "7ddc881b8c4b63699dd8487273384a38": {
+            "text": "Alt sayfalar\u0131n s\u0131ralanmas\u0131"
+        },
+        "6adf97f83acf6453d4a6a4b1070f3754": {
+            "text": "Hi\u00e7biri"
+        },
+        "20a90cbb1d0984f5ecf4fe0cf01fe47e": {
+            "text": "Manuel ta\u015f\u0131-ve-b\u0131rak"
+        },
+        "591acadb8502cd6db313b718df45a6f4": {
+            "text": "Yerli Alanlar"
+        },
+        "833956a760d996ae61ea8b385e9fb6f0": {
+            "text": "\u00d6zel Alanlar"
+        },
+        "d49042595c2674084c92d561b714d522": {
+            "text": "S\u0131ralamay\u0131 terse \u00e7evir?"
+        },
+        "265dabf958cffe4bf96d445dcddf8678": {
+            "text": "%d de\u011fi\u015fti"
+        },
+        "4e5878c0e4b4e901ee96c19e7fd05914": {
+            "text": "%d de\u011fi\u015ftirildi"
+        },
+        "890e4f4dd63b6c580cbf534f25914565": {
+            "text": "Sayfaya \"%1$s\" \u015fablon taraf\u0131ndan atanan eri\u015fim : %2$s"
+        }
+    }
+}

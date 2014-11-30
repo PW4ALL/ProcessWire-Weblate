@@ -1,0 +1,126 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeComments\/FieldtypeComments.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypecomments--fieldtypecomments-module",
+    "translations": {
+        "017e8b29849843b6daa2501aad99f7c1": {
+            "text": "Onay Bekleyenler"
+        },
+        "6f8063417ab31f38d864c28302f3de2f": {
+            "text": "Onayland\u0131"
+        },
+        "19af9433f96a08338dbcf1ea82186f7c": {
+            "text": "SPAM- otomatik olarak %d g\u00fcn sonra silinecek"
+        },
+        "4a97712de239878854839560e1765f5a": {
+            "text": "Yorum Yap\u0131ld\u0131: %s"
+        },
+        "0c6e8a761530efc7ecfe773a5b5a6f7e": {
+            "text": "Hi\u00e7biri - Yorumlar\u0131n\u0131z hemen yay\u0131nlans\u0131n"
+        },
+        "4f214f3246f03a94773427de4f2e7699": {
+            "text": "Hepsi - Sayfa d\u00fczenleme izni olan kullan\u0131c\u0131lar taraf\u0131ndan yorumlar onaylanabilsin"
+        },
+        "d3a76eec189143c6945282d37bd81bb5": {
+            "text": "Sadec Yeni - \u00d6nceden yorum yapmam\u0131\u015f ve yorumu onaylanmam\u0131\u015f kullan\u0131c\u0131lar i\u00e7in onay gereksin."
+        },
+        "11b3f4cb51868835eff93632baf73f0b": {
+            "text": "Yorum Y\u00f6netimi"
+        },
+        "2e5d62a652e3bfee772867720b3b000e": {
+            "text": "Bildiri E-Postas\u0131"
+        },
+        "f1f5c03105f32ee4f4eb3004e2fb49be": {
+            "text": "Yeni yorum g\u00f6nderildi\u011finde bildirimin yap\u0131laca\u011f\u0131 e-posta adresi. \u00c7oklu e-posta giri\u00e7lerini virg\u00fcl ile ay\u0131r\u0131n\u0131z."
+        },
+        "9bf3d3d959883d38b84f1990340bff84": {
+            "text": "S\u0131ralamay\u0131 yeniden eskiye do\u011fru yap?"
+        },
+        "0c9743be855a9e62ab36d4d4eb321932": {
+            "text": "Varsay\u0131lan olarak, yorumlar kronolojik olarak s\u0131ralanacak (eskiden yeniye do\u011fru). Bunu tersine \u00e7evirmek i\u00e7in kutuyu i\u015faretleyin."
+        },
+        "cba07fe99979c9f01d9c61a39aae3045": {
+            "text": "Yorum formu i\u00e7in internet sayfas\u0131 alan\u0131n\u0131 kullan?"
+        },
+        "bb28b3686215b773129c8259cf0e6525": {
+            "text": "\u0130\u015faretlendi\u011finde, yorum formu internet sayfas\u0131 alan\u0131da i\u00e7erecek."
+        },
+        "b7f00c1afdf69f32c12c300c02ac1da7": {
+            "text": "Yorum g\u00f6nderildikten sonra y\u00f6nlendirme yap?"
+        },
+        "cea2870f162b18b9ab95c8c84da6d05a": {
+            "text": "\u0130\u015faretlendi\u011finde, ProcessWire yorum g\u00f6nderilirken \u00e7ift g\u00f6nderimleri engellemek i\u00e7in y\u00f6nlendirme kullanacak. Tavsiye edilir."
+        },
+        "0ad4c8b2b43eb0c8cfa21dd7571401b5": {
+            "text": "SPAM i\u00e7in e-posta g\u00f6nder?"
+        },
+        "ec8fbd0794fa6fafb9061431f9bffa03": {
+            "text": "\u0130\u015faretlendi\u011finde, ProcessWiere mesaj SPAM olarak tan\u0131mland\u0131\u011f\u0131nda size e-posta bildirimi g\u00f6nderir."
+        },
+        "b9f5c797ebbf55adccdd8539a65a0241": {
+            "text": "Devre D\u0131\u015f\u0131"
+        },
+        "a4949d12f429ca4af2feb4e30c1e84e4": {
+            "text": "Gravatar Kullan?"
+        },
+        "694c233e3c1cf5b97224bd5fcbebb340": {
+            "text": "Akismet Spam Filtreleme Servisini Kullan?"
+        },
+        "13df57b389c6175fd742098a67385895": {
+            "text": "Bu servis \u00e7o\u011fu SPAM-\u0131 tespit eder. Kullanmadan \u00f6nce, Akismet API anahtar\u0131n\u0131 Mod\u00fcller > Yorum Filtreleme (Comment Filter): Akismet alt\u0131na girdi\u011finizden emin olun."
+        },
+        "bf31492fe5d4821b483bc7cb8cfe07a3": {
+            "text": "SPAM-lar\u0131n silinmesi i\u00e7in g\u00fcn say\u0131s\u0131"
+        },
+        "72fe450a750c9f11bf0531e5395e6e75": {
+            "text": "Belirtilen g\u00fcn say\u0131s\u0131 sonra SPAM otomatik olarak silinecek."
+        },
+        "8413c683b4b27cc3f4dbd4c90329d8ba": {
+            "text": "Yorumlar"
+        },
+        "a27c92ebebda4931039636893b5c716d": {
+            "text": "Kullan\u0131c\u0131 taraf\u0131ndan tek bir sayfa i\u00e7in yap\u0131lan yorumlar\u0131 depolaman\u0131z\u0131 sa\u011flar."
+        },
+        "e0c0bcd1370c684469277f8066e3c64f": {
+            "text": "Sayfa"
+        },
+        "957cba65c7639be540b3bce16e2c8e57": {
+            "text": "Kimden"
+        },
+        "d856205677eeb676b9b04c173a231c6b": {
+            "text": "E-Posta"
+        },
+        "4df6dabe367988d938bbf565bbcdbe43": {
+            "text": "\u0130nternet Sitesi"
+        },
+        "5be3f30f5db8303d4baac9920be07c45": {
+            "text": "Durum"
+        },
+        "15ede22296b59c623fa73c28c6dbe629": {
+            "text": "Metin"
+        },
+        "b70aad8c6cb77fde247be00630d7f5ef": {
+            "text": "G: Herhangi bir izleyici t\u00fcr\u00fc ile t\u00fcm web siteleri \u00fczerinde g\u00f6sterimi i\u00e7in uygun."
+        },
+        "8e25a98f71c3244890fa8ecf2230fe18": {
+            "text": "PG: Kaba hareketler, k\u0131\u015fk\u0131rt\u0131c\u0131 giyinmi\u015f bireyler, daha az k\u00fcf\u00fcrler, veya hafif \u015fiddet i\u00e7erebilir."
+        },
+        "2900074213d129e33d5d4b6e74076f29": {
+            "text": "R: Sert k\u00fcf\u00fcr, yo\u011fun \u015fiddet, \u00e7\u0131plakl\u0131k, veya sert uyu\u015fturucu kullan\u0131m\u0131 gibi \u015feyler i\u00e7erebilir."
+        },
+        "043cab853d189bb505d101c3c7ab3176": {
+            "text": "X: Hardcore cinsel g\u00f6r\u00fcnt\u00fcleri ya da son derece rahats\u0131z edici \u015fiddet i\u00e7erebilir."
+        },
+        "c5fce56aee82d2bc007cbf213998945b": {
+            "text": "Bu hizmet her yorum i\u00e7in bir avatar g\u00f6r\u00fcnt\u00fclenmesini sa\u011flar (e-posta adresine \u00f6zg\u00fc olarak). Aktive etmek i\u00e7in maksimum gravatar oyunu girin. Filim oylamas\u0131 ile ayn\u0131d\u0131r, G aile dostudur ve X \u015feyler i\u00e7ermez."
+        },
+        "e9f6051c655ca4a6773af3f2d8458815": {
+            "text": "[Gravatar](https:\/\/en.gravatar.com\/site\/implement\/images\/) taraf\u0131ndan verilen derecelendirme a\u00e7\u0131klamalar\u0131."
+        },
+        "e90234905413e689d67361b8f618b63f": {
+            "text": "Sessiz kaydetme?"
+        },
+        "d2c1e7bd67d4253ff76376ed718cf94f": {
+            "text": "\u0130\u015faretlendi\u011finde, sayfa d\u00fczenleme zaman\u0131 ve kullan\u0131c\u0131 yorum ekledi\u011finde g\u00fcncellenmeyecek."
+        }
+    }
+}

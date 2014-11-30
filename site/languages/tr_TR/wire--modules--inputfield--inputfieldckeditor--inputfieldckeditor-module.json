@@ -1,0 +1,201 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldCKEditor\/InputfieldCKEditor.module",
+    "textdomain": "wire--modules--inputfield--inputfieldckeditor--inputfieldckeditor-module",
+    "translations": {
+        "ea4788705e6873b424c65e91c2846b19": {
+            "text": "\u0130ptal"
+        },
+        "259738ca35a086ce9d269623e5ab5d37": {
+            "text": "Ba\u011flant\u0131 Ekle"
+        },
+        "446a6000511ab6fb0711400379a62a04": {
+            "text": "Resim Se\u00e7"
+        },
+        "03274f27f51f0c39e06e0e6cd07e01a9": {
+            "text": "Resim Y\u00fckle"
+        },
+        "586dfebdb944d7af7c4720be84d7fa50": {
+            "text": "Resim Kaydet"
+        },
+        "941c891be23b6a837de1d46c30efad2a": {
+            "text": "Bu Resmi Ekle"
+        },
+        "a616a1ef7aa1ee32d7d31c742923a202": {
+            "text": "Ba\u015fka Resim Se\u00e7"
+        },
+        "a2a62a977b1825230f76d3ba2a6bf3df": {
+            "text": "CKEditor Normal yerine inline modu kullanmak i\u00e7in MarkupHTMLPurifier mod\u00fcl\u00fc gerekli."
+        },
+        "93cba07454f06a4a960172bbd6e2a435": {
+            "text": "Evet"
+        },
+        "bafd7322c6e97d25b6299b5d6fe8920b": {
+            "text": "Hay\u0131r"
+        },
+        "81eeab9506186e2dca8faefa78d54067": {
+            "text": "\u00d6rnek:"
+        },
+        "2ae61d29b7247ef3679ced4aa729fb27": {
+            "text": "CKEditor Ayarlar\u0131"
+        },
+        "29c6f6d4517d673b2003e604b4efb687": {
+            "text": "CKEditor Ara\u00e7 \u00c7ubu\u011fu"
+        },
+        "9022c2878a60d1f4ebc0f9f83a09975f": {
+            "text": "Herbir ara\u00e7 \u00e7ubu\u011funu virg\u00fcl ile ay\u0131r\u0131n. \u00d6\u011feleri bo\u015flukla ayn\u0131 hatta gruplamak i\u00e7in tire \"-\" kullan\u0131n, nerede ayr\u0131lmas\u0131n\u0131 istiyorsan\u0131z orada uygulay\u0131n. E\u011fer birden fazla ara\u00e7 \u00e7ubu\u011fu sat\u0131r\u0131 istiyorsan\u0131z, herbir sat\u0131r\u0131 bo\u015fluk hatt\u0131 ile ay\u0131r\u0131n."
+        },
+        "dfabf65177db13369e6f60e33d626a25": {
+            "text": "Edit\u00f6r Modu"
+        },
+        "0e0da14bdea5e80af97115d05779bdc4": {
+            "text": "D\u00fczenli Edit\u00f6r"
+        },
+        "9f1f94725c69ad201b156e002476104c": {
+            "text": "Inline Edit\u00f6r *"
+        },
+        "f4bbbce516de30f80d2025ca9cc9a595": {
+            "text": "Inline modu a\u00e7\u0131k oldu\u011funda, edit\u00f6r yaz\u0131ya t\u0131klayana kadar aktif olmayacak. Sayfada CKEditor alanlar\u0131n\u0131 fazla kulland\u0131\u011f\u0131n\u0131zda h\u0131zl\u0131 ve daha etkilidir. Ancak, \u00e7ok fazla \u00f6zellik destekleme yada edit\u00f6r \u00f6zelle\u015ftirmeleri d\u00fczenli modda \u00e7al\u0131\u015f\u0131r."
+        },
+        "1c4caab2cc11e882c71d23c8365e23f5": {
+            "text": "*Inline modun \u00e7al\u0131\u015ft\u0131r\u0131labilmesi i\u00e7in HTML Prifier mod\u00fcl\u00fcne ihtiya\u00e7 duyulmaktad\u0131r  (MarkupHTMLPurifier)."
+        },
+        "5131613c3ef9d562a3e0e095e0f1fba8": {
+            "text": "*Gerekli duyulan HTML Purifier mod\u00fcl\u00fc y\u00fcklendi."
+        },
+        "86c0b99d54c2b5c2bbcdc74844dbb5cf": {
+            "text": "UYARI: Hen\u00fcz y\u00fckl\u00fc de\u011fil. Inline modu aktive etmeden \u00f6nce y\u00fcklemeniz gerekmektedir."
+        },
+        "b71ae00b212e1c450146b7263bb791bb": {
+            "text": "ACF Kullan?"
+        },
+        "60f803fa7569e56d3f76d2f622e4130b": {
+            "text": "Evet se\u00e7iliyse, CKEditor Geli\u015fmi\u015f \u0130\u00e7erik Filtreleme (ACF) aktive edilecek. Filtreleme otomatik olarak tan\u0131nmayan bi\u00e7imlendirme yada nitelikleri HTML linizden kald\u0131racak. Tavsiye edilir."
+        },
+        "086f4ea637a29573ed5e10e106040ab5": {
+            "text": "HTML Purifier Kullan?"
+        },
+        "cab4c54f1577378e89ca8dc055075ae4": {
+            "text": "Evet se\u00e7iliyse, g\u00f6nderilen i\u00e7erik [HTML Purifier](http:\/\/htmlpurifier.org\/) kullan\u0131larak \u00e7al\u0131\u015ft\u0131r\u0131lacak. Bu g\u00fcvenilmeyen kullan\u0131c\u0131lar i\u00e7in inline modda CKEditor ile kullan\u0131lmal\u0131d\u0131r. \u0130ki \u015fekildede \u00f6nerilir."
+        },
+        "4a4b882ebec0013773373d7983935b1c": {
+            "text": "Bi\u00e7imlendirmeyi G\u00fczelle\u015ftir"
+        },
+        "dbb9e7f934e4def553f1d3065635377e": {
+            "text": "DIV etiketlerini paragraf P etiketine \u00e7evir"
+        },
+        "ed97424627acfa23d899d27908115be3": {
+            "text": "Bo\u015f paragraf etiketlerini sil"
+        },
+        "ed654cac16ad0b016c80b1e0e04a86fa": {
+            "text": "Non-Breaking (nbsp) bo\u015fluklar\u0131n\u0131 kald\u0131r"
+        },
+        "187cc7fdfc18d7eee937fb34cd6641dc": {
+            "text": "Etiket Formatlar\u0131"
+        },
+        "4cf63a5e6c4eff831c232b0eb238b4ae": {
+            "text": "t\u00fcm CKEditor alanlar\u0131 i\u00e7in"
+        },
+        "bb87b90b3b4cf5290402d36011056951": {
+            "text": "sadece bu CKEditor alan\u0131 i\u00e7in"
+        },
+        "bb38096ab39160dc20d44f3ea6b44507": {
+            "text": "Eklentiler"
+        },
+        "7a6472fdd6090236270ada56951bb4ad": {
+            "text": "Ekstra Eklentiler"
+        },
+        "8cd140c060d298234e0079cb77ee8190": {
+            "text": "A\u015fa\u011f\u0131daki eklentiler bulundu. Y\u00fcklemek istedi\u011finiz eklentilerin kutucuklar\u0131n\u0131 i\u015faretleyin."
+        },
+        "9252446fff7e6ba650e51955cb0dc1ad": {
+            "text": "Daha fazla eklenti eklemek i\u00e7in, \/site\/modules\/InputfieldCKEditor\/plugins\/[ad]\/ alt\u0131na yerle\u015ftirin, [ad] k\u0131sm\u0131na eklenti ismi yerine eklenti ismi gelecek \u015fekilde."
+        },
+        "0aef2da721f0ab14676f8d6ffb9e7e8c": {
+            "text": "tavsiye edilen"
+        },
+        "7ae98f3a4b96e522d75992c305a4ec2b": {
+            "text": "% ayarlar"
+        },
+        "ced89926ebd1c95b56710b6a873b1e93": {
+            "text": "\"%s\" i\u00e7in eklenti ayarlar\u0131 JSON onay\u0131 ba\u015far\u0131s\u0131z."
+        },
+        "9048e64caaebf67509d533265f44414b": {
+            "text": "CKEditorun y\u00fckleyece\u011fi virg\u00fcl ile ayr\u0131lm\u0131\u015f ekstra eklenti listesi."
+        },
+        "7540434dd897a8f6f8118c31f2a931ab": {
+            "text": "\u00d6rnek: non-breaking"
+        },
+        "973ed59e27ee4824370eaf8150cbeec9": {
+            "text": "Eklentileri Kald\u0131r"
+        },
+        "3b9d2511fcd0e4afc3cc8c6c61b42d23": {
+            "text": "CKEditorun y\u00fcklemeyece\u011fi virg\u00fcl ile ayr\u0131lm\u0131\u015f kald\u0131r\u0131lm\u0131\u015f eklenti listesi."
+        },
+        "b6c2682ed322b5c3625338a5849b9794": {
+            "text": "CKEditor yaz\u0131 alan\u0131 zengin metin edit\u00f6r\u00fc"
+        },
+        "63ba0561c6027fed354e6c5af252a77b": {
+            "text": "L\u00fctfen nas\u0131l kullan\u0131laca\u011f\u0131 ile ilgili [talimatlar\u0131m\u0131z](https:\/\/github.com\/ryancramerdesign\/ProcessWire\/blob\/dev\/wire\/modules\/Inputfield\/InputfieldCKEditor\/README.md#custom-editor-js-styles-set) bak\u0131n\u0131z."
+        },
+        "2c3077a1dd5833c9dc6f49fe48e3ab71": {
+            "text": "E\u011fer kullan\u0131l\u0131yorsa, her sat\u0131r i\u00e7in **property: value**, yada JSON metni kullan\u0131n."
+        },
+        "0d26e4905e21b238948dc724daade146": {
+            "text": "\u00d6zel Yap\u0131land\u0131rma Ayarlar\u0131"
+        },
+        "0361833f130e526c7475f0bbcda324f3": {
+            "text": "Bu ekranda mevcut olanlar\u0131n \u00f6tesinde belirlenmi\u015f CKEditor yap\u0131land\u0131rma ayarlar\u0131."
+        },
+        "8b6ac858b8ce3c2724d267695c732325": {
+            "text": "\u00d6zel Yap\u0131land\u0131rma Ayarlar\u0131 JSON onay\u0131ndan ge\u00e7emedi."
+        },
+        "d662e23e83bdb75f4e25b3bb7afa2324": {
+            "text": "E\u011fer tercih edilirse, bu ayarlar bu dosyalardan birine yerle\u015ftirilebilir:"
+        },
+        "9728a8f280cf7e8b0b89b52749f7e800": {
+            "text": "L\u00fctfen nas\u0131l kullan\u0131laca\u011f\u0131 ile ilgili [talimatlar\u0131m\u0131z](https:\/\/github.com\/ryancramerdesign\/ProcessWire\/blob\/dev\/wire\/modules\/Inputfield\/InputfieldCKEditor\/README.md#custom-editor-css-file) bak\u0131n\u0131z."
+        },
+        "c329380c093af757e030c47c58fc31ae": {
+            "text": "\u00d6zel Edit\u00f6r CSS Dosyas\u0131 (d\u00fczenli mod i\u00e7in)"
+        },
+        "1f2a49f98f9868b764037314b9a0a2a0": {
+            "text": "\u00d6zel Edit\u00f6r CSS Dosyas\u0131 (inline mod i\u00e7in)"
+        },
+        "1100db92626b135374ca3ad30025a3d5": {
+            "text": "\u00d6zel Edit\u00f6r JS Stil Se\u00e7enekleri"
+        },
+        "749b7a2316f526ff2ec75692749211ad": {
+            "text": "Bu se\u00e7enek edit\u00f6r\u00fcn\u00fczde se\u00e7imler i\u00e7in \u00f6zel stilleri aktive etmenizi sa\u011flar. ara\u00e7 \u00e7ubu\u011fu ayarlar\u0131n\u0131zda \"Stiller\" se\u00e7ene\u011finin aktif olmas\u0131 gerekmektedir."
+        },
+        "73dd33fa6157ee6008e269d67a2843e3": {
+            "text": "Varsay\u0131lan etiket formatlar\u0131:"
+        },
+        "c6fd363ed202c7dd44b9a3d1b6065adc": {
+            "text": "Ekstra \u0130zin Verilen \u0130\u00e7erik"
+        },
+        "86981868980ec998b671432713a7b65b": {
+            "text": "CKEditor d\u00f6k\u00fcmantasyonuna [detaylar](http:\/\/docs.ckeditor.com\/#!\/guide\/dev_allowed_content_rules-section-2) i\u00e7in g\u00f6z at\u0131n"
+        },
+        "e3e03267810478ccd824a13309388549": {
+            "text": "Bunlar ekstra temizleme se\u00e7enekleridir (ACF ve HTML Purifier d\u0131\u015f\u0131nda), bunu \u00e7o\u011fu durumlar kar\u015f\u0131s\u0131nda yararl\u0131 bulduk. Sayfa kay\u0131t edildi\u011finde uygulanacaklar. Hepsini i\u015faretleyin tavsiye edilir, e\u011fer bi\u00e7imlendirme yoluyla bunlardan herhangibirini bildirmek i\u00e7in bir ihtiya\u00e7 yoksa."
+        },
+        "eb58d10bb9587ab21ba79859997ea7f9": {
+            "text": "Noktal\u0131Virg\u00fcl-Ayr\u0131lm\u0131\u015f liste, a\u00e7\u0131lan men\u00fcde se\u00e7ilebilir etiketler g\u00f6sterilecek format."
+        },
+        "988677b6c211741551df50fd57a5d3f4": {
+            "text": "\u0130zin verilen i\u00e7erik kurallar\u0131 her bir CKEditor i\u00e7in [http:\/\/docs.ckeditor.com\/#!\/api\/CKEDITOR.config-cfg-extraAllowedContent](extraAllowedContent) se\u00e7ene\u011fi. Sadece \"ACF Kullan\" aktif ise uygulanacak."
+        },
+        "69262424661d8b544ebcba617e5772c6": {
+            "text": "Birden fazla kural girebilirsiniz, herbir kural\u0131 kendi sat\u0131r\u0131na yaz\u0131n."
+        },
+        "378f7539f13b958d62e92c063772ee37": {
+            "text": "Takip eden \u00f6rnek alt, src \u015funlar\u0131n kullan\u0131m\u0131na izin verecek, geni\u015flik (width) ve y\u00fckseklik (height) nitelikleri resim etiketi i\u00e7in, src niteli\u011fi herzaman gereklidir."
+        },
+        "60eaab37de096deaa26bb3ff7b706095": {
+            "text": "Yollar ProcessWire kurulum dizinine g\u00f6re olmal\u0131d\u0131r (\u00f6rnek: e\u011fer sitenin alt klas\u00f6rde \u00e7al\u0131\u015f\u0131yorsa, bu k\u0131sm\u0131 d\u0131\u015flay\u0131n)."
+        },
+        "b67b49a021c8f28a0be44e276cdcb145": {
+            "text": "Bu \u015fe\u00e7enek edit\u00f6r\u00fcn\u00fczde yaz\u0131 ve di\u011fer elementleri d\u00fczenlemenizi aktif eder. Bu yanl\u0131zca idari ortamda g\u00f6r\u00fcnt\u00fclenir ve internet sitenizin \u00f6n sayfa k\u0131sm\u0131na etki etmez."
+        }
+    }
+}

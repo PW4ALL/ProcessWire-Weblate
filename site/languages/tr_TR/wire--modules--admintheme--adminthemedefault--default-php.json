@@ -1,0 +1,15 @@
+{
+    "file": "wire\/modules\/AdminTheme\/AdminThemeDefault\/default.php",
+    "textdomain": "wire--modules--admintheme--adminthemedefault--default-php",
+    "translations": {
+        "9cfefed8fb9497baa5cd519d7d2bb5d7": {
+            "text": "tr"
+        },
+        "0323de4f66a1700e2173e9bcdce02715": {
+            "text": "\u00c7\u0131k\u0131\u015f Yap"
+        },
+        "aa0e46d2e05217acb9d70a1bbb546845": {
+            "text": "\u00c7evirmenler \u0130\u00e7in : Bu dosyadan ziyade, \/wire\/templates-admin\/default.php bu dosyay\u0131 \u00e7evirin."
+        }
+    }
+}

@@ -1,0 +1,75 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldImage\/InputfieldImage.module",
+    "textdomain": "wire--modules--inputfield--inputfieldimage--inputfieldimage-module",
+    "translations": {
+        "7e4cc6c00140cefcecd178df1836fbba": {
+            "text": "Resim maksimun izin verilen boyutlarda yeniden boyutland\u0131r\u0131lacak"
+        },
+        "95dde9286ff11d93e5f5ce0c832b9f2c": {
+            "text": "K\u00fc\u00e7\u00fck resimleri sayfa edit\u00f6r\u00fcnde g\u00f6ster?"
+        },
+        "183cf71ab1252b747070605a2aa370c2": {
+            "text": "K\u00fc\u00e7\u00fck resimler daha aza yer kaplar ve s\u0131ralamay\u0131 \u00e7oklu resimlerde daha da kolayla\u015ft\u0131r\u0131r. \u0130\u015faretlenmedi\u011finde, resimler sayfa edit\u00f6r\u00fcnde orjinal boyutlar\u0131nda g\u00f6r\u00fcnt\u00fclenir."
+        },
+        "597c4d1113db01e43b62cd8a7112cf88": {
+            "text": "Varsay\u0131lan G\u00f6r\u00fcn\u00fcm"
+        },
+        "530f488f7a9800411efc6926ab189708": {
+            "text": "Sat\u0131rlar"
+        },
+        "5174d1309f275ba6f275db3af9eb3e18": {
+            "text": "Izgara"
+        },
+        "b3da2ccb426643b265971f8085617aa0": {
+            "text": "Yada g\u00f6r\u00fcnt\u00fcleme resim alan\u0131ndaki \u0131zgara\/sat\u0131rlar ikonuna t\u0131klanarak de\u011fi\u015ftirilebilir. Bu sadece hangi se\u00e7ene\u011fin varsay\u0131lan oldu\u011funu belirtir. Sat\u0131r g\u00f6r\u00fcn\u00fcm\u00fc varsay\u0131lan olarak tavsiye edilir."
+        },
+        "7f0785e56befa113ce8fca2316a12a2e": {
+            "text": "Maksimum Resim Boyutlar\u0131"
+        },
+        "ef375d406da59811c42dc0f5a245dca3": {
+            "text": "\u0130ste\u011fe ba\u011fl\u0131 olarak y\u00fcklenecek resimler i\u00e7in maksimum geni\u015flik ve\/yada y\u00fckselik girin. E\u011fer belirtildiyse, resimler y\u00fcklenirken belirtmi\u015f oldu\u011funuz maksimum geni\u015flik yada y\u00fckseklik orant\u0131lar\u0131nda yeniden boyutland\u0131r\u0131lacak. Boyutland\u0131rma i\u015flemi y\u00fcklenirken yap\u0131lacak, bu sistemdeki resimlere etki etmeyecek, yada API ile y\u00fcklenen resimlere."
+        },
+        "e69ccb31941d2fd7923c6b0c01957db3": {
+            "text": "Y\u00fcklenecek resimlerin maksimum resim geni\u015fli\u011fi"
+        },
+        "c58e466902d0ff945d0677114e41682b": {
+            "text": "Y\u00fcklenecek resimlerin maksimum resim y\u00fcksekli\u011fi"
+        },
+        "fff0d600f8a0b5e19e88bfb821dd1157": {
+            "text": "Resimler"
+        },
+        "8a29508fcba587b8af0cfb36c544ee0d": {
+            "text": "Bir yada birden fazla resim y\u00fcklemenizi sa\u011flar (s\u0131ralanabilir)"
+        },
+        "126b21ce46c39d12c24058791a236777": {
+            "text": "Ge\u00e7ersiz Resim"
+        },
+        "41cfe40655c4b51507eff9d22bd777f2": {
+            "text": "Resim %s minimun resim boyutu gereksinimlerini kar\u015f\u0131lam\u0131yor"
+        },
+        "f2a6c498fb90ee345d997f888fce3b18": {
+            "text": "Sil"
+        },
+        "ad2ac1967f0165ebf04a84bc1819e0de": {
+            "text": "A\u015fa\u011f\u0131ya ta\u015f\u0131"
+        },
+        "727b701bcc5f26422461f10c07a58d48": {
+            "text": "Yukar\u0131ya ta\u015f\u0131"
+        },
+        "1a2b9bdaad8fc3ebd6b83463a0def69e": {
+            "text": "Pixel de\u011ferini numara olarak girin yada limit yok ise bo\u015f b\u0131rak\u0131n."
+        },
+        "6760d392e57247a882e160cdb8b3680c": {
+            "text": "Min. Resim Boyutlar\u0131"
+        },
+        "a195023920e6ece61b6211755c9af27f": {
+            "text": "\u0130ste\u011fe ba\u011fl\u0131 olarak y\u00fcklenen resimler i\u00e7in minimun geni\u015flik ve\/yada y\u00fckseklik de\u011feri girin. E\u011fer belirtilmi\u015f ise, bu de\u011ferleri kar\u015f\u0131lamayan resimler reddedilecek."
+        },
+        "d704e5da0e9e4ca2aa3e04201575f44c": {
+            "text": "Min. y\u00fcklenen resim geni\u015fli\u011fi"
+        },
+        "b477617de997199bdd26761085aea486": {
+            "text": "Min. y\u00fcklenen resim y\u00fcksekli\u011fi"
+        }
+    }
+}

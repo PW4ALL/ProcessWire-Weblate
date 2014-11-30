@@ -1,0 +1,12 @@
+{
+    "file": "wire\/modules\/LanguageSupport\/LanguageTabs.module",
+    "textdomain": "wire--modules--languagesupport--languagetabs-module",
+    "translations": {
+        "4ee6b922de4a3b1d79036b200520ee37": {
+            "text": "Tuo kaikki kieliversiot n\u00e4kyville"
+        },
+        "c667865dc18e9366c835d279c3192aea": {
+            "text": "N\u00e4yt\u00e4 kieliversiot omilla v\u00e4lilehdill\u00e4\u00e4n"
+        }
+    }
+}

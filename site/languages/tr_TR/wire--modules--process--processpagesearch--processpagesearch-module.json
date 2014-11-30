@@ -1,0 +1,117 @@
+{
+    "file": "wire\/modules\/Process\/ProcessPageSearch\/ProcessPageSearch.module",
+    "textdomain": "wire--modules--process--processpagesearch--processpagesearch-module",
+    "translations": {
+        "2c44229630ad7e2758a89bd14435a31b": {
+            "text": "Belirtilen arama yok"
+        },
+        "f802f85dd1eb6a1b3fb0591c682807e9": {
+            "text": "Alanlarda Ara :"
+        },
+        "52b9d143876d2754dd01be52587b1de8": {
+            "text": "Arama tipi :"
+        },
+        "75ecaaafd1f677d07360709be6528768": {
+            "text": "Arama (i\u00e7in) :"
+        },
+        "9e230fa5487a0172264f31c0a1b08b61": {
+            "text": "\u015eablon Filtreleme :"
+        },
+        "6f9d01a14011f05fffe48559583fc609": {
+            "text": "S\u0131rala :"
+        },
+        "fa4e2f0cea3ceef82c840df64fecb9e4": {
+            "text": "Ters S\u0131rala?"
+        },
+        "1e9c565e43a1f652a2718003bbad887e": {
+            "text": "Alanlar\u0131 G\u00f6ster :"
+        },
+        "b4805a9af05d82889758dda70003cfc6": {
+            "text": "Arama Ayarlar\u0131"
+        },
+        "9b6545e4cea9b4ad4979d41bb9170e2b": {
+            "text": "Geli\u015fmi\u015f"
+        },
+        "29e9d8e295b1d5b3002d2d3d5baa4c37": {
+            "text": "K\u0131sayollar"
+        },
+        "de95b43bceeb4b998aed4aed5cef1ae7": {
+            "text": "d\u00fczenle"
+        },
+        "0ccb67e7eaae09d9e4078d161eeca100": {
+            "text": "E\u015fittir"
+        },
+        "3255c386f4276b5c66f12d216ec71906": {
+            "text": "E\u015fit de\u011fil"
+        },
+        "05824b7be006782aaefd1fdb97c71e06": {
+            "text": "B\u00fcy\u00fckt\u00fcr"
+        },
+        "798fe01fcb2754a295b6937ed885a69a": {
+            "text": "B\u00fcy\u00fck yada E\u015fittir"
+        },
+        "ad647e4ae904c7ed54ee93040d8298c7": {
+            "text": "K\u00fc\u00e7\u00fckt\u00fcr"
+        },
+        "28d1141142e2cbb29e657b69a044ddf4": {
+            "text": "K\u00fc\u00e7\u00fckt\u00fcr yada e\u015fittir"
+        },
+        "45fc43a01c15bc63159695441dfacd63": {
+            "text": "\u0130fade yada kelime i\u00e7eriyor"
+        },
+        "e44edbd140708c448e991cde9d8dc0b2": {
+            "text": "Benzer ifade\/kelime i\u00e7eriyor"
+        },
+        "593e63d42f95f6ad96cf700f80c2fe2c": {
+            "text": "T\u00fcm kelimeyi i\u00e7eriyor"
+        },
+        "d60c090c3c99aaae5f57da3eb85fe008": {
+            "text": "Varsay\u0131lan arama alanlar\u0131"
+        },
+        "bfe2201d3b973b0d8c3c5b0ea08e1736": {
+            "text": "Aramak istedi\u011finiz bir yada birden fazla yaz\u0131-tabanl\u0131 alan ad\u0131 girin, herbiri bo\u015fluk ile ayr\u0131lan."
+        },
+        "6278e5dbbd21048091f612f55185257e": {
+            "text": "(Ajax) modunda y\u00f6netici aramas\u0131 alanlar\u0131"
+        },
+        "cc10d38a176ad7cde1228d2e22f1122b": {
+            "text": "Bir yada iki alanla limitlemenizi tavsiye ediyoruz, \u00e7o\u011fu sonu\u00e7 otomatik tamamlamay\u0131 dolduruyor. Tipik olarak bir ba\u015fl\u0131k arayabilirsiniz."
+        },
+        "2d29cf36f3ebbd5bab570d70070e5102": {
+            "text": "Arama sonu\u00e7lar\u0131nda g\u00f6r\u00fcnt\u00fclenecek varsay\u0131lan alan adlar\u0131"
+        },
+        "6cfd6f09104bdac467bb40624aae4e9c": {
+            "text": "E\u011fer birden fazla alan i\u00e7eriyorsa, herbirini bo\u015fluk ile ay\u0131r\u0131n."
+        },
+        "51e1d489ac4198969f8daf52b7cdfaf6": {
+            "text": "Varsay\u0131lan arama operat\u00f6r\u00fc"
+        },
+        "4ecb0055aa1e66535afeaf6093585618": {
+            "text": "Ara"
+        },
+        "d27c07f4c0dd15e39cedd91c19cb279f": {
+            "text": "Ara"
+        },
+        "c488b358fae501da3848f9faeb83dd35": {
+            "text": "Alanlar"
+        },
+        "736f3e2669c68c02be0fb19d1e70622f": {
+            "text": "\u015eablonlar"
+        },
+        "c26ba1dd54d52630a0aedf779e5926af": {
+            "text": "Mod\u00fcller"
+        },
+        "8aa55d906b86496efeb66b0eae7d75ce": {
+            "text": "Sayfalar"
+        },
+        "4b315bff8c7b70281de8ffffbd150708": {
+            "text": "Ara"
+        },
+        "1da914fe3f639d8b3d977a006d2b0c69": {
+            "text": "Bulunan %1$d sayfa, kullanan se\u00e7ici: %2$s"
+        },
+        "dc87414810d43e27f63b89feabadc943": {
+            "text": "Bulunan %1$d sayfa, kullanan se\u00e7ici: %2$s"
+        }
+    }
+}

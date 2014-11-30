@@ -1,0 +1,30 @@
+{
+    "file": "wire\/modules\/LanguageSupport\/LanguageSupportPageNames.module",
+    "textdomain": "wire--modules--languagesupport--languagesupportpagenames-module",
+    "translations": {
+        "ae739a236065a45c64ad51aacb19498c": {
+            "text": "Aktif?"
+        },
+        "35b837a5674ea74e192fc0fa8b68f46c": {
+            "text": "Sayfalama i\u00e7in sayfa numaras\u0131 \u00f6n eki"
+        },
+        "6119a76d8e8915737cda0e4151922c06": {
+            "text": "Bu dil i\u00e7in sayfaland\u0131r\u0131lm\u0131\u015f URL'ye sayfa numaras\u0131 kelimeye eklenecek. Atlan\u0131rsa, \"%s\" kullan\u0131lacak."
+        },
+        "5b5fec43bb1313c56d2e944d9567cd96": {
+            "text": "Varsay\u0131lan ana sayfa URL'si ana URL ile ayn\u0131m\u0131?"
+        },
+        "6fbae724946d15c837d8d88af35ed18c": {
+            "text": "Ana sayfan\u0131z\u0131n varsay\u0131lan k\u00f6k URL'si \/ varsay\u0131lan dil ile servis ediliyorsa (tavsiye edilen) \"Evet\"i se\u00e7in. E\u011fer k\u00f6k URL i\u00e7in bir y\u00f6nlendirme yap\u0131yorsa \/isim\/ (burada \/isim\/ ana sayfas\u0131n\u0131z\u0131n varsay\u0131lan dil ad\u0131) \"Hay\u0131r\"\u0131 se\u00e7in."
+        },
+        "fccde8e7592dffb93fe985bc462771c0": {
+            "text": "Bu ayar sadece ana sayfa davran\u0131\u015f\u0131n\u0131 etkiler. E\u011fer \"Hay\u0131r\"\u0131 i\u015faretlerseniz, Ana sayfan\u0131z\u0131n varsay\u0131lan dil i\u00e7in ayarlanm\u0131\u015f oludu\u011funa emin olun."
+        },
+        "ff88cd079dc8d2fb836b8807f5d266a4": {
+            "text": "Evet - K\u00f6k URL varsay\u0131lan dili i\u00e7erir (tavsiye edilen)"
+        },
+        "f1bd84fbcee1b287fe538f7df1cbd700": {
+            "text": "Hay\u0131r - K\u00f6k url i\u00e7in bir y\u00f6nlendirme yapar: \/isim\/"
+        }
+    }
+}

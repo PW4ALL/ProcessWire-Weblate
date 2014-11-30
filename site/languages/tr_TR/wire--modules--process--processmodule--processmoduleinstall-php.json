@@ -1,0 +1,57 @@
+{
+    "file": "wire\/modules\/Process\/ProcessModule\/ProcessModuleInstall.php",
+    "textdomain": "wire--modules--process--processmodule--processmoduleinstall-php",
+    "translations": {
+        "ccb108ad977122d69f8bbc7758997ff2": {
+            "text": "\/site\/assets\/cache\/ klas\u00f6r\u00fcn\u00fcn PHP taraf\u0131ndan yaz\u0131labilir oldu\u011fundan emin olun."
+        },
+        "cfe1ee62b0efc597562d0b78c5196d47": {
+            "text": "\u0130ntenet sitenizin mod\u00fcl klas\u00f6r\u00fcn\u00fcn (\/site\/modules\/) PHP taraf\u0131ndan yaz\u0131labilir oldu\u011fundan emin olun."
+        },
+        "34484ec9b680d2670f6c0d0a6ea5cb5a": {
+            "text": "ZipArchive s\u0131n\u0131f\u0131 gereklidir ve PHP niz bunu i\u00e7ermiyor."
+        },
+        "af32834e6517e929e3993eb018b46ac0": {
+            "text": "Herhangibir mod\u00fcl dosyas\u0131 bulunam\u0131yor"
+        },
+        "2a3cd9a18eaf3b274b4fa40068fff003": {
+            "text": "Dosyalar ba\u015far\u0131yla yeni klas\u00f6re ta\u015f\u0131nd\u0131"
+        },
+        "5bb84f541cde4c248e5f6f58ae92c49e": {
+            "text": "Dosyalar yeni klas\u00f6re ta\u015f\u0131nam\u0131yor"
+        },
+        "5a3527463defe3c1e1ab721c4942f331": {
+            "text": "Klas\u00f6r olu\u015fturulam\u0131yor:"
+        },
+        "a7e401f040fc37065b5d7a8b01e5a592": {
+            "text": "Mod\u00fcl dosyalar\u0131 kopyalanam\u0131yor:"
+        },
+        "82d70ccfc2a2e0bb66507a3f90c4690e": {
+            "text": "Mod\u00fcl klas\u00f6r\u00fc silme i\u015flemi ba\u015far\u0131s\u0131z:"
+        },
+        "0e30f791217cbeee87323db58731e58f": {
+            "text": "Var olan yedeklendi %s"
+        },
+        "34e8dc0a73d373618c591be38800cd3c": {
+            "text": "Yedekten geri y\u00fckleme yap\u0131ld\u0131 %s"
+        },
+        "21b1483780050057a84adbf35ec57c05": {
+            "text": "Y\u00fckleme tamamlanam\u0131yor"
+        },
+        "e7df9a3e1460bdfcaabe5b2e451a6594": {
+            "text": "Y\u00fckleme bulunamad\u0131"
+        },
+        "c8e5b4f1bb72c62949a522f6925e80c8": {
+            "text": "\u0130ndirme tamamlanam\u0131yor"
+        },
+        "a4e29333ef852fef776eecdb5b3ac6a1": {
+            "text": "Bilinmeyen indirme URL si belirlendi"
+        },
+        "e830879e542fd52ca82f599ce41b6668": {
+            "text": "ZIP dosyas\u0131n\u0131 indir: %s (%d byte)"
+        },
+        "04abd66e622f247f079329fcbc51b97c": {
+            "text": "L\u00fctfen bunu %s not edin, bu bir sembolik ba\u011flant\u0131d\u0131r ve d\u00fczenli bir dizine d\u00f6n\u00fc\u015ft\u00fcr\u00fclecek."
+        }
+    }
+}

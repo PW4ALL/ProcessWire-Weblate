@@ -1,0 +1,21 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldPageName\/InputfieldPageName.module",
+    "textdomain": "wire--modules--inputfield--inputfieldpagename--inputfieldpagename-module",
+    "translations": {
+        "49ee3087348e8d44e1feda1917443987": {
+            "text": "Ad"
+        },
+        "152cfcb2150e04c8533d86e9d7642b11": {
+            "text": "Karakter kombinasyonu (a-z), numara (0-9), noktalamalar yada alt-tireler (bo\u015fluksuz)"
+        },
+        "f48a4577939e2ab65867848e6b439a81": {
+            "text": "Karakter de\u011fi\u015ftirmeler"
+        },
+        "9d250aded0473671ec3f113407f9809c": {
+            "text": "Kullan\u0131c\u0131 sayfa ad\u0131n\u0131 girerken olu\u015fturulacak de\u011fi\u015ftirme i\u00e7in karakterleri girin. Herbir de\u011fi\u015ftirme i\u00e7in, herbir sat\u0131rda \"anahtar=de\u011fer\" \u015feklinde giri\u015f yap\u0131n. Yani, her bir yeni sat\u0131ra, de\u011fi\u015ftirilmesini istedi\u011finiz karakterleri \"=\" e\u015fittir i\u015fareti ile de\u011fi\u015ftirin, karakterler \"ascii\" olmal\u0131d\u0131r."
+        },
+        "9bc6bf958fcb86296c17a2b2db2a00a6": {
+            "text": "Herbir de\u011fi\u015ftirilebiir de\u011fer bir yada daha fazla : a-z, 0-9, nokta, alt-tire i\u00e7ermelidir."
+        }
+    }
+}

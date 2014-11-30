@@ -1,0 +1,15 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldSelectMultiple.module",
+    "textdomain": "wire--modules--inputfield--inputfieldselectmultiple-module",
+    "translations": {
+        "019fce53dcc7e7f5a3abea240de44d77": {
+            "text": "Boyut: \u00e7oklu se\u00e7imde bir seferde g\u00f6r\u00fcnt\u00fclenecek sat\u0131r say\u0131s\u0131"
+        },
+        "eefa4a712878aa9e7c3a4fdb9ab10adf": {
+            "text": "\u00c7oklu Se\u00e7im"
+        },
+        "6faad70d6719b405a08c5121e31e258b": {
+            "text": "Listeden \u00e7oklu se\u00e7im yap\u0131lmas\u0131n\u0131 sa\u011flar"
+        }
+    }
+}

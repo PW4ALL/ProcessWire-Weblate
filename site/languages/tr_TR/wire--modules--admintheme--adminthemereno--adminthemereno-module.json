@@ -1,0 +1,45 @@
+{
+    "file": "wire\/modules\/AdminTheme\/AdminThemeReno\/AdminThemeReno.module",
+    "textdomain": "wire--modules--admintheme--adminthemereno--adminthemereno-module",
+    "translations": {
+        "eea889e927448a79d84da81851f9d9cb": {
+            "text": "Arama i\u00e7in buraya yaz\u0131n"
+        },
+        "b3d00bda3ff5e34c61a7fa73267eb75c": {
+            "text": "Tom Reno (Renobird) taraf\u0131ndan ProcessWire 2.5 i\u00e7in y\u00f6netim paneli temas\u0131"
+        },
+        "f0a5fc96d36fdda66a2a10b79be6d7fb": {
+            "text": "Renk Seti"
+        },
+        "d35b51b639528d580362ca7042de6a0e": {
+            "text": "Klasik"
+        },
+        "9594eec95be70e7b1710f730fdda33d9": {
+            "text": "Mavi"
+        },
+        "cf64a1df05b0b5640322820b1b705605": {
+            "text": "Kullan\u0131c\u0131 resim alan\u0131"
+        },
+        "d076186eb326fac94ae60de5b71755d7": {
+            "text": "Bu \u00f6zelli\u011fi kullanabilmek i\u00e7in \"kullan\u0131c\u0131\" \u015fablonunda resim alan\u0131 olmas\u0131 gereklidir. E\u011fer kullan\u0131c\u0131 \u015fablonunuzda resim alan\u0131 yok ise, avatar varsay\u0131lan resim olarak g\u00f6r\u00fcnt\u00fclenecek. Kullan\u0131c\u0131 \u015fablonuna resim alan\u0131 eklemek i\u00e7in Kurulum > Filtreleme (Sistem \u015eablonlar\u0131n\u0131 G\u00f6r\u00fcnt\u00fcle). \"Kullan\u0131c\u0131\" \u015fablonu listede g\u00f6r\u00fcnt\u00fclenecek."
+        },
+        "32b92d181457ef3ee601718c6717d21f": {
+            "text": "Kullan\u0131c\u0131 \u015fablon alanlar\u0131 i\u00e7in resim alan\u0131 belirtilmemi\u015f"
+        },
+        "b30e371dcaa3d2b157ef7566aa157b8a": {
+            "text": "Kullan\u0131c\u0131 taraf\u0131ndan profilleri i\u00e7in d\u00fczenlenebilir alanlara eklenen alan \"%s\""
+        },
+        "8f67973007158337346584551b093be8": {
+            "text": "Tu\u015flar"
+        },
+        "f69110441f08575ffbedd45591ddc4e1": {
+            "text": "Navigasyon \u00f6\u011feleri i\u00e7in tu\u015flar\u0131 belirle"
+        },
+        "a5cf3b1e924454eb5f3b0579e2f40830": {
+            "text": "\u00dcst Navigasyon: Ana Sayfay\u0131 G\u00f6r\u00fcnt\u00fcle"
+        },
+        "13884a61afb0a46fc63ee2694d21d16e": {
+            "text": "\u00dcst Navigasyon: \u00c7\u0131k\u0131\u015f Yap"
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "file": "wire\/core\/WireTempDir.php",
+    "textdomain": "wire--core--wiretempdir-php",
+    "translations": {
+        "fcecae7cd3a639caff1a6a7c895c954d": {
+            "text": "\"temp\" Klas\u00f6r\u00fc olu\u015fturulam\u0131yor"
+        },
+        "5d73c732a700aaa27e07ffd0f638ecc8": {
+            "text": "\"temp\" Klas\u00f6r\u00fc kald\u0131r\u0131lam\u0131yor"
+        }
+    }
+}

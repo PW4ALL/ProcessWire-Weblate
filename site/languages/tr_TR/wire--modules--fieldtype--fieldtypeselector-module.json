@@ -1,0 +1,15 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeSelector.module",
+    "textdomain": "wire--modules--fieldtype--fieldtypeselector-module",
+    "translations": {
+        "edcca7404d60fa39e1e56bbb6c85c519": {
+            "text": "Se\u00e7ici Ba\u015flang\u0131\u00e7 De\u011feri"
+        },
+        "4795bb99893dc26981eb889746b21499": {
+            "text": "\u00d6rnek: template=urun"
+        },
+        "7705e5655113c7b4e5b224010ac7af38": {
+            "text": "Zorunlu ba\u015flang\u0131\u00e7 noktas\u0131 i\u00e7in kullan\u0131lacak bir ba\u015flang\u0131\u00e7 dizesi se\u00e7icisi girin, bu alan taraf\u0131ndan olu\u015fturulan herhangibir se\u00e7ici. Kullan\u0131c\u0131n\u0131n belirledi\u011fi se\u00e7ici ile e\u015fle\u015fen herhangibir sayfa  buraya girilen se\u00e7ici ile ba\u011flant\u0131l\u0131 olacakt\u0131r."
+        }
+    }
+}

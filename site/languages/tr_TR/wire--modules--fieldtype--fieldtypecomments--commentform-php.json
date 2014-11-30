@@ -1,0 +1,33 @@
+{
+    "file": "wire\/modules\/Fieldtype\/FieldtypeComments\/CommentForm.php",
+    "textdomain": "wire--modules--fieldtype--fieldtypecomments--commentform-php",
+    "translations": {
+        "55db28530640e9fb41ebf71ea8afce72": {
+            "text": "Yorum G\u00f6nder"
+        },
+        "a3676fa92ee7acc9486a220da4580c7e": {
+            "text": "Te\u015fekk\u00fcrler, g\u00f6nderiniz kay\u0131t edildi."
+        },
+        "5443970b690d94d32a481cac5cf31cb6": {
+            "text": "Y\u00f6netici taraf\u0131ndan yorumunuz onayland\u0131ktan sonra yay\u0131nlanacak."
+        },
+        "af54d31f765138998bf8d2903d4095ce": {
+            "text": "Bir yada daha fazla hatadan dolay\u0131 g\u00f6nderiniz kay\u0131t edilemedi. L\u00fctfen g\u00f6nderi yapmadan \u00f6nce t\u00fcm alanlar\u0131 doldurdu\u011funuzdan emin olun."
+        },
+        "614cffa523202658a898e34a5d94d05e": {
+            "text": "Ad\u0131n\u0131z"
+        },
+        "cd5b60538fc5fdd7a7280d67e4a12089": {
+            "text": "E-Posta Adresini"
+        },
+        "f359c2373cfa104cd9be66f79047deb5": {
+            "text": "\u0130nternet Siteniz"
+        },
+        "8413c683b4b27cc3f4dbd4c90329d8ba": {
+            "text": "Yorum"
+        },
+        "a4d3b161ce1309df1c4e25df28694b7b": {
+            "text": "G\u00f6nder"
+        }
+    }
+}

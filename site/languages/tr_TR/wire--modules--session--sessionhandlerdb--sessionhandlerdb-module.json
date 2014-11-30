@@ -1,0 +1,18 @@
+{
+    "file": "wire\/modules\/Session\/SessionHandlerDB\/SessionHandlerDB.module",
+    "textdomain": "wire--modules--session--sessionhandlerdb--sessionhandlerdb-module",
+    "translations": {
+        "6514b2122a2e569491dccb69eebe383c": {
+            "text": "Bu kutuyu i\u015faretledi\u011finizde, y\u00f6netim paneli oturum listesinde verileri g\u00f6r\u00fcnt\u00fclemenizi sa\u011flar."
+        },
+        "262f42ad28e2d01d7dc5afa698716099": {
+            "text": "Oturum bilgilerinde IP adresi takip edilsin mi?"
+        },
+        "ab5b4b2116f61fda9325e6deb591bb8f": {
+            "text": "Oturum bilgilerinde kullan\u0131c\u0131 taray\u0131c\u0131s\u0131 takip edilsin mi?"
+        },
+        "703fdc8134134754f6630df73ee50572": {
+            "text": "Kullan\u0131c\u0131 taray\u0131c\u0131s\u0131 tipik olarak kullan\u0131lan taray\u0131c\u0131 hakk\u0131nda bilgi i\u00e7erir."
+        }
+    }
+}

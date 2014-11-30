@@ -1,0 +1,27 @@
+{
+    "file": "wire\/modules\/Process\/ProcessRole\/ProcessRole.module",
+    "textdomain": "wire--modules--process--processrole--processrole-module",
+    "translations": {
+        "a5cd3ed116608dac017f14c046ea56bf": {
+            "text": "Roller"
+        },
+        "e5e77ccf470959bc6be60127730908b5": {
+            "text": "Kullan\u0131c\u0131 rollerini ve rollere ekli izinleri y\u00f6net"
+        },
+        "d08ccf52b4cdd08e41cfb99ec42e0b29": {
+            "text": "\u0130zinler"
+        },
+        "2ac1fce951ddece70a50dfb03bd386b2": {
+            "text": "isim|baslik"
+        },
+        "9bfb6e6af6e6793bfa9387e728187c87": {
+            "text": "(zorunlu)"
+        },
+        "abf1be1c76c0620d1a220871b1ba0da1": {
+            "text": "Kutular\u0131 i\u015faretledikten ve sayfay\u0131 kay\u0131t ettikten sonra, belirtilen izinler daha fazla izin se\u00e7enekleri ortaya \u00e7\u0131kar."
+        },
+        "55713ee9cd76b3704908899aaa30b5e5": {
+            "text": "*Not sayfa-d\u00fczenleme (page-edit) izinlerini i\u015faretlemek sadece \u015fablon d\u00fczeyinde d\u00fczenleme eri\u015fimleri se\u00e7ebilece\u011finiz anlam\u0131na gelir. Basit\u00e7e, sayfa-d\u00fczenleme (page-edit) izinleri burada \u015fablon kontrol ayarlar\u0131nda se\u00e7ilmedik\u00e7e d\u00fczenleme eri\u015fimi vermez."
+        }
+    }
+}

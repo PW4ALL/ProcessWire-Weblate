@@ -1,0 +1,60 @@
+{
+    "file": "wire\/modules\/Inputfield\/InputfieldTinyMCE\/InputfieldTinyMCE.module",
+    "textdomain": "wire--modules--inputfield--inputfieldtinymce--inputfieldtinymce-module",
+    "translations": {
+        "9cfefed8fb9497baa5cd519d7d2bb5d7": {
+            "text": "tr"
+        },
+        "ea4788705e6873b424c65e91c2846b19": {
+            "text": "\u0130ptal"
+        },
+        "259738ca35a086ce9d269623e5ab5d37": {
+            "text": "Link Ekle"
+        },
+        "446a6000511ab6fb0711400379a62a04": {
+            "text": "Resim Se\u00e7"
+        },
+        "03274f27f51f0c39e06e0e6cd07e01a9": {
+            "text": "Resmi D\u00fczenle"
+        },
+        "586dfebdb944d7af7c4720be84d7fa50": {
+            "text": "Resmi Kaydet"
+        },
+        "941c891be23b6a837de1d46c30efad2a": {
+            "text": "Bu Resmi Ekle"
+        },
+        "a616a1ef7aa1ee32d7d31c742923a202": {
+            "text": "Ba\u015fka Resim Se\u00e7"
+        },
+        "c52cec1acd3726638b497fc3b39cb851": {
+            "text": "TinyMCE Geli\u015fmi\u015f Yap\u0131land\u0131rma Se\u00e7enekleri"
+        },
+        "9247ce0e73d45c25608e5e5fac2d781c": {
+            "text": "A\u015fa\u011f\u0131daki alanlar TinyMCE'ye \u00f6zg\u00fcd\u00fcr ve bu se\u00e7enekler hakk\u0131nda detayl\u0131 bilgiyi TinyMCE internet sayfas\u0131nda bulabilirsiniz. E\u011fer TinyMCE ile ilgili bilgiye sahip de\u011filseniz varsay\u0131lan yap\u0131land\u0131rmay\u0131 kullanman\u0131z en iyisi olacakt\u0131r."
+        },
+        "cc622260b5aec87bc7427108ffc573ab": {
+            "text": "TinyMCE ye bir alternatif, l\u00fctfen [CKEditor](http:\/\/modules.processwire.com\/modules\/inputfield-ckeditor\/) Inputfield mod\u00fcl\u00fcn\u00fc kontrol edin, mod\u00fcl b\u00f6l\u00fcm\u00fcnde mevcut."
+        },
+        "c0c126335fecd7cae389dfbf58c5622d": {
+            "text": "\u0130ste\u011fe ba\u011fl\u0131 content.css dosyas\u0131 uzant\u0131s\u0131 (sitenizin k\u00f6k dizinine g\u00f6re)  ve TinyMCE bu dosyay\u0131 varsay\u0131lan \/wire\/modules\/Inputfield\/InputfieldTinyMCE\/content.css yerine  kullanacak. Not bu content.css varsay\u0131lan : .align_left, .align_right, and .align_center sitilleri i\u00e7erebilir."
+        },
+        "96b75e3952ad31abfa95420bdb00cec3": {
+            "text": "\u00d6rnek: \/site\/templates\/styles\/content.css"
+        },
+        "5e0f16068f575dd9db39e18c16f0522f": {
+            "text": "Ek TinyMCE ayarlar\u0131"
+        },
+        "e9cc0e7796a91954d22c949695a127f7": {
+            "text": "E\u011fer ba\u015fka TinyMCE ayarlar\u0131 (yukar\u0131da yer almayan)  belirtmek istiyorsan\u0131z, alt alta anahtar:de\u011fer format\u0131nda giriniz."
+        },
+        "05c89e10b124c14e5502e938a4cfc7e2": {
+            "text": "\u00d6rnek : theme_advanced_styles:Header 1=header1;Header 2=header2;Header 3=header3;Table Row=tableRow1"
+        },
+        "060cba1f9aaf01aa7573c92e30e634d8": {
+            "text": "\u0130ste\u011fe ba\u011fl\u0131 \u00fc\u00e7\u00fcnc\u00fc-\u015fah\u0131s TinyMCE eklentileri ekleyebilirsiniz. Alt alta anahtar:de\u011fer format\u0131nda girmeni gerekiyor, anahtar eklenti ad\u0131 ve de\u011fer ise eklenti yolu olarak belirlenmi\u015ftir."
+        },
+        "af33d545f762188f4ac0cbf35c07d1a3": {
+            "text": "\u00d6rnek : bramus_cssextras : \/site\/tinymce\/myplugins\/bramus_cssextras"
+        }
+    }
+}

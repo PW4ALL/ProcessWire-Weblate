@@ -1,0 +1,12 @@
+{
+    "file": "wire\/modules\/Process\/ProcessHome.module",
+    "textdomain": "wire--modules--process--processhome-module",
+    "translations": {
+        "56cc559d234df2ffabc88b8926592264": {
+            "text": "Y\u00f6netim Paneli"
+        },
+        "3555f18b32d499274ee3fcfb73c15558": {
+            "text": "Y\u00f6netim panelindeki i\u015flemler i\u00e7in bir yer tutucu g\u00f6revi g\u00f6r\u00fcr. Giri\u015f yapt\u0131ktan sonra do\u011fru bir ak\u0131\u015f kontrol\u00fc sa\u011flar."
+        }
+    }
+}
