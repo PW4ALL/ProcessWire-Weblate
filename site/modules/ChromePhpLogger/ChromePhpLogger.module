@@ -1,0 +1,243 @@
+<?php
+
+/**
+ * ProcessWire Module
+ *
+ * Chrome Php Logger
+ * @created 12/12/12 by Philipp 'Soma' Urlich
+ *
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ *
+ */
+
+$dirname = dirname(__FILE__);
+require_once($dirname . "/ChromePhp.php");
+
+class ChromePhpLogger extends WireData implements Module {
+
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+
+        return array(
+            'title' => 'Chrome PHP Debug',
+            'version' => 005,
+            'summary' => 'Server Side Chrome PHP logger. Requires http://www.chromephp.com/ Chrome Php Extension, install and enable it on the site you want to inspect.'
+                        .' Includes ChromePhp debug class @ by Craig Campbell. Outputs various on request infos in Chrome JS console for inspecting.',
+            'href' => '',
+            'singular' => true,
+            'autoload' => true
+            );
+    }
+
+    public function __construct() {}
+
+    /**
+     * prepare the hook and stop if request is on admin pages or assets
+     *
+     */
+    public function init() {
+
+        //disable in admin on /processwire/ requests
+        if(strpos($_SERVER['REQUEST_URI'],$this->config->urls->admin) !== false) return;
+
+        // disable on /site/assets calls? strange
+        if(strpos($_SERVER['REQUEST_URI'],$this->config->urls->assets) !== false) return;
+
+        // disable if config debug is off
+        if($this->config->debug == false) return;
+
+        // window hosts don't have this method
+        $this->getrusage = (function_exists('getrusage'));
+
+        // add hooks needed to log data
+        $this->addHookBefore("Page::render", $this, "startDebug");
+        $this->addHookAfter("Page::render", $this, "renderDebug");
+    }
+
+    /**
+     * start the debug timer
+     */
+    public function startDebug(HookEvent $event){
+
+        // user $page->skipChromePhpLogger = 1 to skip logging
+        if($event->object->skipChromePhpLogger) return;
+
+        $this->time_start = microtime(true);
+        if($this->getrusage) {
+            $dat = getrusage();
+            // define('PHP_TUSAGE', $this->time_start);
+            // define('PHP_RUSAGE', $dat["ru_utime.tv_sec"]*1e6+$dat["ru_utime.tv_usec"]);
+            $this->rusage = $dat["ru_utime.tv_sec"]*1e6+$dat["ru_utime.tv_usec"];
+        }
+    }
+
+    public function renderDebug(HookEvent $event) {
+
+        $page = $event->object;
+
+        // user $page->skipChromePhpLogger = 1 to skip logging
+        if($page->skipChromePhpLogger) return;
+
+        $time_end = microtime(true);
+        $execution_time = ($time_end - $this->time_start);
+
+        // TODO: windows compatible script?
+        if($this->getrusage) {
+            $dat = getrusage();
+            $dat["ru_utime.tv_usec"] = ($dat["ru_utime.tv_sec"]*1e6 + $dat["ru_utime.tv_usec"]) - $this->rusage;
+            $time = ($time_end - $this->time_start) * 1000000;
+            // cpu per request
+            if($time > 0) {
+                $cpu = sprintf("%01.2f", ($dat["ru_utime.tv_usec"] / $time) * 100);
+            } else {
+                $cpu = '0.00';
+            }
+        }
+
+        ChromePhp::log("PageRenderTime: " . $execution_time . " s");
+        ChromePhp::log("Memory: " . number_format(memory_get_usage()/1024/1024,2) . " Mb");
+        if($this->getrusage) ChromePhp::log("CPU: " . $cpu . "%");
+            else ChromePhp::log("CPU: getrusage() not supported on this system");
+        ChromePhp::log("PagesCacheCount: ". count($this->pages->getCache()));
+
+        /**
+         * output all fields and their settings from the current page
+         */
+        $pagedata = array();
+        //$pagedata = $page->getIterator();
+
+        foreach($page->fields as $field){
+            $value = $this->getFieldValue($page,$field);
+            if(!$value) continue;
+            $pagedata["$field->name - ($field->type)"] = array('value' => $value, "settings" => $field->getArray());
+        }
+        $pagedata["name InputfieldPageName"] = array('value' => $page->name, "settings" => null);
+        $pagedata["url"] = array('value' => $page->url, "settings" => null);
+        $pagedata["template"] = array('value' => $page->template->name, "settings" => $page->template->getArray());
+        ChromePhp::log(array("CurrentPage" => $pagedata));
+
+        /**
+         * user data
+         */
+        $userdata = array();
+        foreach($this->user->fields as $field){
+            $value = $this->getFieldValue($this->user,$field);
+            if(!$value) continue;
+            $userdata["$field->name - ($field->type)"] = array('value' => $value, "settings" => $field->getArray());
+        }
+        $userdata["name InputfieldPageName"] = array('value' => $this->user->name, "settings" => null);
+        ChromePhp::log(array("CurrenUserData" => $userdata));
+
+        /**
+         * get user roles and permissions for current users
+         */
+        $userroles = array();
+        $permissions = array();
+        foreach($this->user->roles as $role){
+            foreach($this->roles->get($role->name)->permissions->getArray() as $perm) $permissions[] = $perm->name;
+            $userroles["$role->name"]["permissions"] = $permissions;
+        }
+        ChromePhp::log(array("CurrentUserRoles: " => $userroles));
+
+        $pagepermissions = array();
+        foreach($this->user->getPermissions($page) as $permission){
+            $pagepermissions[] = $permission->name;
+        }
+        ChromePhp::log(array("CurrentUserPermissionsOnPage: " => $pagepermissions));
+
+        /**
+         * output pages loaded/cached for this request
+         */
+        $pagecache = array();
+        foreach($this->pages->getCache() as $key => $p) {
+            $pagecache["$p->title"] = $p->getArray();
+        }
+        ChromePhp::log(array("PagesCache" => $pagecache));
+
+        /**
+         * The fuel for the current request, these are the template variables
+         */
+        $fuel = array();
+        foreach($this->fuel as $key => $value) $fuel[] = $key;
+        ChromePhp::log(array('Fuel' => $fuel));
+
+        /**
+         * modules loaded
+         */
+        $modulesloaded = array();
+        foreach($this->modules as $module) {
+            if(!$module instanceof ModulePlaceholder)
+                $modulesloaded[] = $module->className() . ": " . get_class($module);
+        }
+        ChromePhp::log(array('Modules' => $modulesloaded));
+
+        /**
+         * output some useful server vars
+         */
+        ChromePhp::log(array("ServerVars" => $_SERVER));
+        ChromePhp::log(array("Cookies" => $_COOKIE));
+        ChromePhp::log(array("Request" => $_REQUEST));
+
+        $querylog = array();
+        foreach($this->db->getQueryLog() as $n => $sql) {
+            $querylog["MySQLQueries"][$n] = $sql;
+        }
+        ChromePhp::log($querylog);
+    }
+
+    /**
+     * iterate through page fields to get the value or even more if page array
+     *
+     * @param  Page   $page  the page object
+     * @param  field $field the page field object
+     * @return mixed        value of field
+     */
+    protected function getFieldValue(Page $page, $field){
+        $value = '';
+        if($field->type == "FieldtypeFieldsetTabOpen"
+           || $field->type == "FieldtypeFieldsetTabClose"
+           || $field->type == "FieldtypeFieldsetOpen"
+           || $field->type == "FieldtypePassword"
+           || $field->type == "FieldtypeFieldsetClose") return false;
+
+        if($field->type == "FieldtypeRepeater"){
+            if(count($page->$field)){
+                $value = array();
+                foreach($page->$field as $o) $value[$o->id] = $o->getIterator();
+            }
+        } else if($field->type == "FieldtypePage"){
+            if(count($page->$field)){
+                $value = array();
+                if($page->$field instanceof PageArray){
+                    foreach($page->$field as $o) $value[$o->id] = $o->getIterator();
+                } else {
+                    if($page->$field) $value[$page->$field->id] = $page->$field->getIterator();
+                        else $value = "null";
+                }
+            } else {
+                //ChromePhp::log($page->$field->name);
+                $value = "null";
+            }
+        } else if($field->type == "FieldtypeImage" || $field->type == " FieldtypeFile"){
+            if(count($page->$field)){
+                $value = array();
+                foreach($page->$field as $o) {
+                    $value[$o->filename] = $o->getIterator();
+                }
+            }
+        } else {
+            $page->of(true);
+            $value = $page->$field ? $page->$field : 'null';
+            $page->of(false);
+        }
+        return $value;
+    }
+
+}

@@ -1,0 +1,153 @@
+<?php
+
+/**
+ * Processwire 'FrontendContentManager' module
+ * 
+ * The FrontendContentManager class handle add / edit / delete content from the frontend.
+ * 
+ * @author Sturm88x4, pwFoo
+ * @since 2014-06-05
+ * 
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ */
+class FrontendContentManager extends WireData implements Module { //, ConfigurableModule {
+
+    /** @var object FormHelper module object */
+    private $fh;
+    
+    /** @var object Page object to manipulate and work with */
+    private $pageObj;
+    
+    /** @var object Processed form values */
+    private $formData;
+    
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     * 
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'FrontendContentManager',
+            'summary' => 'Frontend create, edit and delete pages',
+            'version' => '0.0.4',            
+            'requires' => array('FormHelper'),
+        );
+    }
+    
+    /**
+     * Initialize module, setup hooks. Must be present
+     */
+    public function init() {
+        $this->fh = $this->modules->get('FormHelper');
+    }
+
+    /**
+     * Add new Page process
+     * @param object $parent The parent Page object
+     * @param object $template Optional Template object
+     * @return object The created and presaved Page object
+     */
+    public function add($parent, $template = null) {
+        $this->makePage($parent, $template);
+        $this->updatePageFields();
+        return $this->pageObj;
+    }
+    
+    /**
+     * Edit a Page process
+     * @param object $editPage Page object to edit
+     * @return object Updated, unsaved Page object
+     */
+    public function edit($editPage) {
+        $this->pageObj = $editPage;
+        $this->pageObj->of(false);
+        $this->updatePageFields();
+        return $this->pageObj;
+    }
+    
+    /** Delete process isn't implemented yet */
+    protected function delete() {
+    }
+
+    /**
+     * Save the current page object
+     * @return object Returns the saved Page object
+     */
+    public function save() {
+        $this->pageObj->save();
+        $this->pageObj->of(true);
+        return $this->pageObj;
+    }
+    
+    /**
+     * Create and presave a new page helper method.
+     * @param object $parent The parent Page object
+     * @param object $template The optional Template object
+     * @return object The saved Page object
+     */
+    protected function makePage($parent, $template = null) {
+        if ($template === null)     $template = $parent->template;
+        
+        $title = $this->formData->get('title')->value;
+        
+        $p = new Page();
+        $this->pageObj->of(false);
+        
+        $p->parent   = $parent;
+        $p->template = $template;
+        $p->title    = $this->sanitizer->text($title);
+        $p->name     = $this->sanitizer->pageName($title);
+        
+        $this->pageObj = $p;
+        return $this->save();
+    }
+    
+    /**
+     * Update Page object fields values without saving here
+     */
+    protected function updatePageFields() {
+        foreach ($this->formData->children as $field) {
+            if ($field->type == 'file') {
+                $this->pageObj = $this->fh->uploadFiles($this->pageObj, $field->name);
+            }
+            elseif ($field->value != $this->pageObj->get($field->name)) {    
+                $this->pageObj->set($field->name, $field->value);
+            }
+        }
+    }
+    
+    /**
+     * Wrapper for FormHelper method createFrom()
+     * @param object|array $src Source to build the form (Page, Template or array)
+     * @param array $formOptions Array with options which passed to FormHelper
+     * @return object Form API object
+     */
+    public function createForm($src, $formOptions = null) {
+        return $this->fh->createForm($src, $formOptions);
+    }
+    
+    /** 
+     * Wrapper for FormHelper method formProcess()
+     * @return object processed form data OR NULL / false
+     */
+    public function formProcess() {
+        $this->formData = $this->fh->formProcess();
+        
+        if ($this->fh->form->getErrors())   return false;
+        return $this->formData;
+    }
+    
+    /**
+     * Wrapper for FormHelper method jsConfig()
+     * @return string JavaScript code for WYSIWYG editor
+     */
+    public function jsConfig() {
+        return $this->fh->jsConfig();
+    }
+}

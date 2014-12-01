@@ -1,0 +1,254 @@
+<?php
+
+/**
+ * Markup Yahoo! Weather
+ *
+ * Display weather forecast using Yahoo! Weather API
+ *
+ * Author 2013 Nikola Vidoni
+ *
+ * Weather icons by umutavci, http://umutavci.deviantart.com/
+ *
+ * Version 1.0.2
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2013 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://processwire.com
+ *
+ */
+
+class MarkupWeather extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * Return information about this module (required)
+     *
+     */
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Markup Yahoo! Weather',
+			'version' => 102,
+			'summary' => __('Display weather forecast using Yahoo! Weather API', __FILE__),
+            'autoload' => false,
+            'singular' => true
+		);
+	}
+
+    /**
+     * Initialize the module
+     *
+     */
+    public function init() {
+        // Hook before page render
+        $this->addHookAfter('Page::render', $this, 'addScripts');
+    }
+
+    /**
+     * Default options for module
+     *
+     */
+    protected static $options = array(
+        'woeid' => '851128', // Yahoo! Woeid (Where on Earth IDentifier)
+        'locale' => 'en_US', // PHP locale in setlocale() format
+        'date' => '%A, %d.%m.%Y.', // PHP date in strftime() format
+        'days' => 1, // shows 5 day forecast below current weather forecast, default = checked
+        'scale' => 0 // display temperature in Fahrenheit instead of Celsius, default = unchecked
+    );
+
+    /**
+     * Get and set options defined above
+     *
+     */
+    public function __construct() {
+	   foreach(self::$options as $key => $value) {
+		   	$this->set($key, $value);
+	   }
+	}
+
+    /**
+     * Hook scripts and styles during Page Render
+     *
+     */
+    public function addScripts(HookEvent $event) {
+
+        $page = $event->object;
+
+        if($page->template == "admin") return;
+
+        $script = "<link rel='stylesheet' type='text/css' href='{$this->config->urls->MarkupWeather}MarkupWeather.css' />\n";
+        $script .= "<script type='text/javascript' src='{$this->config->urls->MarkupWeather}MarkupWeather.js'></script>\n";
+
+        $event->return = str_ireplace("</head>", "$script</head>", $event->return);
+
+    }
+
+    /**
+     * Render weather conditions
+     *
+     * Returns markup of weather conditions defined with options set in module itself
+     *
+     */
+    public function ___render() {
+
+        if(wire()->page->template == 'admin') return;
+
+        // Check what temperature scale is in use
+        $scale = $this->scale ? 'f' : 'c';
+        // Get weather data
+        $result = file_get_contents('http://weather.yahooapis.com/forecastrss?w=' . $this->woeid . '&u=' . $scale);
+        $xml = simplexml_load_string($result);
+        $xml->registerXPathNamespace('yweather', 'http://xml.weather.yahoo.com/ns/rss/1.0');
+
+        $location = $xml->channel->xpath('yweather:location');
+
+        if(!empty($location)) {
+
+            foreach($xml->channel->item as $item) {
+
+                // Initialize setlocale and display date using localized format
+                setlocale(LC_ALL, "{$this->locale}.UTF-8");
+
+                // Translatable array of days
+                $days = array(
+                    'Mon' => __("Mon", __FILE__),
+                    'Tue' => __("Tue", __FILE__),
+                    'Wed' => __("Wed", __FILE__),
+                    'Thu' => __("Thu", __FILE__),
+                    'Fri' => __("Fri", __FILE__),
+                    'Sat' => __("Sat", __FILE__),
+                    'Sun' => __("Sun", __FILE__)
+                );
+
+                // Translatable array of conditions
+                $conditions = array(
+                    'Tornado' => __("Tornado", __FILE__),
+                    'Tropical Storm' => __("Tropical Storm", __FILE__),
+                    'Hurricane' => __("Hurricane", __FILE__),
+                    'Severe Thunderstorms' => __("Severe Thunderstorms", __FILE__),
+                    'Thunderstorms' => __("Thunderstorms", __FILE__),
+                    'Mixed Rain And Snow' => __("Mixed Rain And Snow", __FILE__),
+                    'Mixed Snow And Sleet' => __("Mixed Snow And Sleet", __FILE__),
+                    'Freezing Drizzle' => __("Freezing Drizzle", __FILE__),
+                    'Drizzle' => __("Drizzle", __FILE__),
+                    'Freezing Rain' => __("Freezing Rain", __FILE__),
+                    'Showers' => __("Showers", __FILE__),
+                    'Snow Flurries' => __("Snow Flurries", __FILE__),
+                    'Light Snow Showers' => __("Snow Flurries", __FILE__),
+                    'Blowing Snow' => __("Blowing Snow", __FILE__),
+                    'Snow' => __("Snow", __FILE__),
+                    'Hail' => __("Hail", __FILE__),
+                    'Sleet' => __("Sleet", __FILE__),
+                    'Dust' => __("Dust", __FILE__),
+                    'Foggy' => __("Foggy", __FILE__),
+                    'Haze' => __("Haze", __FILE__),
+                    'Smoky' => __("Smoky", __FILE__),
+                    'Blustery' => __("Blustery", __FILE__),
+                    'Windy' => __("Windy", __FILE__),
+                    'Cold' => __("Cold", __FILE__),
+                    'Cloudy' => __("Cloudy", __FILE__),
+                    'Mostly Cloudy' => __("Mostly Cloudy", __FILE__),
+                    'Partly Cloudy' => __("Partly Cloudy", __FILE__),
+                    'Clear' => __("Clear", __FILE__),
+                    'Cloudy' => __("Cloudy", __FILE__),
+                    'Sunny' => __("Sunny", __FILE__),
+                    'Fair' => __("Fair", __FILE__),
+                    'Mixed Rain And Hail' => __("Mixed Rain And Hail", __FILE__),
+                    'Hot' => __("Hot", __FILE__),
+                    'Isolated Thunderstorms' => __("Isolated Thunderstorms", __FILE__),
+                    'Scattered Thunderstorms' => __("Scattered Thunderstorms", __FILE__),
+                    'Scattered Showers' => __("Scattered Showers", __FILE__),
+                    'Heavy Snow' => __("Heavy Snow", __FILE__),
+                    'Scattered Snow Showers' => __("Scattered Snow Showers", __FILE__),
+                    'Heavy Snow' => __("Heavy Snow", __FILE__),
+                    'Partly Cloudy' => __("Partly Cloudy", __FILE__),
+                    'Thundershowers' => __("Thundershowers", __FILE__),
+                    'Snow Showers' => __("Snow Showers", __FILE__),
+                    'Isolated Thundershowers' => __("Isolated Thundershowers", __FILE__),
+                    'Not Available' => __("Not Available", __FILE__)
+                );
+
+                $current = $item->xpath('yweather:condition');
+                $forecast = $item->xpath('yweather:forecast');
+
+                $current = $current[0];
+
+                // Weather forecast container
+                $out = "<div id='weather'>";
+                $out .= "<div class='location'><h1>" . $location[0]['city'] . ", " . $location[0]['country'] . "</h1><span>" . iconv('ISO-8859-2', 'UTF-8', strftime($this->date, strtotime(date("d.m.Y.")))) . "</span></div>";
+                $out .= "<div class='current'>";
+                $out .= "<img src='" . str_replace("http://l.yimg.com/a/i/us/we/52/", "{$this->config->urls->MarkupWeather}icons/", "http://l.yimg.com/a/i/us/we/52/" . $current['code'] . ".png") . "' />";
+                $out .= "<span class='temp'>" . $current['temp'] . "&deg;" . strtoupper($scale) . "</span>";
+                $out .= "<div class='conditions'>" . __("Current Conditions:", __FILE__) . " <span>" . str_replace(array_keys($conditions), $conditions, $current['text']) . "</span></div>";
+                $out .= "</div>";
+
+                // Show 5 day forecast below current weather forecast
+                if($this->days == 1) {
+                    $out .= "<ul class='forecast'>";
+                    for($i = 0; $i < 5; $i++) {
+                        $out .= "<li><span class='day'>" . str_replace(array_keys($days), $days, $forecast[$i]['day']) . "</span>" . "<img class='tip' src='" . str_replace("http://l.yimg.com/a/i/us/we/52/", "{$this->config->urls->MarkupWeather}icons/", "http://l.yimg.com/a/i/us/we/52/" . $forecast[$i]['code'] . ".png") . "' title='" . str_replace(array_keys($conditions), $conditions, $forecast[$i]['text']) . "' /><span class='high'>" . $forecast[$i]['high'] . "&deg;" . strtoupper($scale) . "</span><span class='low'>" . $forecast[$i]['low'] . "&deg;" . strtoupper($scale) . "</span></li>";
+                	}
+                    $out .= "</ul>";
+                }
+
+                $out .= "</div>";
+
+                return $out;
+
+            }
+        }
+
+    }
+
+    /**
+     * Configure the module
+     *
+     */
+	static public function getModuleConfigInputfields(array $data) {
+
+		$fields = new InputfieldWrapper();
+
+		$modules = wire('modules');
+
+		$data = array_merge(self::$options, $data);
+
+        $field = $modules->get("InputfieldText");
+		$field->name = "woeid";
+		$field->label = "Yahoo! Weather Woeid";
+		$field->value = $data['woeid'];
+		$field->description = __("Woeid is a number located right beside the city name, e.g. http://weather.yahoo.com/croatia/grad-zagreb/zagreb-851128/", __FILE__);
+		$fields->add($field);
+
+        $field = $modules->get("InputfieldText");
+		$field->name = "locale";
+		$field->label = "Set Locale";
+		$field->value = $data['locale'];
+		$field->notes = __("See the [PHP setlocale](http://php.net/manual/en/function.setlocale.php) function reference for more information on how to customize this format.", __FILE__);
+		$fields->add($field);
+
+        $field = $modules->get("InputfieldText");
+		$field->name = "date";
+		$field->label = "Date Format";
+		$field->value = $data['date'];
+		$field->notes = __("See the [PHP strftime](http://php.net/manual/en/function.strftime.php) function reference for more information on how to customize this format.", __FILE__);
+		$fields->add($field);
+
+        $field = $modules->get("InputfieldCheckbox");
+		$field->name = "days";
+        $field->label = __("Show 5 day forecast below current weather forecast?", __FILE__);
+        $field->value = 1;
+		$field->attr('checked', empty($data['days']) ? '' : 'checked');
+		$fields->add($field);
+
+        $field = $modules->get("InputfieldCheckbox");
+		$field->name = "scale";
+        $field->label = __("Display temperature in Fahrenheit instead of Celsius?", __FILE__);
+        $field->value = 1;
+		$field->attr('checked', empty($data['scale']) ? '' : 'checked');
+		$fields->add($field);
+
+		return $fields;
+
+    }
+
+}

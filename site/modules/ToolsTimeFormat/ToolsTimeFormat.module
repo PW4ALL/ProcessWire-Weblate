@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * ToolsTimeFormat
+ *
+ * Module formatting timestamps into human readable relative format (XY units ago)
+ * 
+ * @author Adam Kiss
+ * @version 1.0.3
+ * @since 2013-01-12
+ * @license WTFPL <http://www.wtfpl.net/>
+ * 
+ * @link http://www.adamkiss.com
+ */
+
+class ToolsTimeFormat extends WireData implements Module {
+
+  /**
+   * Z informationz
+   *
+   * @return array
+   */
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'TimeFormat',
+      'version' => 103, 
+      'summary' => 'Module formatting timestamps into human readable relative format (XY units ago)',
+      'href' => 'http://adamkiss.com'
+    );
+  }
+
+  public function init(){}
+  public function ___install() {
+    if(ProcessWire::versionMajor == 2 && ProcessWire::versionMinor < 2) {
+      throw new WireException("This module requires ProcessWire 2.2 or newer"); 
+    }
+  }
+
+  private $formats_singular = array(
+    '%d second ago',
+    '%d minute ago',
+    '%d hour ago',
+    '%d day ago',
+    '%d week ago',
+    '%d month ago',
+    '%d year ago',
+    '%d decade ago'
+  );
+
+  private $formats_plural = array(
+    '%d seconds ago',
+    '%d minutes ago',
+    '%d hours ago',
+    '%d days ago',
+    '%d weeks ago',
+    '%d months ago',
+    '%d years ago',
+    '%d decades ago'
+  );
+
+  private $lengths = array("60","60","24","7","4.35","12","10");
+  private $limits = array("80","70","28","10","8","14","18");
+
+  public function ago($timestamp){
+    $then = new DateTime((is_int($timestamp) ? "@{$timestamp}" : $timestamp));
+    $now = new DateTime;
+    $difference = abs($now->getTimestamp() - $then->getTimestamp());
+
+    $smallest_length = 0;
+    while($smallest_length < 7 && $difference > $this->limits[$smallest_length]){
+      $difference = $difference / $this->lengths[$smallest_length++];
+    }
+
+    return sprintf(($difference < 1.5) ?
+      $this->_($this->formats_singular[$smallest_length]) :
+      $this->_($this->formats_plural[$smallest_length]),
+      (int)round($difference)
+    );
+  }
+}

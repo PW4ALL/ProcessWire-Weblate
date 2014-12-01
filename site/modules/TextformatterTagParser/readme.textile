@@ -1,0 +1,133 @@
+h1. Tag Parsing Textformatter Module For ProcessWire
+
+Substitutes tags in a given text block with values from a context (or an array of contexts). Each context provider must be an instance of WireData. This means that almost any object from ProcessWire can be used by the parser to do substitutions.
+
+Given an input string such as: 
+
+bc. "Date: {datetime}\nUser: {name}\nIP:   {REMOTE_ADDR}"
+
+...and a user object as context, you might get something like this as the result...
+
+bc.. Date: 12th September 2012, 14:45
+User: ryan
+IP:   127.0.0.1
+
+p. ...of course, your mileage may vary.
+
+h2. Installation
+
+# Copy TextformatterTagParser.module to your site/modules directory
+# Login to the admin interface
+# Navigate to the modules page
+# Click the "Check for new modules"
+# Click on the name "TextformatterTagParser" in the message that appears or scroll to the bottom of the screen to locate the correct entry
+# Click the "Install" button.
+
+
+h2. Tags In The Input
+
+You can embed tags in the input text block in the positions in which you'd like the parser to make a substitution from the context it has been given. These tags are always formed by matched curly braces and must take one of these forms...
+
+# {fieldname} 
+# {context.fieldname}
+
+The first form can be used regardless of how many contexts are setup in the parser, whilst the second form is used to specified which context to extract the fieldname from when using multiple contexts. For example, {page.name} is more specific than just {name}. If no context specifier is used in a tag then contexts will be searched for a match in the order in which they appear in the context array and the first match will be used for the substitution.
+
+The value of _fieldname_ can be any field accessible in any context or from the $_SERVER globals or one of the following special fields...
+
+|_. Special Tag |_. Description |
+| {datetime} | The current date & time as formatted according to the dateFormat value in your site's config.php file. |
+
+Special tags override other context fields with the same name so if you want to include the datetime from one of your context objects you need to specify the context in the tag (eg. "{login.datetime}").
+
+h2. Transformation Of Tag Values
+
+It is possible to have the parser apply a number of transformations to the value used to replace a given tag. You can specify a transformation to perform on the substituted value of a tag by appending it to the end of the tag like this @{name>upper}@ or @{page.name>title}@.
+
+You can chain transformations so: @{page.title>lower>url}@ which will lowercase the title field value and then URL encode it.
+
+|_. Transformation |_. Description |
+| lower | Runs the value through @mb_strtolower()@ or @strtolower()@ |
+| upper | Runs the value through @mb_strtoupper()@ or @strtoupper()@ |
+| title | Runs the value through @mb_convert_case( , MB_CASE_TITLE, )@ or @ucwords()@ |
+| url   | URL encodes the value unless URL encoding is set globally |
+| encode | A deprecated alias for the 'url' transformation |
+| base64 | Base64 encodes the value |
+| strip | Runs the value through @strip_tags()@ |
+| email | Limits substitution to a single, trimmed line. Several possible line-ending characters are taken into account when splitting the substituted value into a single line. |
+| html | Runs the value through @htmlspecialchars( , ENT_QUOTES, 'utf-8' )@ |
+| initial | Returns the initial letter of the string |
+| initcap | Returns the initial letter of the string capitalised and postfixed with '.' |
+| initials | Returns the initial letters of each word of the field |
+| initcaps | Returns the initial letters of each word of the field capitalised and postfixed with '.' |
+| thinspaces | Thins out multiple spaces, replacing them with a single space |
+| nospaces | Strips spaces from the field. |
+| nl2br | Converts newlines to html breaks. |
+| nl2space | Converts newlines to spaces; essentially collapsing multiline text. |
+| (integer) _n_ | Select the [*n*][^th^] word from the input string |
+
+You can also specify which of the above are to be applied to *all* the substitutions in a text by setting that transform name to true on the parser (see usage example.)
+
+h2. Usage
+
+h3. Getting a parser object:
+
+bc. $parser = wire()->modules->get("TextformatterTagParser"); 
+
+h3. Setting a single context:
+
+bc. $parser->set('context', $user);
+
+If you are only setting a single context then the shorter _{fieldname}_ tag format will be sufficient for the parser.
+
+h3. Setting multiple contexts:
+  
+bc. $parser->set('context', array('user'=>$user, 'page'=>$page) );
+
+If you are using multiple contexts, you will probably need to use the _{context.fieldname}_ tag format in your input strings to avoid ambiguity when the parser looks for substitutions.
+
+h3. Parsing a string:
+
+Parsing is done using the format() method.
+
+bc. $parser->format($string);
+
+*NB:* The string is passed to format() by reference and *the value is changed* by the parser.
+
+h3. Setting transfomrations for all substitutions:
+
+If you are formatting something that needs all the substitutions to be transformed in a certain manner you just...
+
+bc. $parser->set('url', true);
+
+p. ...and the parser will apply the transformation as it goes. You can set as many or few as needed.
+
+h3. Putting it together:
+
+You can format as many blocks as you want with a given parser & context...
+
+bc.. $body = "Hi {firstname>title} and welcome to our service. You can login using your username {name} and password.";
+$subject = "Welcome {name>1>title}"; // Show the first word of the name in title case.
+$parser = wire()->modules->get("TextformatterTagParser");
+$parser
+    ->set('context', $user)
+    ->set('email', true)    // apply the email transformation to all substituted values in the subject to prevent header injections
+    ->format($subject)      // make $subject specific to this $user
+    ->set('email', false)   // no need to prevent headers in the body
+    ->format($body)         // make $body specific to given $user
+    ;
+$sent = @email($user->email, $subject, $body);
+
+p. You can setup new contexts on a given parser instance between format() calls.
+
+h3. Debug output
+
+If you'd like to see a trail of which transformations were applied by the parser do a @$parser->set('debug', true)@ before you call @format()@.
+
+h2. Helper Module
+
+There is a small "test module":https://github.com/netcarver/PW-ProcessTagParserTest available that allows you to experiment with this module from within a ProcessWire installation.
+
+h2. License
+
+GPLv2

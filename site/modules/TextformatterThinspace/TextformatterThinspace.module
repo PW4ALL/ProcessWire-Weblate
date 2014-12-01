@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * ProcessWire Thinspace Module
+ *
+ * Replaces multiple consecutive ascii space or newline characters with just a single instance.
+ *
+ * @copyright Copyright (c) 2012, Netcarver (https://github.com/netcarver)
+ */
+
+class TextformatterThinspace extends Textformatter
+{
+    public static function getModuleInfo()
+    {
+        return array(
+            'title'     => __('Thin Space'),
+            'version'   => 100,
+            'summary'   => __("Replace repeated consecutive whitespace characters with just a single character."),
+            'author'    => 'Netcarver',
+        );
+    }
+
+
+
+    /**
+     * Format the input string
+     *
+     * @param string $str The block of text to parse
+     *
+     * The incoming string is replaced with the formatted version of itself.
+     **/
+    public function format(&$str)
+    {
+        $str = preg_replace('/(?:\x{20}|\x{a0}){2,}/u', ' ', $str);
+        $str = preg_replace("/\n{2,}/u", "\n", $str);
+    }
+}

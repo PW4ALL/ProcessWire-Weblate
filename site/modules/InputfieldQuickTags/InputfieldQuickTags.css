@@ -1,0 +1,9 @@
+.ed_toolbar {background:#F0F0EE;border:1px solid #ccc;border-bottom:0px;}
+.ed_toolbar .ed_button, .ed_toolbar input:not([type=submit]):not([type=file]):not([type=checkbox]):not([type=radio]) {color:#444;-webkit-appearance: none;padding:4px 13px;border:0px;background:transparent;border-right:1px solid #ccc;border-left:1px solid #f9f9f9;margin:5px 0px 5px 0px;}
+.ed_toolbar .ed_button:hover, .ed_toolbar input:not([type=submit]):not([type=file]):not([type=checkbox]):not([type=radio]):hover {background:#e9e9e9;padding:9px 13px;margin:-5px 0px;cursor:pointer;color:#000;}
+.ed_toolbar .ed_bold {font-weight:bold;font-family: sans-serif;}
+.ed_toolbar .ed_italic {font-style:italic;}
+.ed_toolbar .ed_del {text-decoration:line-through;}
+.ed_toolbar .ed_link {color: #0000FF !important;text-decoration:underline;}
+
+.ed_toolbar + textarea {background:#fff;}

@@ -1,0 +1,152 @@
+<?php
+
+/**
+ * ProcessWire Range Slider Inputfieldtype
+ * by "Soma" Philipp Urlich
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class InputfieldRangeSlider extends Inputfield implements InputfieldHasArrayValue{
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('Integer Range Slider', __FILE__), // Module Title
+			'summary' => __('Simple jQuery UI integer range slider that can be configured.', __FILE__), // Module Summary
+			'version' => 104,
+			'requires' => array("FieldtypeRangeSlider")
+		);
+	}
+
+	public function __construct() {
+		parent::__construct();
+	}
+
+	public function init() {
+		return parent::init();
+	}
+
+	public function setAttribute($key, $value) {
+
+		if($key == 'value'){
+			if(!is_array($value)) {
+				throw new WireException("This input only accepts an array for it's value");
+			}
+		}
+
+		return parent::setAttribute($key, $value);
+	}
+
+	public function ___render() {
+
+		$out = '';
+
+		// config
+		$min = $this->minValue;
+		$max = $this->maxValue;
+		$range = $this->isrange ? 'range: true,' : '';
+		$value = $this->attr('value');
+
+
+		if($this->isrange) $display = "<span id='RangeSlider_{$this->name}_display1'></span> – <span id='RangeSlider_{$this->name}_display2'>0</span>";
+			else $display = "<span id='RangeSlider_{$this->name}_display1'>0</span>";
+
+		$out .= "<div class='RangeSlider RangeSlider_$this->name' id='RangeSlider_$this->name'>$display<div></div></div>";
+
+		if($this->isrange) {
+			$out .= "<input type='hidden' name='{$this->name}[min]' id='Inputfield_" . $this->name . "1' value='" . $value['min'] . "'/>";
+			$out .= "<input type='hidden' name='{$this->name}[max]' id='Inputfield_" . $this->name . "2' value='" . $value['max'] . "'/>";
+
+			$display = "$( '#RangeSlider_{$this->name}_display1' ).text( '$this->prefix' + ui.values[0] + '$this->suffix');";
+			$display .= "$( '#RangeSlider_{$this->name}_display2' ).text( '$this->prefix' + ui.values[1] + '$this->suffix');";
+
+			$constrain = "$( '#Inputfield_{$this->name}1' ).val( ui.values[0] );";
+			$constrain .= "$( '#Inputfield_{$this->name}2' ).val( ui.values[1] );";
+			// for change event checks
+			$constrain .= "$( '#Inputfield_{$this->name}1' ).trigger( 'change' );";
+
+			$val = "values: [ $( '#Inputfield_{$this->name}1' ).val(), $( '#Inputfield_{$this->name}2' ).val() ]";
+			$set = "$( '#RangeSlider_{$this->name}_display1' ).text( '$this->prefix' + $( '#RangeSlider_$this->name div' ).slider( 'values', 0 ) + '$this->suffix' );";
+			$set .= "$( '#RangeSlider_{$this->name}_display2' ).text( '$this->prefix' + $( '#RangeSlider_$this->name div' ).slider( 'values', 1 ) + '$this->suffix' );";
+
+		} else {
+			$out .= "<input type='hidden' name='{$this->name}[min]' id='Inputfield_" . $this->name . "1' value='" . $value['min'] . "'/>";
+
+			$display = "$( '#RangeSlider_{$this->name}_display1' ).text( '$this->prefix' + ui.value + '$this->suffix');";
+
+			$constrain = "$( '#Inputfield_{$this->name}1' ).val( ui.value );";
+			// for change event checks
+			$constrain .= "$( '#Inputfield_{$this->name}1' ).trigger( 'change' );";
+
+			$val = "value: $( '#Inputfield_{$this->name}1' ).val()";
+			$set = 	"$( '#RangeSlider_{$this->name}_display1' ).text( '$this->prefix' + $( '#RangeSlider_$this->name div' ).slider( 'value' ) + '$this->suffix' );";
+
+		}
+
+		$width = $this->width;
+		$step = $this->step;
+
+		$out .= <<<_END
+<script>
+$(function(){
+	$( '#RangeSlider_$this->name div' ).slider({
+		$range
+		$val,
+		animate: true,
+		min: $min,
+		max: $max,
+		step: $step,
+		slide: function( event, ui ) {
+			$display
+			$constrain
+
+		}
+	});
+	$set
+});
+
+
+</script>
+<style>
+	#RangeSlider_$this->name > div { width:$width%!important; }
+</style>
+_END;
+
+		return $out;
+
+	}
+
+
+	public function ___processInput(WireInputData $input) {
+
+		$name = $this->attr('name');
+		$range = $this->attr('value');
+		$inputValue = $input->$name;
+
+		if(isset($inputValue)) {
+			// check for changes in min value
+			if($range['min'] != $inputValue['min']){
+				$range['min'] = $inputValue['min'];
+				$this->trackChange('value');
+			}
+			// only if range is enabled
+			if($this->isrange){
+				if($range['max'] != $inputValue['max']){
+					$range['max'] = $inputValue['max'];
+					$this->trackChange('value');
+				}
+			}
+		}
+		// set new value
+		$this->attr("value", $range);
+		// echo "json:" . wireEncodeJSON((array) $this->attr("value"), true);
+		return $this;
+	}
+
+}

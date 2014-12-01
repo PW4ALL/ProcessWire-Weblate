@@ -1,0 +1,305 @@
+<?php
+
+/**
+ * AudioMP3 module
+ *
+ * This module provides to integrate Flash-MP3-Players in your pages.
+ *
+ * made by Christoph Thelen
+ * Copyright (c) 2013, Christoph Thelen
+ * http://www.kixe.de
+ * 
+ * Flashplayer
+ * Copyright and License: http://flash-mp3-player.net/
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ * 
+ * 
+ * changelog
+ * 14.06.13 add error messages to the install routine
+ * 15.06.13 hook added to $page
+ * 20.06.13 message added to the uninstall routine
+ * 
+ * 
+ */
+
+class Audio_MP3 extends Process implements ConfigurableModule {
+
+	/**
+	 *
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'Audio MP3', 
+			'version' => 101, 
+			'summary' => 'Creates a Field to store MP3-Audiofiles and generates a Frontend-Player which is extensively configurable in the Module settings.',
+			'author' => 'Christoph Thelen',
+			'singular' => true, 
+			'autoload' => true, 
+			'href' => 'http://modules.processwire.com/modules/audio-mp3/'
+			);
+	}
+
+	protected static $configDefaults = array(
+		'width'=>360,
+		'height'=>30,
+		'volume'=>50,
+		'showstop'=>1,
+		'showinfo'=>1,
+		'showvolume'=>1,
+		'showloading'=>'always',
+		'buttonwidth'=>30,
+		'volumewidth'=>60,
+		'volumeheight'=>10,
+		'loadingcolor'=>'ffff75',
+		'sliderovercolor'=>'ff2936',
+		'buttonovercolor'=>'ff2936'
+	); 
+
+	/**
+	 * Data as used by the get/set functions
+	 *
+	 */
+	protected $data = array();
+
+	/**
+	 * Set our configuration defaults
+	 *
+	 */
+	public function __construct() {
+		foreach(self::$configDefaults as $key => $value) {
+			$this->set($key, $value); 
+		}
+	}	
+
+	/**
+	 * Module configuration screen
+	 *
+	 */
+	public static function getModuleConfigInputfields(array $data) {
+
+		foreach(self::$configDefaults as $key => $value) {
+			if(!isset($data[$key])||$data[$key]=="") $data[$key] = $value;
+		}
+
+		unset($data['cacheClear']);
+		$inputfields = new InputfieldWrapper();
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'width');
+		$f->attr('value', $data['width']); 
+		$f->attr('columnWidth', 33); 
+		$f->label = __('Player Width'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'height');
+		$f->attr('value', $data['height']); 
+		$f->attr('columnWidth', 33); 
+		$f->label = __('Player Height'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'volume');
+		$f->attr('value', $data['volume']); 
+		$f->attr('columnWidth', 33); 
+		$f->label = __('Volume'); 
+		$f->description = __('Choose a Value between 0 and 100'); 
+		$inputfields->add($f);
+
+		$f = wire('modules')->get('InputfieldCheckbox'); 
+		$f->attr('name', 'showstop');
+		$f->attr('value', 1); 
+		if($data['showstop']) $f->attr('checked', 'checked'); 
+		$f->label = __('Show Stop Button'); 
+		$f->description = __(''); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldCheckbox'); 
+		$f->attr('name', 'showinfo');
+		$f->attr('value', 1); 
+		if($data['showinfo']) $f->attr('checked', 'checked'); 
+		$f->label = __('Show Info Button'); 
+		$f->description = __(''); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldCheckbox'); 
+		$f->attr('name', 'showvolume');
+		$f->attr('value', 1); 
+		if($data['showvolume']) $f->attr('checked', 'checked'); 
+		$f->label = __('Show Volume Slider'); 
+		$f->description = __(''); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'buttonwidth');
+		$f->attr('value', $data['buttonwidth']); 
+		$f->label = __('Button Width'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'volumewidth');
+		$f->attr('value', $data['volumewidth']); 
+		$f->label = __('Volume Slider Width'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldInteger'); 
+		$f->attr('name', 'volumeheight');
+		$f->attr('value', $data['volumeheight']); 
+		$f->label = __('Volume Slider Height'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldText'); 
+		$f->attr('name', 'loadingcolor');
+		$f->attr('value', $data['loadingcolor']); 
+		$f->attr('size', 6); 
+		$f->label = __('Color of Loading Bar'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldText'); 
+		$f->attr('name', 'sliderovercolor');
+		$f->attr('value', $data['sliderovercolor']); 
+		$f->attr('size', 6); 
+		$f->label = __('Slider Over Color'); 
+		$inputfields->add($f); 
+
+		$f = wire('modules')->get('InputfieldSelect'); 
+		$f->attr('name', 'showloading');
+		$f->addOption('autohide',null, ($data['showloading']=='autohide')?array('selected'=>'selected'):null); 
+		$f->addOption('always',null, ($data['showloading']=='always')?array('selected'=>'selected'):null); 
+		$f->addOption('never',null, ($data['showloading']=='never')?array('selected'=>'selected'):null); 
+		$f->label = __('Show Loading Process'); 
+		$inputfields->add($f); 
+
+		return $inputfields;
+	}
+
+	public function init() {
+		$this->addHookProperty('Page::player', $this, 'render');
+	}
+
+    protected function render($event) {
+  		$page = $event->object;
+
+		#module installed?
+		if ($this->page->audio) {
+			$audio_files = $this->page->audio;
+		} else {
+ 			throw new WireException('Field "Audio" to store the mp3-files doesn\'t exist! The field is usually generated by the module. If you have accidentally deleted it, the module must be reinstalled.');
+			exit;
+		}
+		
+		#playlist string-prefix
+		$playlist = "mp3=";
+
+		#how many files do we have?
+		switch ($audio_files->count()) {
+			#exit if no file is stored
+			case 0:
+			exit;
+
+			case 1:
+			#set standard player
+			$playersize = "maxi";
+		
+			#get the stored mp3-file and alternative title
+			$playlist .= $audio_files->first()->url;
+ 			$titles = ($audio_files->first()->description)?$audio_files->first()->description:$audio_files->first();
+			break;
+			
+			default:
+			#basic-height
+			$this->data['height'] = 30;
+			#get the stored mp3-files
+			foreach ($audio_files as $audio_file) {
+				$playlist .= $audio_file->url."|";
+				$titles .= ($audio_file->description)?$audio_file->description."|":$audio_file."|";
+				$this->data['height'] += 15;
+			}
+		
+			$playlist = substr($playlist,0,-1);
+			$titles = substr($titles,0,-1);
+			#set multi-player
+			$playersize = "multi";
+  			break;
+
+		}
+				
+		#create parameter-string
+		foreach($this->data as $key => $value) {
+			$string .= "&amp;$key=$value";
+		}
+
+		#width and height for the object-tag
+		$height = $this->data['height'];
+ 		$width = $this->data['width'];
+  		
+ 		$embedCode = "\n
+ 		<object id=\"mp3_player\" type=\"application/x-shockwave-flash\" data=\"/site/modules/Audio_MP3/player_mp3_$playersize.swf\"  width=\"$width\" height=\"$height\">
+ 		   	<param name=\"movie\" value=\"/site/modules/Audio_MP3/player_mp3_$playersize.swf\" />
+    		<param name=\"wmode\" value= \"transparent\"/>
+			<param name=\"FlashVars\" value=\"$playlist$string&amp;title=$titles\" />
+		</object>";
+	
+		$event->return = array('code'=>$embedCode, 'title'=>$titles);
+
+	}
+
+	/**
+     *
+     * install routine
+     */
+   
+    public function ___install() {
+ 
+ 		if($this->fields->get('audio')) {
+			throw new WireException("There is already a field installed called 'audio'. To install this modul you have to delete or rename the existing 'audio' field.");
+			exit;
+		}
+
+ 		$path = $this->fuel('config')->paths->$this;
+ 		if(!file_exists($path.'player_mp3_maxi.swf')||!file_exists($path.'player_mp3_multi.swf')) {
+ 			throw new WireException('Files missing. Before Installing you have to put the two Flash-MP3-layers in the folder *Audio_MP3*<br/>Download from here: <a href="http://flash-mp3-player.net/players/">http://flash-mp3-player.net/players/</a>');
+			exit;
+		}
+
+        $field_audio = new Field();
+        $field_audio->type = $this->modules->get("FieldtypeFile");
+        $field_audio->name = 'audio';
+        $field_audio->description = 'Upload your mp3 or mp3-zip files via drag and drop. Define an alternative title in the Description-Field. Default title is the name of the file.';
+        $field_audio->label = 'MP3 Audio File';
+        $field_audio->extensions = 'mp3';
+		$field_audio->columnWidth = 100;//in percent, default setting: 100
+		$field_audio->unzip = 1;// unzip archives automatically
+		$field_audio->collapsed =0;
+        $field_audio->size = 0;
+        $field_audio->maxlength = 0;
+        $field_audio->save();
+
+    }
+
+    /**
+     *
+     * uninstall routine
+     */
+    public function ___uninstall() {
+ 
+       	$fields = wire('fields');
+		if ($fields->get('audio')) {
+        	$fields->delete($fields->get('audio'));
+		} else {
+		$this->message('The Module has been uninstalled even though the field \'audio\' (generated by the Module) could not be found.');
+		}
+
+	}
+	
+}

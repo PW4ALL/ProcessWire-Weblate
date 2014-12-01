@@ -1,0 +1,241 @@
+<?php 
+/*
+* Heatmap 0.0.3
+* created March 2013
+* Adds tracking Snippet to pages marked for tracking
+* Saves clicks to files
+* generates heatmap from files
+*
+* add ?debugclickheat to tracked url for debug mode
+ * 
+**************************KUDOS TO********************
+*   Javascript tracking by clickheat
+*   ClickHeat : Enregistrement d'un clic suivi / Logging of a tracked click
+* 
+*   @author Yvan Taviaud - LabsMedia - www.labsmedia.com
+*   @since 27/10/2006
+******************************************************
+*   function showHeatmap() works with heatmap.js
+*   Heatmap.js is an open source JavaScript library that can be used for generating realtime heatmaps. 
+*   It uses the power and flexibility of the HTML5 canvas element to draw heatmaps based on your data 
+*   http://www.patrick-wied.at/static/heatmapjs/
+******************************************************
+* MODULE Info
+* @author Luis Mendez
+* <http://misterui.de>
+*
+* ProcessWire 2.3
+* Copyright (C) 2011 by Ryan Cramer
+* Licensed under GNU/GPL v2, see LICENSE.TXT
+*
+* http://www.processwire.com
+*
+*/
+
+class WireDataHeatmap extends WireData implements Module 
+{
+  public static function getModuleInfo(){
+    return array(
+        'title' => 'Heatmap',
+        'summary' => 'Appends tracking snippet to all Pages with tracking activated and tracks user clicks to log files.',
+        'version' => 3,
+        'author' => 'Luis Mendez', 
+        'href' => 'http://misterui.de/',            
+        'autoload' => true,
+    );
+  }
+  
+  public function init(){
+     //check if page is called by click tracking javascript, if so call addClick function    
+     if($this->input->get->setHeatmap)$this->addHookBefore('Page::render', $this, 'processClick'); 
+     //render an offset indicator in page body, we need offsets to handle different viewports  
+     $this->addHookBefore('Page::render', $this, 'setOffset'); 
+     //tracking snippet and click saving // will split into 2 functions in further versions  
+     $this->addHookAfter('Page::render', $this, 'addTracker');
+     //check if user wanna see heatmap and if its superuser
+     if($this->user->isSuperuser() && $this->input->get->getHeatmap == 1)$this->addHookAfter('Page::render', $this, 'showHeatmap');      
+   }
+ 
+  public function setOffset(){
+    //we assume that the $page->body is inside main layout and add a span
+    //hidden span indicates offset left to make fluid layout handling possible 
+    $this->page->body .= '<span class="offset" style="margin:0;padding:0;position:absolute;width:0px;height:0px;">&nbsp;</span>';
+  } 
+  
+  public function processClick(){
+    
+    //check if processClick is called by tracked page
+    if (!$this->page->track_heatmap) exit('ERROR: This page should not be tracked');
+    
+    //check if all parameters are set
+    if (!isset($this->input->get->x)      //x coord 
+        || !isset($this->input->get->y)   //y coord 
+        || !isset($this->input->get->w)   //user width 
+        || !isset($this->input->get->h)   //user height 
+        || !isset($this->input->get->g)   //user offset 
+        || !isset($this->input->get->s)   //page name 
+        || !isset($this->input->get->b)   //browser 
+       )
+      {
+        exit('ERROR: Parameters error');
+      }
+    
+    // do not track right clicks
+    if ($this->input->get->c == 3) exit('Rightclick not recorded'); 
+    
+    //sanitize received parameters before processing
+    $xCoord = $this->sanitizer->entities($this->input->get->x);  
+    $yCoord = $this->sanitizer->entities($this->input->get->y);
+    $trackedWidth = $this->sanitizer->entities($this->input->get->w);
+    $trackedHeight = $this->sanitizer->entities($this->input->get->h);
+    $offset = $this->sanitizer->entities($this->input->get->g);
+    $browser = $this->sanitizer->entities($this->input->get->b);
+    
+    //output -> YYYY-MM-DD|xCoord|yCoord|userWidth|offset! ** ! -> marks line end
+    $click = date('Y-m-d').'|'.((int)$xCoord).'|'.((int)$yCoord).'|'.((int)$trackedWidth).'|'.((int)$trackedHeight).'|'.((int)$offset).'|'.$browser."!";
+    
+    //save the click in the page
+    $this->saveClick($click);   
+    
+    //Now stop the script to prevent page loading caused by ajax call in javascript tracker
+    exit('click recorded');    
+  }   
+  
+  public function addTracker($event){  
+    //add the tracking snippet to those pages with activated tracking   
+    $page = $event->object;     
+    //check if page has to be tracked, dont print the tracking code if its superuser or we call the heatmap  
+    if(!$page->track_heatmap || $this->user->isSuperuser() || $this->input->get->getHeatmap == 1) return;  
+  
+    //get our module url to include the click js script 
+    $url = $this->config->urls->siteModules . "Heatmap/";
+    //form our tracking code
+    $out .= <<<OUT
+          
+    <script type="text/javascript" src="{$url}clickheat.js"></script>
+    <script type="text/javascript"> <!-- 
+    var offset = $('.offset').offset().left;
+    clickHeatSite = '{$page->name}';clickHeatGroup = $('.offset').offset().left; initClickHeat(); 
+    //--> </script>
+OUT;
+    //print our tracking code in the bottom
+    $event->return = str_ireplace('</body>', $out, $event->return);      
+  } 
+        
+  public function showHeatmap($event){
+  
+    $page = $event->object; 
+    
+    //get our module url to include the heatmap generate js script 
+    $url = $this->config->urls->siteModules . "Heatmap/";
+    
+    //grab the width and height of actual heatmap, need for further calculus for responsive
+    $userWidth = ((int)$this->input->get->w);
+    $userHeight = ((int)$this->input->get->h);
+    
+    //get the logs assigned to this page and form an array for every log
+    $setDays = strip_tags($this->page->tracked_clicks);    
+    $getDays = explode("!", $setDays);  
+      
+    //set the head of heatmap code and add black overlay to the page to visualize clicks bit better
+    $out.= "
+      <div style=\"height:100%;width:100%;background:black;opacity: 0.2;position: fixed;top:0;\"></div>
+      <script type=\"text/javascript\" src=\"{$url}heatmap.js\"></script>
+        <script type=\"text/javascript\">
+        var offset = $('.offset').offset().left;
+        var heatmap = h337.create({
+          element: $(\"body\")[0],
+          radius: 5,
+          opacity: 100
+         });
+         window.heatmap = heatmap;
+      var data = {max: 1, data: [ ";
+    /*
+     * 
+     * ++++++++++++++++++++ CALCULUS WE NEED YOUR HELP +++++++++++++++++++++++++
+     * 
+     */
+    //main part of heatmap generation. Form Arrays for every log and handle clicks associated to user width and visitor width
+    foreach($getDays as $day){
+      $getCoords = explode("|", $day);            
+                 
+      //calculus plz calculate xcoord if visitorWidth is > heatmap width
+      if ($getCoords[3] > $userWidth)
+      {                
+        //now check if we got a x and y coord, if so beginn calculus, if not return nothing to prevent javascript trouble                   
+        if(isset($getCoords[1]) && isset($getCoords[2]))
+        {
+          $out.= '{x: '.$getCoords[1].' - ('.$getCoords[5].' - offset ) ,y:'.$getCoords[2].',count:1},';   
+        } 
+        else { $out.= ''; }        
+      }
+      
+      //calculus go and calculate xcoord if visitorWidth is < heatmap width
+      if ($getCoords[3] < $userWidth)
+      {
+       //now check if we got a x and y coord, if so beginn calculus, if not return nothing to prevent javascript trouble                   
+        if(isset($getCoords[1]) && isset($getCoords[2]))
+        {
+          $out.= '{x: '.$getCoords[1].' + (offset - '.$getCoords[5].' ) ,y:'.$getCoords[2].',count:1},';   
+        } 
+        else { $out.= ''; }
+      } 
+      
+      //calculate xcoord if visitorWidth is == heatmap width
+      if ($getCoords[3] == $userWidth)
+      {        
+        //now check if we got x and y coord, if so return our coords if not return nothing to prevent javascript trouble                   
+        if(isset($getCoords[1]) && isset($getCoords[2]))
+        {
+          $out.= '{x: '.$getCoords[1].' ,y:'.$getCoords[2].',count:1},'; 
+        }
+        else { $out.= ''; } 
+      }                 
+    }  
+    
+    //end of heatmap genration           
+    $out.= "]};
+    heatmap.store.setDataSet(data);</script>";
+    
+    //print our heatmap code to page bottom
+    $event->return = str_ireplace('</body>', $out, $event->return);
+  }  
+
+  private function saveClick($vars) {
+     //check if click tracking container is available, if not add to the site
+    if(!$this->page->template->hasField(tracked_clicks))
+    {
+      $this->page->template->fields->add('tracked_clicks');
+      $this->page->template->fields->save();
+    }      
+    //save tracked click 
+    $this->page->of(false);
+    $this->page->tracked_clicks .= $vars;
+    $this->page->save('tracked_clicks');
+    $this->page->of(true);  
+  }
+    
+  public function install(){
+		   
+		if (!$this->fields->get('track_heatmap')) 
+    {
+      $f1 = new Field();
+      $f1->type = $this->modules->get("FieldtypeCheckbox");
+      $f1->name = 'track_heatmap';
+      $f1->label = 'Give the page permission to track user clicks';
+      $f1->save();
+    }
+    
+    if (!$this->fields->get('tracked_clicks')) 
+    {
+      $f2 = new Field();
+      $f2->type = $this->modules->get("FieldtypeTextarea");
+      $f2->name = 'tracked_clicks';
+      $f2->label = 'Contains the tracked clicks for this page';
+      $f2->save();
+    }         
+  }
+  
+}
+
+?>

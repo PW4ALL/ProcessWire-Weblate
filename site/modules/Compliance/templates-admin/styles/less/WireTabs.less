@@ -1,0 +1,39 @@
+.WireTabs{
+	margin: -@innerPadding -@innerPadding 0 -@innerPadding!important;
+	position: static!important;
+	padding: 1.6em @innerPadding;
+	background: #eeeeee;
+	overflow: hidden;
+	list-style: none!important;
+	border-top: 1px solid #fff;
+	border-bottom: 1px solid #e0e0e0;
+	.border-radius(8px 8px 0 0);
+	li{
+		background: transparent!important;
+		line-height: 1.3em;
+	}
+	em{
+		border: none!important;
+		font-weight: 100!important;
+	}
+	a{
+		text-transform: uppercase;
+		.button();
+ 			 border: 1px solid #cecece!important;
+ 			float: left;
+		font-size: 1em;
+		padding: 0.6em 0.9em;
+		margin: 0 0.6em 0 0;
+
+	}
+	a:hover{
+		.buttonHover();
+	}
+	a.on{
+		.buttonOn();
+	}
+}
+#_ProcessPageEditView{
+	float: right;
+	margin: 0;
+}

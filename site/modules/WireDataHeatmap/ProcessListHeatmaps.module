@@ -1,0 +1,106 @@
+<?php
+/**
+* ListHeatmaps 0.0.3
+* List Generated Heatmaps in a single Admin Page
+* Requires WireDataHeatmap
+*
+* @author Luis Mendez
+* <http://misterui.de>
+*
+* ProcessWire 2.3
+* Copyright (C) 2011 by Ryan Cramer
+* Licensed under GNU/GPL v2, see LICENSE.TXT
+*
+* http://www.processwire.com
+*
+*/
+
+class ProcessListHeatmaps extends Process {
+
+  /**
+   * Return information about this module (required)
+   *
+   */
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Heatmaps', 
+      'summary' => 'Lists all Pages with heatmap tracking activated.',
+      'version' => 2, 
+      'author' => 'Luis Mendez', 
+      'href' => 'http://misterui.de/', 
+      'requires' => 'WireDataHeatmap', 
+      ); 
+  }
+  const pageName = 'heatmaps';
+
+  public function init() {
+    parent::init(); // required
+  }
+
+
+  public function ___execute() {
+
+    $heatmaps = wire('pages')->find('track_heatmap=1');
+     
+    $out = "<ul>" ;
+     
+    foreach($heatmaps as $heatmap)
+    {
+      $out .= "<li><a class='heatmap' href='{$heatmap->url}'>{$heatmap->name}</a></li>";
+ 
+    }
+    
+    $out .= "
+    </ul>
+    <script>
+    var screenWidth = $(document).width();
+    var callHeatmap = '?getHeatmap=1&w=' + screenWidth + '&h='+ window.innerHeight;
+    $('.heatmap').attr('href', function() {
+    return this.href + callHeatmap;
+    });    
+    </script> ";
+ 
+    return $out;
+    
+  } 
+
+
+  public function ___install() {
+
+    // create the page our module will be assigned to
+    $page = new Page();
+    $page->template = 'admin';
+    $page->name = self::pageName; 
+
+    // installs to the admin "Setup" menu ... change as you see fit
+    $page->parent = $this->pages->get($this->config->adminRootPageID);
+    $page->process = $this; 
+
+    // we will make the page title the same as our module title
+    // but you can make it whatever you want
+    $info = self::getModuleInfo();
+    $page->title = $info['title'];
+
+    // save the page
+    $page->save();
+
+    // tell the user we created this page
+    $this->message("Created Page: {$page->path}"); 
+  }
+
+
+  public function ___uninstall() {
+
+    // find the page we installed, locating it by the process field (which has the module ID)
+    // it would probably be sufficient just to locate by name, but this is just to be extra sure.
+    $moduleID = $this->modules->getModuleID($this); 
+    $page = $this->pages->get("template=admin, process=$moduleID, name=" . self::pageName); 
+
+    if($page->id) {
+      // if we found the page, let the user know and delete it
+      $this->message("Deleting Page: {$page->path}"); 
+      $page->delete();
+    }
+  }
+
+}

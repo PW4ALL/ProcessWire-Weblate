@@ -1,0 +1,361 @@
+<?php
+
+/**
+ * Image Rasterizer Module
+ *
+ * @author Adrian Jones
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class ImageRasterizer extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+
+        return array(
+            'title' => 'ImageRasterizer',
+            'version' => 16,
+            'summary' => 'Admin and front-end resizing and rasterizing of vector SVG images',
+            'href' => 'http://modules.processwire.com/modules/image-rasterizer/',
+            'singular' => true,
+            'autoload' => true,
+            'icon'     => 'file-image-o'
+            );
+    }
+
+    protected static $configDefaults = array(
+        // global
+        "rasterizedImagesField" => "same",
+        "rasterDimensions" => "",
+        "format" => "png",
+        "image_type" => 7,
+        "image_depth" => 8,
+        "jpg_compression" => "90",
+        "jpg_background_color" => "#FFFFFF",
+        "png_background_color" => "#FFFFFF"
+    );
+
+    /**
+     * Data as used by the get/set functions
+     *
+     */
+    protected $data = array();
+
+
+    /**
+     * Initialize the module
+     *
+     */
+    public function init() {
+    }
+
+    public function ready() {
+        if($this->page->template == 'admin'){
+            $this->addHook('Pageimage::isVariation', $this, 'isVariationWithRasterizer');
+            $this->addHookBefore('InputfieldFile::fileAdded', $this, 'rasterizeImage');
+        }
+        else{
+            $this->addHook('Pageimage::rasterize', $this, 'rasterizeImage');
+        }
+    }
+
+
+    public function rasterizeImage(HookEvent $event){
+
+        if($this->page->template == 'admin'){
+            $image = $event->argumentsByName("pagefile");
+            $field = $event->object;
+        }
+        else{ //must be a front-end call from rasterize()
+            $image = $event->object;
+            $field = $image->field;
+        }
+
+        if(pathinfo($image->filename, PATHINFO_EXTENSION) != 'svg') return; // leave now if we are not dealing with an SVG file
+
+
+        // these are the values sent when using rasterize(w,h)
+        if($this->page->template != 'admin'){
+            $rasterizeWidth = $event->arguments(0);
+            $rasterizeHeight = $event->arguments(1);
+        }
+
+        if($this->page->template == 'admin' || (!isset($rasterizeWidth)&& !isset($rasterizeHeight))){
+            $new_img_path = str_replace('.svg', '.'.$this->format, $image->filename);
+        }
+        else{
+            $new_img_path = str_replace('.svg', '.'.$rasterizeWidth.'x'.$rasterizeHeight.'.'.$this->format, $image->filename);
+        }
+
+        if(!$this->page->$field) { //if the current page does not contain the image field - eg an ajax called script
+            $pathSegments = explode('/', $new_img_path);
+            $pageId = (int) $pathSegments[count($pathSegments)-2];
+            $imagePage = $this->pages->get($pageId);
+        }
+        else {
+            $imagePage = $this->page;
+        }
+
+        //various checks to stop this module from starting the rasterize process
+        if(file_exists($new_img_path)){
+            $new_img = new PageImage($imagePage->$field, $new_img_path);
+            $event->return = $new_img;
+            return; //if rasterized variation already exists, return it now
+        }
+
+        if($this->rasterizedImagesField == 'none' && $this->page->template == 'admin') return;
+
+        if($this->rasterizedImagesField != 'none'){
+            $inputfield = $this->rasterizedImagesField == 'same' || $this->rasterizedImagesField == '' ? $this->fields->get($field->name) : $this->fields->get($this->rasterizedImagesField); //set inputfield for rasterized image
+            if(!$inputfield) return;
+            if(!$inputfield->type instanceof FieldtypeImage) return;
+        }
+
+
+        //if we get this far, get SVG details, resize and rasterize
+        clearstatcache();
+        $im = new Imagick();
+        if($this->format == 'png'){
+            // http://www.php.net/manual/en/imagick.getimagetype.php - "7" is imagick::IMGTYPE_TRUECOLORMATTE
+            $png_background_color = $this->image_type == '7' ? new ImagickPixel("transparent") : $this->png_background_color;
+            $im->setBackgroundColor($png_background_color);
+        }
+        else{
+            $im->setBackgroundColor($this->jpg_background_color);
+        }
+
+        //read the image to get the existing resolution and dimensions
+        $im->readImage($image->filename);
+        $res = $im->getImageResolution();
+
+        //get initial dimensions from the SVG
+        $initialWidth = $im->getImageWidth();
+        $initialHeight = $im->getImageHeight();
+
+        //get entered dimensions from module config settings
+        $rasterDimensions = '';
+        if($this->rasterDimensions != '') $rasterDimensions = explode(",", preg_replace('/\s+/', '', $this->rasterDimensions));
+
+        //set new dimensions to those in the module config settings, or if not set, then to the original dimensions of the SVG
+        $newWidth = $rasterDimensions ? $rasterDimensions[0] : $initialWidth;
+        $newHeight = $rasterDimensions ? $rasterDimensions[1] : $initialHeight;
+
+        if($this->page->template != 'admin'){ //if front-end rasterize, and dimensions set, override dimensions just set above
+            //if no dimensions specified in rasterize(), use the ones entered in the module config settings or revert to initial dimensions
+            if(isset($rasterizeWidth)) $newWidth = $rasterizeWidth;
+            if(isset($rasterizeHeight)) $newHeight = $rasterizeHeight;
+        }
+
+        // if one of the dimensions is set to 0 (which it should be), then calculate the other dimension, otherwise just squish the image. Maybe should be cropping instead, but this could be handled by using a PW ->size() on the newly created PNG.
+        if($newWidth == 0 || $newHeight == 0){
+            if($newWidth > $newHeight){
+                $newHeight = round($newWidth / $initialWidth * $initialHeight);
+            }
+            else{
+                $newWidth = round($newHeight / $initialHeight * $initialWidth);
+            }
+        }
+
+        // calculate the resolution required before rasterizing based on the initial dimensions and the final required dimensions
+        $x_res = round($res['x'] * $newWidth / $initialWidth);
+        $y_res = round($res['y'] * $newHeight / $initialHeight);
+        $im->removeImage(); // Remove the image because setResolution has to be called before readImage because the image gets rasterized after that, and setResolution has no effect.
+        $im->setResolution($x_res, $y_res);
+        $im->readImage($image->filename);
+
+        //rasterize
+        if($this->format == 'png'){
+            $im->setImageFormat("png");
+            $im->setImageDepth($this->image_depth);
+            $im->setImageColorSpace(imagick::COLORSPACE_RGB);
+            $im->setImageType($this->image_type);
+            //$im->setImageCompressionQuality(100); //not really sure this is doing much
+            //$im->setOption("png:color-type","6");
+            //$im->setOption("png:compression-level","9"); // 9 is highest compression and going down towards 0 just makes huge files with no obvious improvements in quality
+        }
+        else{
+            $im->setImageFormat("jpg");
+            $im->setImageCompression(imagick::COMPRESSION_JPEG);
+            $im->setImageCompressionQuality($this->jpg_compression);
+        }
+
+        clearstatcache();
+
+        $im->writeImage($new_img_path);
+
+        $im->clear();
+        $im->destroy();
+
+        //add rasterized version to the images field
+        if($this->page->template == 'admin'){
+            $image_page = $this->pages->get((int) $this->input->get->id);
+            $image_page->$inputfield->add(str_replace('.svg', '.'.$this->format, $image->filename));
+            $image_page->save($inputfield);
+        }
+        //front-end, so don't add to images field, just return the rasterized version to the rasterize() method for display
+        else{
+            $new_img = new PageImage($imagePage->$field, $new_img_path);
+            $event->return = $new_img;
+        }
+
+    }
+
+    /**
+     * Remove any rasterized versions when deleting an SVG in the admin.
+     * This is for images that were created by the rasterize() method on the front-end and therefore not added to the Pageimage, hence the need for this.
+     *
+     */
+    public function isVariationWithRasterizer($event) {
+        $pageimage = $event->object;
+        $variationName = basename($event->arguments[0]);
+
+        // if the result of hooked method isn't false, or if the file isn't an SVG, leave now
+        if(pathinfo($pageimage->filename, PATHINFO_EXTENSION) != 'svg' || false!==$event->return) return $event->return;
+
+        //check to see if the variation also exists in the pageimage - in that case, return and don't remove it.
+        $image_page = $this->pages->get((int) $this->input->get->id);
+        $variation_image = $image_page->{$pageimage->field}->get("$variationName");
+        if($variation_image && !$variation_image->name =='') return $event->return;
+
+        $basename = basename($pageimage->name, '.' . $pageimage->ext);
+        $re = '/^' . $basename . '.*?' . '\.(gif|jpg|png)' . '$/';
+        if(preg_match($re, $variationName)) {
+            // we have a match, now return array with imageinfo
+            // (the following rows are taken from original method Pageimage::isVariation(), only regexp is modified)
+            $re2 = '/^.*?' . $basename . '\.' .
+            '(\d+)x(\d+)' .                           // 50x50
+            '([pd]\d+x\d+|[a-z]{1,2})?' .             // nw or p30x40 or d30x40
+            '\.(gif|jpg|jpeg|png)' .                  // .ext
+            '$/';
+            preg_match($re2, $variationName, $matches);
+            $info = array(
+            'original' => $basename . '.' . $pageimage->ext,
+            'width' => $matches[1],
+            'height' => $matches[2],
+            'crop' => (isset($matches[3]) ? $matches[3] : '')
+            );
+            $event->return = $info;
+            return $event->return;
+        }
+        return false;
+   }
+
+
+    /**
+     * Get any inputfields used for configuration of this Fieldtype.
+     *
+     * This is in addition to any configuration fields supplied by the parent Inputfield.
+     *
+     * @param Field $field
+     * @return InputfieldWrapper
+     *
+     */
+    public static function getModuleConfigInputfields(array $data) {
+
+        $modules = wire('modules');
+
+        foreach(self::$configDefaults as $key => $value) {
+            if(!isset($data[$key]) || $data[$key]=='') $data[$key] = $value;
+        }
+
+        $inputfields = new InputfieldWrapper();
+
+        $f = $modules->get("InputfieldSelect");
+        $f->attr('name', 'rasterizedImagesField');
+        $f->attr('value', $data["rasterizedImagesField"]);
+        $f->label = __('Rasterized Images Field');
+        $f->description = __("The field to send the rasterized images to.\n\nChoose 'Same as source image' to save them to the same images field as the vector image.\nChoose 'None' if you don't want a rasterized version saved to the images field. NB You'll still be able to access a raster version in your templates using the Rasterize() method.");
+        $f->addOption('same', 'Same as source image');
+        $f->addOption('none', 'None');
+        // populate with all available fields
+        foreach(wire('fields') as $fieldoption) {
+            // filter out incompatible field types
+            if($fieldoption->type == "FieldtypeImage")  $f->addOption($fieldoption->name);
+        }
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldText");
+        $f->attr('name', 'rasterDimensions');
+        $f->attr('value', $data["rasterDimensions"]);
+        $f->attr('size', 10);
+        $f->label = __('Raster Dimensions');
+        $f->description = __('This determines dimensions of the rasterized version. Leave blank to keep same existing dimensions from the SVG.');
+        $f->notes = __("Width, Height. Be sure to enter 0 for one dimension to ensure proportional scaling, eg: 500,0");
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldSelect");
+        $f->attr('name', 'format');
+        $f->attr('value', $data["format"]);
+        $f->label = __('Image Format');
+        $f->addOption('png');
+        $f->addOption('jpg');
+        $inputfields->add($f);
+
+        //http://www.php.net/manual/en/imagick.getimagetype.php
+        $f = $modules->get("InputfieldSelect");
+        $f->showIf = "format=png";
+        $f->attr('name', 'image_type');
+        $f->attr('value', $data["image_type"]);
+        $f->label = __('Color Type');
+        $f->addOption('7', 'True Color Alpha Transparent');
+        $f->addOption('6', 'True Color');
+        $f->addOption('4', 'Pallete');
+        $inputfields->add($f);
+
+        //http://www.php.net/manual/en/gmagick.setimagedepth.php
+        $f = $modules->get("InputfieldSelect");
+        $f->showIf = "format=png";
+        $f->attr('name', 'image_depth');
+        $f->attr('value', $data["image_depth"]);
+        $f->label = __('Image Depth');
+        $f->addOption('8', '8');
+        $f->addOption('16', '16');
+        $f->addOption('32', '32');
+        $f->notes = __("Default: 8");
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldText");
+        $f->showIf = "format=jpg";
+        $f->attr('name', 'jpg_background_color');
+        $f->attr('value', $data["jpg_background_color"]);
+        $f->attr('size', 10);
+        $f->label = __('Background (Matte) Color');
+        $f->notes = __("Default: #FFFFFF");
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldText");
+        $f->showIf = "format=png, image_type!=7";
+        $f->attr('name', 'png_background_color');
+        $f->attr('value', $data["png_background_color"]);
+        $f->attr('size', 10);
+        $f->label = __('Background (Matte) Color');
+        $f->notes = __("Default: #FFFFFF");
+        $inputfields->add($f);
+
+        $f = $modules->get("InputfieldText");
+        $f->showIf = "format=jpg";
+        $f->description = __('This determines filesize and image quality as percentage. 100 is the best quality and largest file size.');
+        $f->attr('name', 'jpg_compression');
+        $f->attr('value', $data["jpg_compression"]);
+        $f->attr('size', 10);
+        $f->label = __('JPG Compression Level');
+        $f->notes = __("Default: 90");
+        $inputfields->add($f);
+
+        return $inputfields;
+
+    }
+
+}

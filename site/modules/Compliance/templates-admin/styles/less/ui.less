@@ -1,0 +1,252 @@
+/**********************************************************************************************
+ * ProcessWire Admin Control Panel - Skyscraper Theme - ui.css
+ *
+ * 1. jQuery UI overrides.
+ * 2. Theming of specific user interface elements (MarkupPagerNav and PageList)
+ *
+ * Copyright 2012 by Ryan Cramer
+ *
+ */
+
+
+/****************************************************************************************
+ * 1. Theme specific jQuery UI overrides and additions
+ *
+ */
+
+.ui-icon {
+    float: left;
+	// margin-right: 2px;
+    margin: 0;
+    opacity: 1!important;
+    padding: 0!important;
+}
+
+
+/*label.ui-widget-header + div.ui-widget-content {
+
+	border-top: none;
+}*/
+.ui-button-text-only .ui-button-text{
+    padding: 0!important;
+}
+
+.ui-dialog {
+   background: #eee!important;
+   .border-radius(8px);
+   padding: 0!important;
+   overflow: hidden;
+   z-index: 1000002!important;
+}
+.ui-dialog-buttonpane,
+.ui-dialog-titlebar{
+    margin: 0!important;
+    // .border-radius(8px 8px 0 0)!important;
+    padding: 1em @innerPadding!important;
+    background: transparent!important;
+    list-style: none!important;
+    border: none;
+    border-bottom: 1px solid #e0e0e0;
+}
+.ui-dialog-title{
+    line-height: 2em;
+    font-size: 16px;
+    margin-top: 0.5em;
+    color: @grayLight;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 1px #fff;
+}
+.ui-dialog-titlebar-close{
+    .border-radius(8px);
+    overflow: hidden;
+}
+.ui-dialog .ui-dialog-content {
+	padding: 0;
+    display: block!important;
+    border-top: 1px solid #fff!important;
+
+    border-bottom: 1px solid #e0e0e0;
+}
+.ui-dialog-buttonpane{
+    margin: 0;
+    border: none!important;
+    border-top: 1px solid #fff!important;
+
+}
+.ui-widget-overlay {
+	background: #000;
+    z-index: 1000001!important;
+}
+
+.ui-widget-content{
+    .ui-sortable{
+        li.ui-state-hover{
+            border-top: 1px dashed @grayLighter;
+            border-bottom: 1px dashed @grayLighter;
+        }
+        .ui-sortable-helper{
+            .button();
+            .border-radius(2px);
+            border: 1px solid @grayLighter!important;
+            .box-shadow(0 1px 6px rgba(0,0,0,.2));
+        }
+    }
+
+}
+
+.ui-sortable-helper{
+    .box-shadow(0 2px 9px rgba(0,0,0,.2));
+}
+
+
+
+.ui-accordion-header-icon {
+	display: none;
+}
+
+/**
+ * jQuery UI tooltips
+ *
+ */
+.ui-tooltip {
+	z-index: 100;
+	border-bottom: 1px solid #fff!important;
+	padding: 0.6em 1em;
+	background: #fff;
+    .border-radius(4px);
+	.box-shadow( 0 0 6px rgba(0,0,0,.3));
+}
+
+.ui-tooltip:before {
+    content: "";
+    position: absolute!important;
+    left: 50%;
+    top: 100%;
+    margin: 1px 0 0 -6px;
+    width: 0;
+    z-index: 0;
+
+    height: 0;
+    border-style: solid;
+    border-width: 6px 6px 0 6px;
+    border-color: #fff transparent transparent transparent;
+}
+.ui-tooltip:after {
+	content: "";
+	position: absolute!important;
+	left: 50%;
+	top: 100%;
+	margin: 1px 0 0 -7px;
+	width: 0;
+    z-index: -1;
+	height: 0;
+	border-style: solid;
+	border-width: 7px 7px 0 7px;
+	border-color: @grayLighter transparent transparent transparent;
+}
+
+/***********************************************************************************************
+ * 2a. Theme Specific Pagination Markup
+ *
+ */
+
+.MarkupPagerNav {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        margin: 1em 0;
+}
+        .MarkupPagerNav li {
+                padding: 0;
+                margin: 0;
+                list-style: none;
+                display: inline;
+                padding: 6px 0;
+                background: none;
+        }
+
+                .MarkupPagerNav li a {
+                        padding: 4px 9px;
+                        margin: 0;
+                        text-decoration: none;
+                        border: none;
+                        background: #2f4248;
+                        color: #fff;
+                        font-weight: bold;
+                        font-size: 11px;
+                        text-transform: uppercase;
+			opacity: 0.8;
+                }
+
+                .MarkupPagerNav li a:hover {
+			opacity: 1.0;
+		}
+
+                .MarkupPagerNav li.MarkupPagerNavOn a {
+			opacity: 1.0;
+                        color: #fff;
+                        background: #db1174;
+                }
+
+                .MarkupPagerNav li.MarkupPagerNavSeparator {
+                        border: none;
+                }
+
+
+        .ui-slider{
+                .border-radius(4px);
+                padding: 0!important;
+                .button();
+                overflow: visible!important;
+                background: #444 !important;
+                border-color: #fff !important;
+                -webkit-box-shadow: inset 0 0 5px #222;
+                -moz-box-shadow: inset 0 0 5px #222;
+                box-shadow: inset 0 0 5px #222;
+                .border-radius(6px)!important;
+                .ui-slider-range{
+                    background: #3f94e3 !important;
+                    border-color: #fff !important;
+                    -webkit-box-shadow: inset 0 0 5px #3375b3;
+                    -moz-box-shadow: inset 0 0 5px #3375b3;
+                    box-shadow: inset 0 0 5px #3375b3;
+                    margin: -1px 0 0 -2px !important;
+                    padding: 0 2px 0 0 !important;
+                    .border-radius(6px)!important;
+                }
+        }
+
+        .ui-state-default.ui-slider-handle{
+            .button();
+            .border-radius(12px);
+            padding: 1px;
+            border-color: #bbb!important;
+            .box-shadow(0 0 4px rgba(0,0,0,.3));
+            outline: none;
+        }
+        .ui-state-active.ui-slider-handle,
+        .ui-state-hover.ui-slider-handle{
+            .buttonHover();
+        }
+
+#columnWidth{
+        width: 8%;
+        margin: 0 0 1em 0!important;
+        padding: 4px 1%;
+}
+#columnWidthSlider{
+        width: 85%!important;
+        top: 6px!important;
+        float: right!important;
+}
+
+
+.ui-datepicker{
+    .box-shadow( 0 0 5px rgba(0,0,0,0.2));
+    dl dt{
+        font-style: 12px!important;
+    }
+}
+.ui-button{
+    float: right;
+}

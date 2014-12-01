@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * FieldnameUnprefixer
+ *
+ * Makes it possible to access prefixed field names without the prefix.
+ *
+ * Copyright 2014 by Christian Raunitschka
+ * @author Christian Raunitschka @owzim <git@raunitschka.de>
+ *
+ */
+
+class FieldnameUnprefixer extends WireData implements Module {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Field Name Unprefixer',
+			'summary' => 'Makes it possible to access prefixed field names without the prefix.',
+			'version' => '0.1.1',
+			'author' => 'owzim',
+			'icon' => 'arrow-circle-left',
+			'requires' => 'ProcessWire>=2.5.0, PHP>=5.4.0',
+			'singular' => true,
+			'autoload' => true
+		);
+	}
+
+	public function init() {
+		
+		if(!$templateNames = $this->config->FieldnameUnprefixer) return;
+		$prefixedHooks = array();
+
+		foreach ($templateNames as $templateName => $prefixes) {
+
+			// put value in an array if it's not an array already
+			if (!is_array($prefixes)) {
+				$prefixes = array($prefixes);
+			}
+
+			$template = $this->templates->get($templateName);
+			if (!$template) continue;
+			$fields = $template->fields;
+
+			foreach ($prefixes as $prefix) {
+
+				// find fields that start with the current prefix
+				$prefixedFields = $fields->find("name^=$prefix");
+				$hasPrefixes = count($prefixedFields) > 0;
+
+				foreach ($prefixedFields as $prefixedField) {
+
+					$fieldName = (string) $prefixedField->name;
+					$unprefixedFieldName = str_replace($prefix, '', $fieldName);
+					$trackingKey = "{$templateName}_{$fieldName}";
+
+					// only add the hook if it's not been added before
+					if (!in_array($trackingKey, $prefixedHooks)) {
+
+						/* http://php.net/manual/en/functions.anonymous.php#99287
+						 * importing into scrope should be by reference (like 'use (&$fieldName)'), see above url
+						 * but since it's within a loop, the last reference would be used, so
+						 * we pass it not as reference, it's just a string anyway
+						 */
+
+						// $this->pages->find("template.name=$templateName")->addHookProperty("$unprefixedFieldName", null, function($event) use ($fieldName) { // does not work?
+
+						$this->addHookProperty("Page::$unprefixedFieldName", null, function($event) use ($fieldName) {
+							$page = $event->object;
+							if ($rtn = $page->get($fieldName)) {
+								$event->return = $rtn;
+							}
+						});
+
+						// add the tracking key, so we keep track what's been hooked already
+						$prefixedHooks[] = $trackingKey;
+					}
+				}
+			}
+		}
+	}
+}

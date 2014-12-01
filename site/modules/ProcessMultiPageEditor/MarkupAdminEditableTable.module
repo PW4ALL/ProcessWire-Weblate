@@ -1,0 +1,46 @@
+<?php
+
+class MarkupAdminEditableTable extends MarkupAdminDataTable {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Admin Editable Table',
+			'summary' => 'Generates XHTML markup for data tables used by ProcessWire admin',
+			'version' => 101,
+			'permanent' => false,
+			);
+	}
+
+	public function init() {
+		parent::init();
+
+		$this->config->styles->add(
+			$this->config->urls->MarkupAdminDataTable . 'MarkupAdminDataTable.css?v=101'
+		);
+	}
+
+	protected function setupRow(array $a) {
+		$row = array();
+
+		foreach ($a as $k => $v) {
+			if (is_string($k)) {
+				$v = '<a href="' . $v . ' ">' . $this->encode($k) . '</a>';
+			} else {
+				if (is_array($v)) {
+					if (isset($v['input'])) {
+						$input = $v['input'];
+						$name = $input['name'];
+						$value = $input['value'];
+
+						$v = '<input type="text" name="' . $name . '" value="' . $value . '" style="width: 90%">';
+					}
+				} else {
+					$v = $this->encode($v);
+				}
+			}
+			$row[] = $v;
+		}
+
+		return $row;
+	}
+}

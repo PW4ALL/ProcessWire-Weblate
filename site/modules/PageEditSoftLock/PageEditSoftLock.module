@@ -1,0 +1,201 @@
+<?php
+
+/**
+ * ProcessWire, Page Edit Soft Lock
+ *
+ * This module provides function to update edit lock status
+ * It will get called through from PageEditSoftLock's js script when editing a page
+ *
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ *
+ * @author Philipp 'Soma' Urlich, philipp at urlich dot ch
+ *
+ * @created 27/10/2011
+ *
+ *
+ */
+
+class PageEditSoftLock extends WireData implements Module, ConfigurableModule {
+
+	static protected $defaults = array(
+		'pingInterval' => 20,
+		'removeLockTimeout' => 60,
+		'hardLock' => 0
+	);
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Page Edit Soft Lock',
+			'summary' => 'Throws alert message when page is being edited by another user.',
+			'version' => 101,
+			'href' => 'http://processwire.com/talk/index.php/topic,637.0.html',
+			'permanent' => false,
+			'singular' => true,
+			'autoload' => true
+		);
+	}
+
+
+	public function init() {
+		$this->addHookAfter('ProcessPageEdit::execute', $this, 'checkpagestatus');
+	}
+
+
+	public function checkpagestatus(HookEvent $event){
+
+		if($this->config->ajax) return;
+
+		$config = self::$defaults;
+		foreach($config as $key => $unused) {
+			$config[$key] = $this->get($key) ? $this->get($key) : $config[$key] ;
+		}
+
+		$expiredTime = time() - $config['removeLockTimeout']; // default 60 seconds ago
+
+		// delete all entries older than set removeLockTimeout
+		$this->db->query("DELETE FROM users_editing_page WHERE ts <= $expiredTime");
+
+		// get current page being edited
+		$process = $event->object;
+		$page = $process->getPage();
+
+		$pingurl = $this->config->urls->admin . "page/edit/checkpagelock/updatestatus/";
+		$interval = $config["pingInterval"]*1000;
+		$script = <<< _END
+
+<script type="text/javascript">
+
+$(function(){
+	var t = window.setInterval(pwsoftlockping,$interval);
+	function pwsoftlockping(){
+
+		$.ajax({
+			url: '$pingurl',
+			type: 'get',
+			data: 'user_id={$this->user->id}&page_id={$page->id}',
+			success: function(data){
+				//alert('udpated');
+			}
+		});
+	}
+
+
+});
+
+</script>
+_END;
+		// check for entries in table with this page id
+		$result = $this->db->query("SELECT user_id FROM users_editing_page WHERE page_id={$page->id}");
+
+		if($result->num_rows) {
+			// if found entry not older than 2 minutes trow a message
+			// we also want to check if it's same user or not
+
+			// get user_id
+		 	list($user_id) = $result->fetch_row();
+
+			// get user from saved user_id in table
+		    $user = $this->users->get($user_id);
+
+			// check if current user is same user we output ping script
+		    if($user_id == $this->user->id){
+				$event->return .= $script;
+			}
+			// if it another user we throw an alert and error message
+			else{
+				$this->error(sprintf($this->_('Attention! This page is currently being edited by user: %1$s (%2$s)'),$user->name,$user->email));
+				$event->return .= "<script>alert('".sprintf($this->_('Attention! This page is currently being edited by user: %1$s (%2$s)'),$user->name,$user->email)."')</script>";
+
+				// if hardlock turned on, don't output the edit form by overwriting the return value
+				if($config['hardLock'] == 1) {
+					$event->return = "";
+					$event->return .= "<script>alert('".sprintf($this->_('Attention! This page is currently being edited by user: %1$s (%2$s)'),$user->name,$user->email)."')</script>";
+				}
+			}
+		}
+		else{
+			// nobody is currently editing this page so insert user and page id, and output js ajax pinging
+			$curr_ts = time();
+			$result = $this->db->query("INSERT INTO users_editing_page (page_id,user_id,ts) VALUES({$page->id},{$this->user->id},{$curr_ts})");
+			$event->return .= $script;
+		}
+
+	}
+
+
+	static public function getModuleConfigInputfields(array $data) {
+
+		$modules = wire('modules');
+		$data = array_merge(self::$defaults, $data);
+
+		$fields = new InputfieldWrapper();
+
+		$field = $modules->get("InputfieldInteger");
+		$field->attr('name', 'pingInterval');
+		$field->attr('value', $data['pingInterval']);
+		$field->label = "Ping interval in seconds (default 20)";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldInteger");
+		$field->attr('name', 'removeLockTimeout');
+		$field->attr('value', $data['removeLockTimeout']);
+		$field->label = "Expiration time to remove soft lock seconds (default 60)";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldCheckbox");
+		$field->attr('name', 'hardLock');
+		$field->attr('value', $data['hardLock']);
+		$field->collapsed = $data['hardLock'] ? Inputfield::collapsedNo : Inputfield::collapsedYes;
+		$field->label = "Turn on hard lock";
+		$field->attr("checked", $data['hardLock'] ? 'checked' : '');
+		$field->description = "If checked the page will be hard locked and not editable.";
+		$fields->append($field);
+
+		return $fields;
+	}
+
+
+	public function ___install() {
+
+		$process = $this->modules->get("ProcessPageEditSoftLock");
+		$p = new Page();
+		$p->template = $this->templates->get("admin");
+		$p->parent = $this->pages->get(10);
+		$p->title = 'CheckPageEditStatus';
+		$p->name = 'checkpagelock';
+		$p->process = $process;
+		$p->status = Page::statusHidden;
+		$p->save();
+
+		$sql = <<< _END
+
+		CREATE TABLE users_editing_page (
+		    page_id int unsigned not null,
+		    user_id int unsigned not null,
+		    ts int unsigned not null,
+		    PRIMARY KEY(page_id),
+		    KEY(user_id),
+		    KEY(ts)
+		);
+
+_END;
+
+		$this->db->query($sql);
+	}
+
+	public function ___uninstall() {
+		$p = $this->pages->get('template=admin, name=checkpagelock');
+		if($p->id) $p->delete();
+
+		$this->db->query("DROP TABLE IF EXISTS users_editing_page");
+		$this->modules->uninstall("ProcessPageEditSoftLock");
+	}
+}
+?>

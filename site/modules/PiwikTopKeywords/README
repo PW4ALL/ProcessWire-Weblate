@@ -1,0 +1,61 @@
+How to install 
+============== 
+
+First of all, if you don't use Piwik, an open source alternative for 
+Google Analytics™, go to http://www.piwik.org and see if it's something
+for you. If you use Piwik, you are good to go. :-) 
+
+1. Just add the .module file to your site/modules/ folder and install 
+the module (Piwik Top Keywords) under the Piwik section. You can 
+configure the module from ProcessWire's admin area, but you can also 
+configure it during runtime. 
+   
+2. Add the following to your CSS stylesheet:
+	#PiwikTagcloud {list-style-type:none; margin:0px; padding:0px; text-align: center;} 
+	#PiwikTagcloud li  {display:inline !important; margin-right:15px; line-height:1.5em;} 
+	#PiwikTagcloud li  a {display:inline; text-decoration: none;}
+	#PiwikTagcloud a:hover {text-decoration: underline;}
+	#PiwikTagcloud .smallest {font-size: 100%;}
+	#PiwikTagcloud .small {font-size: 125%;}
+	#PiwikTagcloud .medium {font-size:150%;}
+	#PiwikTagcloud .large {font-size:170%;}
+	#PiwikTagcloud .largest {font-size:200%;}
+
+
+Usage on templates
+==================
+
+Add the following to your template:
+	$PiwikTopKeywords = $modules->get("PiwikTopKeywords");
+	$PiwikTopKeywords->DisplayTopKeywords();
+
+Note: you may configure the module during runtime, like this:
+		$PiwikTopKeywords = $modules->get("PiwikTopKeywords");
+		// Optional settings, if if omitted the default setting from the module 
+		// configuration is used.
+		$PiwikTopKeywords->piwik_url = "http://www.mydomain.com/piwik/";
+		$PiwikTopKeywords->piwik_token = "f0b2a04a482958e2675ab4c01aef6d2b"; 
+		$PiwikTopKeywords->search_url = "http://www.yourdomain.com/search/?q=";
+		$PiwikTopKeywords->piwik_timerange = "month"; //possible values: day, week, month or year
+		$PiwikTopKeywords->piwik_site_id = "4"; // This is the Piwik Site ID, check your 
+												// Piwik installation to find it.
+		$PiwikTopKeywords->piwik_max_keywords = "10";
+		// The following is required
+		$PiwikTopKeywords->DisplayTopKeywords();	
+
+		
+Credits & Trademarks
+====================
+
+This ProcessWire module is written by Jasper Metselaar (jasper@formmailer.net &
+twitter.com/jaspermetselaar)
+The module is licensed under GNU/GPL v2, see http://processwire.com/about/license/
+
+ProcessWire 2.x, Copyright (C) 2010 by Ryan Cramer
+Licensed under GNU/GPL v2, see LICENSE.TXT
+http://processwire.com
+
+Piwik ® is an internationally registered trademark, currently assigned to the project's 
+founder and lead developer, Matthieu Aubry. More info: http://piwik.org/trademark/
+
+Google Analytics™ is a trademark of Google Inc.

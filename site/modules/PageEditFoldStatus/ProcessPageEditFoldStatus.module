@@ -1,0 +1,40 @@
+<?php
+
+class ProcessPageEditFoldStatus extends Process {
+
+	public static function getModuleInfo() {
+		return array(
+			'title'		=> 'Process Page Edit Fold Status',
+			'version'	=> '0.1',
+			'summary'	=> 'Provides admin page for the "PageEditFoldStatus" module.',
+			'href'		=> '',
+			'singular' => true,
+			'autoload' => true
+		); 
+	}
+	
+	public function ___execute(){
+
+	}
+	
+	public function executeSaveStatus() {
+		$foldstatus = $this->session->get('foldstatus');
+		if($foldstatus == null) {
+			$foldstatus= array();
+		}
+		$id = $this->input->get->pageid;
+		$status = $this->input->post->foldstatus;
+		$foldstatus[$id] = $status;
+		$this->session->set('foldstatus', $foldstatus);
+		echo true; exit;
+	}
+	
+	public function executeLoadStatus() {
+		$foldstatus = $this->session->get('foldstatus');
+		$id = $this->input->get->pageid;
+		$status = $foldstatus[$id];
+		header('Content-Type: application/json');
+		echo $status; exit;
+	}
+	
+}

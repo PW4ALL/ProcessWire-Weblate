@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * ProcessPreview
+ *
+ * (c) 2014 Nico Knoll (http://www.nico-knoll.de/)
+ *
+ * Sponsored by dreizunull.com
+ *
+ */
+
+class ProcessPreview extends Process implements Module {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Preview', 
+			'version' => '2.5.0', 
+			'summary' => 'Let you see a preview of a page.',
+			'singular' => true, 
+			'autoload' => true 
+		);
+	}
+
+	public function init() {
+		parent::init();
+		$this->addHook('ProcessPageEdit::buildForm', $this, 'addButton');
+		$this->addHook('ProcessPageView::execute', $this, 'changeView');
+
+		// if ajax Request
+		if($this->input->get->ajax == 'true') {
+			echo $this->ajaxPreviewToSession();
+			exit;
+		}
+	}
+
+	private function ajaxPreviewToSession() {
+		// get the data into $data
+		foreach($this->input->post as $key => $value) {
+			$data[$key] = $value;
+		}
+
+		// set field stuff into session so the opened page can use it
+		$this->session->set('preview', $data);
+
+		// retrurn the pages preview url
+		$previewURL = $this->pages->get($this->input->get->id)->url.'?preview=true';
+		return $previewURL;
+	}
+
+	public function changeView(HookEvent $event) {
+		// get session data
+		$sessionData = $this->session->get('preview');
+
+		// check if ?preview=true
+		if($this->input->get->preview != 'true') return false;
+
+		// check if the opened page is the one we created the preview for
+		$page = $this->page;
+		if($this->page->id != $sessionData['id']) return false;
+
+		// abort if NullPage
+		if($page instanceof NullPage) return false;
+		// abort request if page is not editable
+		if(!$page->editable()) return;
+
+		// replace field content of the $page var with the preview stuff saved in the session
+		foreach($sessionData as $key => $value) {
+			if($page->fields->has($key)) $page->setFieldValue($key, $value);
+		}
+
+		$page->status = Page::statusOn;
+
+		// return the preview merged page
+		$event->return = $page->setOutputFormatting(true)->render();
+
+		// reset preview session
+		$this->session->remove('preview');
+	}
+
+
+	public function addButton(HookEvent $event) {
+		// it's better to go with hleper to prevent include automatically on every page becaue of autoload
+		$this->config->styles->add($this->config->urls->ProcessPreview.'ProcessPreviewHelper.css');
+		$this->config->scripts->add($this->config->urls->ProcessPreview.'ProcessPreviewHelper.js');
+
+		// generate the link / button ...
+		$field = $this->modules->get('InputfieldButton');
+		$field->attr('id+name', 'previewButton'); 
+		$field->attr('class', $field->class);
+		$field->attr('target', '_blank');
+		$field->attr('value', $this->_('Preview')); 
+
+		// little hacking to add the preview link as link and not as button
+		$href = $this->pages->get($this->input->get->id)->url.'?preview=true&time='.time();
+		$wrapper = $this->modules->get('InputfieldMarkup');
+		$wrapper->attr('id+name', 'previewMarkupWrapper');
+		$wrapper->attr('value', '</div></li>
+		<li class="Inputfield InputfieldPreview Inputfield_previewButton InputfieldColumnWidthFirst" id="wrap_previewButton">
+			<div class="InputfieldContent">
+
+				<a href="'.$href.'" class="ui-button ui-widget ui-corner-all head_button_clone ui-state-default" id="previewButton" target="_blank">
+					<span class="ui-button-text">'.$this->_('Preview').'</span>
+				</a>
+
+		');
+
+		// ... and add it to the form
+		$event->return = $event->return->append($wrapper); 
+	}
+
+
+}

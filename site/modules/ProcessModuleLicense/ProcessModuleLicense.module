@@ -1,0 +1,78 @@
+<?php
+
+/**
+ * ProcessWire Module Module-License-Info
+ *
+ * 
+ * Display License Name and Link to further license information if set in modules info array
+ * link could be external (full url) or internal to a license textfile in the modules directory 
+ * 
+ * made by kixe (Christoph Thelen) 12.10.14
+ * Licensed under GNU/GPL v3
+ * 
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2013 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://processwire.com
+ *
+ */
+class ProcessModuleLicense extends WireData implements Module {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('Modules License Info'),         
+			'summary' => __('Add License Information to Module Info'),
+			'version' => 102, 
+			'author' => 'kixe',
+			'permission' => 'module-admin', // needed to hook in ProcessModule
+			'singular' => true, 
+			'autoload' => true, 
+			'license' => 'GNU-GPLv3',
+			'hreflicense' => 'http://www.gnu.org/licenses/gpl-3.0.html'
+			);
+	}
+
+	/**
+	 *
+	 * hooky dooky
+	 */
+	public function init() {
+		$this->addHookAfter('ProcessModule::executeEdit', $this, 'hookLicense');
+	}
+
+	/**
+	 * @return string (markup AdminDataTable)
+	 * 
+	 */
+	protected function hookLicense($event) {
+		$info = $this->getInfo();
+		if (!empty($info['license'])) {
+			$hreflicense = ($info['hreflicense'])?' - '.'<a href="'.$info['hreflicense'].'">'.__('read more').'</a>':'';
+			$license = $info['license'].$hreflicense;
+			$p = "@(ModuleInfo)([\s\S]*)(</tbody>)@"; // $2 searches for linefeeds too, which doesn't work with .* 
+			$r = "$1$2\t<tr>\n\t\t\t<td>".__('License')."</td>\n\t\t\t<td>$license</td>\n\t\t</tr>\n\t$3";
+			$s = $event->return;
+			$event->return = preg_replace($p,$r,$s,1); // limited to 1 replacement
+		}
+	}
+
+	/**
+	 * @return array
+	 * 
+	 */
+	 protected function getInfo() {
+		$infoarray = null; 
+		$moduleName = '';
+
+		if(isset($_POST['name'])) $moduleName = $_POST['name']; 
+			else if(isset($_GET['name'])) $moduleName = $_GET['name'];
+
+		$moduleName = $this->sanitizer->name($moduleName); 
+		$infoarray = $this->modules->getModuleInfoVerbose($moduleName);
+		if(empty($infoarray['hreflicense'])) return $infoarray;
+		if(substr($infoarray['hreflicense'],0,7) != 'http://') $infoarray['hreflicense'] = $this->fuel('config')->urls->$this.$infoarray['hreflicense'];
+		return $infoarray;
+	}
+}

@@ -1,0 +1,280 @@
+h1,
+.user-menu a{
+	text-shadow: 0  0 3px #000;
+}
+
+.search-box{
+	float: right;
+}
+#ProcessPageSearchQuery{
+	padding: 5px 1em;
+	border: none;
+	margin: 3px 0;
+	color: #fff;
+	outline: none;
+	opacity: 1!important;
+	text-align: right;
+	line-height: 1em;
+	width: 200px;
+	font-size: 12px;
+
+	/* Search: */
+
+	border-radius: 4px;
+
+	background: #0067a5;
+	.box-shadow(0px 0px 1px rgba(255,255,255,0.15));
+	.box-shadow(inset 0px 0px 3px rgba(0,0,0,0.37));
+
+}
+#ProcessPageSearchQuery:focus{
+	border-color: #fff;
+	background: #fff;
+	color: @gray;
+	.box-shadow( 0 0 5px rgba(0,0,0,.3));
+}
+// search results
+
+#ProcessPageSearchOptions{
+	input, select{
+		width: 100%!important;
+		margin-bottom: 0.8em;
+	}
+	#Inputfield_submit{
+		margin-top: 0.5em;
+	}
+}
+	#wrap_search_field input{
+		margin-top: 0!important;
+	}
+
+
+#fieldgroupContext{
+	top: @innerPadding * 1.4!important;
+	right: @innerPadding!important;
+	vertical-align: middle;
+	
+}
+#fieldgroupContextSelect{
+	vertical-align: middle;
+	margin: 0;
+}
+.InputfieldPageAddButton,
+.ui-button,
+.ui-button.ui-state-default{
+	padding: 0.5em 0.8em;
+	cursor: pointer;
+	text-transform: uppercase;
+	.button();
+}
+.InputfieldPageAddButton:hover,
+.ui-button.ui-state-hover{
+	.button();
+	.buttonHover();
+}
+.InputfieldPageAddButton:active,
+.ui-button.ui-state-active{
+	.buttonOn();
+}
+.InputfieldPageAddButton{
+	.border-radius(2px);
+	padding: 0.3em 1em 0.3em 0.6em;
+	float: left;
+	margin: 1em 0;
+}
+
+// delete colors
+.PageListMoveNote a,
+#_WireTabDelete{
+	color: @error;
+}
+#_WireTabDelete.on{
+	border-color: @error!important;
+}
+#_WireTabDelete:hover{
+	color: @errorDark;
+}
+
+.fright{
+	float: right;
+}
+
+.fleft{
+	float: left;
+}
+
+.align_left {
+	float: left;
+	margin: 0 1em 0.5em 0;
+}
+
+.align_right {
+	float: right;
+	margin: 0 0 0.5em 1em;
+}
+
+.align_center {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+.modalNoMod{
+	background: @grayLightest!important;
+
+	body.modal{
+		background: @grayLightest!important;
+		.footer,
+		.page-header{
+			display: none!important;
+		}
+		.container{
+			padding: 0;
+			.inner{
+				.border-radius(0);
+				.box-shadow(none);
+			}
+		}
+	}
+}
+.modalMod{
+	background: @grayLightest!important;
+	body.modal{
+		.nav-wrapper,
+		.footer p,
+		.nav-bread{
+			display: none!important;
+		}
+	}
+}
+
+
+// ---------------------------------------------------------------------------------
+// overrides ---------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+
+table.AdminDataList tr td:first-child a{
+	font-weight: 100!important;
+	color: @adminAccentDark;
+}
+
+table.AdminDataList td span.ui-icon{
+	bottom: auto!important;
+}
+
+
+#notices{
+	padding: 0 0 1.5em 0;
+	.ui-icon{
+		margin-right: 0.3em;
+	}
+	li{
+		background: transparent!important;
+		border: none!important;
+		text-shadow: 1px 1px 1px #000;
+	}
+	li.NoticeMessage.ui-state-highlight{
+		color: @successLight;
+	}
+	li.NoticeWarning.ui-state-highlight{
+		color: @notice;
+	}
+	li.NoticeError.ui-state-highlight{
+		color: @errorLight;
+	}
+	a:hover{
+		color: #fff;
+	}
+}
+.login-body{
+	#notices,
+	.copy{
+		position: fixed;
+
+	}
+	#notices{
+		bottom: 0em;
+		left: 2em;
+		width: 100%;
+		li{
+		text-align: left;
+
+		}
+	}
+	.copy{
+		right: 2em;
+		bottom: 1.6em;
+	}
+	.page-header{
+		position: absolute;
+		top: 50%;
+		margin: -230px 0 0 0;
+		text-align: center;
+		width: 100%;
+
+		h1{
+			font-size: 2.3em;
+			color: #555;
+			float: none;
+		}
+	}
+	.content{
+		height: 300px;
+		width: 300px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin: -150px 0 0 -150px;
+	}
+	.Inputfield,
+	.Inputfields #login_name,
+	.Inputfields #login_pass {
+		width: 100%!important;
+	}
+}
+#head #head_button{
+	float: right;
+	padding: 1.5em 0;
+	.ui-button{
+		.buttonDark()
+	}
+	.ui-button:hover{
+		.buttonDarkHover()
+	}
+}
+
+#submit_publish,
+#submit_publish_copy,
+#submit_save,
+#submit_save_copy,
+#submit_save_form_fields,
+#Inputfield_submit{
+	.buttonGo();
+	float: right;
+}
+#submit_publish_copy:hover,
+#submit_publish:hover,
+#submit_save_form_fields_copy:hover,
+#submit_save_form_fields:hover,
+#submit_save_copy:hover,
+#submit_save:hover,
+#Inputfield_submit_copy:hover,
+#Inputfield_submit:hover{
+	.buttonGoHover();
+	float: right;
+}
+
+#_ProcessPageEditDelete.on,
+#_WireTabDelete.on{
+	.buttonCancelOn();
+}
+
+#_ProcessPageEditDelete{
+
+}
+
+#debug{
+	.container{
+		padding: 0;
+	}
+	text-shadow: none;
+}

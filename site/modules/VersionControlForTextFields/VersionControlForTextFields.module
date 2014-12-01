@@ -1,0 +1,582 @@
+<?php
+
+/**
+ * Simplified version control for text type fields
+ *
+ * This module attempts to use hooks provided by ProcessWire to catch page edits,
+ * find out which fields were changed and if text fields (such as FieldtypeText, 
+ * FieldtypeTextarea etc.) were changed their values are saved for later use.
+ *
+ * @copyright Copyright (c) 2013, Teppo Koivula
+ * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
+ *
+ * ProcessWire 2.x 
+ * Copyright (C) 2013 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://processwire.com
+ *
+ */
+class VersionControlForTextFields extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * Return information about this module (required)
+     *
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Version Control For Text Fields',
+            'summary' => 'Simplified version control for text type fields',
+            'href' => 'http://modules.processwire.com/modules/version-control-for-text-fields/',
+            'author' => 'Teppo Koivula',
+            'version' => 139,
+            'singular' => true,
+            'autoload' => true,
+            'installs' => array(
+                'ProcessRevisionHistoryForTextFields',
+                'PageSnapshot',
+            ),
+        ); 
+    }
+
+    /**
+     * Default configuration for this module
+     *
+     * The point of putting this in it's own function is so that you don't have to specify
+     * these defaults more than once.
+     *
+     * @return array
+     */
+    static public function getDefaultData() {
+        return array(
+            'compatible_fieldtypes' => array(
+                'FieldtypeEmail',
+                'FieldtypeDatetime',
+                'FieldtypeText',
+                'FieldtypeTextLanguage',
+                'FieldtypeTextarea',
+                'FieldtypeTextareaLanguage',
+                'FieldtypePageTitle',
+                'FieldtypePageTitleLanguage',
+                'FieldtypeCheckbox',
+                'FieldtypeInteger',
+                'FieldtypeFloat',
+                'FieldtypeURL',
+                'FieldtypePage',
+                'FieldtypeModule',
+            )
+        );
+    }
+    
+    /**
+     * Container for field data
+     *
+     */
+    protected $page_data = array();
+
+    /**
+     * Data fields
+     *
+     * Each installed language needs one of these.
+     *
+     */
+    protected $data_fields = array();
+
+    /**
+     * Names of database tables used by this module
+     *
+     * Data table is used as a storage table for actual revision data (content) while main table provides dates, user
+     * and page id's etc. (metadata.)
+     *
+     */
+    const TABLE_NAME = 'version_control_for_text_fields';
+    const DATA_TABLE_NAME = 'version_control_for_text_fields__data';
+
+    /**
+     * Populate the default config data
+     *
+     * ProcessWire will automatically overwrite it with anything the user has specifically configured.
+     * This is done in construct() rather than init() because ProcessWire populates config data after
+     * construct(), but before init().
+     *
+     */
+    public function __construct() {
+        foreach(self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+
+    /**
+     * Module configuration
+     *
+     * @param array $data
+     * @return InputfieldWrapper
+     */
+    static public function getModuleConfigInputfields(array $data) {
+
+        // this is a container for fields, basically like a fieldset
+        $fields = new InputfieldWrapper();
+
+        // since this is a static function, we can't use $this->modules, so get them from the global wire() function
+        $modules = wire('modules');
+
+        // merge default config settings (custom values overwrite defaults)
+        $defaults = self::getDefaultData();
+        $data = array_merge($defaults, $data);
+
+        // define fieldtypes considered compatible with this module
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "compatible_fieldtypes";
+        $field->label = __("Compatible fieldtypes");
+        $field->description = __("Fieldtypes considered compatible with this module.");
+        $field->collapsed = Inputfield::collapsedYes;
+        $field->icon = 'list-alt';
+        $selectable_fieldtypes = $modules->find('className^=Fieldtype');
+        foreach ($selectable_fieldtypes as $key => $fieldtype) {
+            // remove native fieldtypes known to be incompatible
+            if ($fieldtype == "FieldtypePassword" || strpos($fieldtype->name, "FieldtypeFieldset") === 0) {
+                unset($selectable_fieldtypes[$key]);
+            }
+        }
+        $field->addOptions($selectable_fieldtypes->getArray());
+        $field->notes = __("Please note that selecting any fieldtypes not selected by default may result in various problems.");
+        if (isset($data['compatible_fieldtypes'])) $field->value = $data['compatible_fieldtypes'];
+        $fields->add($field);
+        
+        // for which templates should we track values?
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "enabled_templates";
+        $field->label = __("Enable history for these templates");
+        $field->notes = __("Only non-system templates can be selected.");
+        $field->icon = "file-o";
+        $field->columnWidth = 50;
+        foreach (wire('templates')->getAll() as $key => $template) {
+            // include only non-system templates
+            if (~ $template->flags & Template::flagSystem) {
+                $field->addOption($key, $template);
+            }
+        }
+        if (isset($data['enabled_templates'])) $field->value = $data['enabled_templates'];
+        $fields->add($field);
+        
+        // for which fields should we track values?
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "enabled_fields";
+        $field->label = __("Enable history for these fields");
+        $field->notes = __("Only fields of compatible fieldtypes can be selected.");
+        $field->icon = "file-text-o";
+        $field->columnWidth = 50;
+        $types = implode($data['compatible_fieldtypes'], "|");
+        $field->addOptions(wire('fields')->find("type=$types")->getArray());
+        if (isset($data['enabled_fields'])) $field->value = $data['enabled_fields'];
+        $fields->add($field);
+
+        // for how long should collected data be retained?
+        if ($modules->isInstalled("LazyCron")) {
+            $field = $modules->get("InputfieldSelect");
+            $field->addOption('1 WEEK', __('1 week'));
+            $field->addOption('2 WEEK', __('2 weeks'));
+            $field->addOption('1 MONTH', __('1 month'));
+            $field->addOption('2 MONTH', __('2 months'));
+            $field->addOption('3 MONTH', __('3 months'));
+            $field->addOption('6 MONTH', __('6 months'));
+            $field->addOption('1 YEAR', __('1 year'));
+            $field->notes = __("Leave empty to disable automatic cleanup.");
+            if (isset($data['data_max_age'])) $field->value = $data['data_max_age'];
+        } else {
+            $field = $modules->get("InputfieldMarkup");
+            $field->description = __("Automatic cleanup requires LazyCron module, which isn't currently installed.");
+        }
+        $field->label = __("For how long should we retain collected data?");
+        $field->name = "data_max_age";
+        $field->icon = "clock-o";
+        $field->columnWidth = 50;
+        $fields->add($field);
+
+        // should we limit the amount of revisions saved for each field + page combination?
+        $field = $modules->get("InputfieldSelect");
+        $field->name = "data_row_limit";
+        $field->label = __("Revisions retained for each field + page combination");
+        $field->addOptions(array(10 => '10', 20 => '20', 50 => '50', 100 => '100'));
+        $field->notes = __("Leave empty to not limit stored revisions at all.");
+        $field->icon = "random";
+        $field->columnWidth = 50;
+        if (isset($data['data_row_limit'])) $field->value = $data['data_row_limit'];
+        $fields->add($field);
+
+        // notice about additional config options
+        $field = $modules->get("InputfieldMarkup");
+        $field->label = __("Additional config options");
+        $field->icon = "gear";
+        $link_module = "ProcessRevisionHistoryForTextFields";
+        $link_markup = "<a href='".wire('page')->url."edit?name=$link_module'>$link_module</a>";
+        $field->set('markupText', sprintf(__("You can find additional config options related to this module at %s"), $link_markup));
+        $fields->add($field);
+
+        // skip dropping tables during uninstall?
+        $field = $modules->get("InputfieldCheckbox");
+        $field->name = "skip_drop_tables";
+        $field->label = __("Don't drop tables during uninstall");
+        $field->description = __("This setting is most useful when planning to transition (or upgrade) to Version Control module. During uninstall custom database tables will remain intact and data gathered by this module will be imported into Version Control during it's own install procedure.");
+        $field->notes = __("Before upgrading to Version Control, please completely uninstall this module first, including PageSnapshot and ProcessVersionControlForTextFields.");
+        $field->collapsed = Inputfield::collapsedYes;
+        if (isset($data[$field->name]) && $data[$field->name]) {
+            $field->checked = "checked";
+            $field->collapsed = Inputfield::collapsedNo;
+        }
+        $fields->add($field);
+        
+        return $fields;
+
+    }
+
+    /**
+     * Initialization function
+     *
+     * This function attachs required hooks.
+     *
+     */
+    public function init() {
+
+        // init data fields
+        $this->data_fields = array();
+        if ($this->modules->isInstalled('LanguageSupport')) {
+            $language_support = $this->modules->get('LanguageSupport');
+            $default_language = $language_support->defaultLanguagePageID;
+            $this->data_fields = array($default_language => 'data');
+            $language_ids = $language_support->otherLanguagePageIDs;
+            if (count($language_ids)) {
+                foreach ($language_ids as $language_id) {
+                    $this->data_fields[$language_id] = "data$language_id";
+                }
+            }
+        } else {
+            $this->data_fields[] = 'data';
+        }
+
+        // remove expired rows daily
+        $this->addHook("LazyCron::everyDay", $this, 'cleanup');
+
+        if (count($this->enabled_templates) && count($this->enabled_fields)) {
+            // add hooks that gather information and trigger insert
+            $this->addHook('Pages::saveReady', $this, 'gather'); 
+            $this->addHookAfter('Pages::save', $this, 'insert'); 
+            // add hook that clears stored data for deleted pages
+            $this->addHookAfter('Pages::deleted', $this, 'cleanupDeleted');
+            // add hook that injects additional scripts and/or styles
+            $this->addHookAfter('ProcessPageEdit::execute', $this, 'inject');
+            // add new property versionControlFields to Template object
+            $this->addHookProperty('Template::versionControlFields', $this, 'versionControlFields');
+            // get and init (and install if not yet installed) page snapshot
+            $this->modules->get('PageSnapshot')->init();
+        }
+
+    }
+
+    /**
+     * Delete data older than max age defined in module settings
+     *
+     */
+    public function cleanup() {
+
+        if (!$this->data_max_age) return;
+
+        $t1 = self::TABLE_NAME;
+        $t2 = self::DATA_TABLE_NAME;
+        $interval = $this->db->escape_string($this->data_max_age);
+        $sql = "DELETE $t1, $t2 FROM $t1, $t2 WHERE $t1.timestamp < DATE_SUB(NOW(), INTERVAL $interval) AND $t2.{$t1}_id = $t1.id";
+        
+        $this->db->query($sql);
+
+    }
+
+    /**
+     * Delete data that exceeds row limit defined in module settings
+     *
+     * Row limit applies to each unique page + field combination.
+     *
+     * @param int $pages_id
+     * @param int $fields_id
+     */
+    protected function cleanupExcessRows($pages_id, $fields_id) {
+
+        if (!$this->data_row_limit) return;
+
+        $ids = "";
+        $t1 = self::TABLE_NAME;
+        $t2 = self::DATA_TABLE_NAME;
+        $sql = "SELECT COUNT(*) AS count FROM $t1 WHERE pages_id = $pages_id AND fields_id = $fields_id";
+        $result = $this->db->query($sql);
+        $row = mysqli_fetch_assoc($result);
+        if ($row['count'] > $this->data_row_limit) {
+            $limit = $row['count'] - $this->data_row_limit;
+            $sql = "SELECT id FROM $t1 ORDER BY timestamp LIMIT $limit";
+            $result = $this->db->query($sql);
+            while ($row = mysqli_fetch_assoc($result)) {
+                $ids .= ($ids) ? ", " . $row['id'] : $row['id'];
+            }
+            $sql = "DELETE FROM $t1 WHERE id IN ($ids)";
+            $this->db->query($sql);
+            $sql = "DELETE FROM $t2 WHERE {$t1}_id IN ($ids)";
+            $this->db->query($sql);
+        }
+
+    }
+
+    /**
+     * Remove previously stored data for deleted page
+     *
+     * @param HookEvent $event
+     */
+    protected function cleanupDeleted(HookEvent $event) {
+
+        $page = $event->arguments[0];
+
+        $t1 = self::TABLE_NAME;
+        $t2 = self::DATA_TABLE_NAME;
+        $sql = "DELETE $t1, $t2 FROM $t1, $t2 WHERE $t1.pages_id = $page AND $t2.{$t1}_id = $t1.id";
+
+        $this->db->query($sql);
+        
+    }
+
+    /**
+     * After page has being edited, track changed fields and trigger insert method to
+     * save their values to database (or any other applicable storage medium.)
+     *
+     * @param HookEvent $event
+     */
+    public function gather(HookEvent $event) {
+
+        $page = $event->arguments[0];
+
+        // if page has no id, it's currently being added
+        $page_id = $page->id ? $page->id : 0;
+
+        // check if tracking values has been enabled for template of current
+        // page or (in case of repeater pages) template of containing page
+        $template_id = $page->template->id;
+        if ($page instanceof RepeaterPage) $template_id = $page->getForPage()->template->id;
+        if (!in_array($template_id, $this->enabled_templates)) return;
+
+        if ($page->isChanged()) {
+            foreach ($page->template->fields as $field) {
+                if ($page->isChanged($field->name) && in_array($field->id, $this->enabled_fields)) {
+                    $data = $page->get($field->name);
+                    // continue only if either the page in question exists (i.e.
+                    // old field was cleared) or page is new and field has value
+                    if ($page->id || !is_null($data) && $data != "") {
+                        if (!isset($this->page_data[$page_id])) $this->page_data[$page_id] = array();
+                        // using array to store field data isn't really necessary at the moment,
+                        // but it's not harmful either and could make it easier to support more
+                        // fields at some (distant) point in the future.
+                        $this->page_data[$page_id][$field->id] = array(
+                            'data' => $page->get($field->name)
+                        );
+                    }
+                }
+            }
+        }
+        
+    }
+
+    /**
+     * Insert row into database or other suitable medium (currently only database
+     * is supported, though..)
+     *
+     * @param HookEvent $event
+     */
+    public function insert(HookEvent $event) {
+
+        $page = $event->arguments[0];
+
+        // return if current page is repeater parent (for-page-n or for-field-n)
+        if ($page->template == "admin" && strpos($page->name, "for-") === 0) return;
+
+        $users_id = $this->user->id;
+        $username = $this->user->name;
+        if (!isset($this->page_data[$page->id]) && isset($this->page_data[0])) {
+            // handle new pages; '0' is a placeholder required if we want to
+            // store even the initial values of fields under version control
+            $this->page_data[$page->id] = $this->page_data[0];
+            unset($this->page_data[0]);
+        }
+        $page_data = isset($this->page_data[$page->id]) ? $this->page_data[$page->id] : null;
+
+        // return if no data exists
+        if (!$page_data) return;
+
+        foreach ($page_data as $fields_id => $field_data) {
+
+            // insert new row to database table containing history rows
+            $sql_fields = "pages_id, fields_id, users_id, username";
+            $sql_values = "{$page->id}, $fields_id, $users_id, '$username'";
+            $sql = "INSERT INTO " . self::TABLE_NAME . " ($sql_fields) VALUES ($sql_values)";
+            $this->db->query($sql);
+
+            // id of inserted database row
+            $insert_id = $this->db->insert_id;
+
+            // insert field data to another table
+            $sql_fields = self::TABLE_NAME . "_id, property, data";
+            foreach ($field_data as $property => $value) {
+                if ($value instanceof LanguagesPageFieldValue) {
+                    $properties = array();
+                    foreach ($this->languages as $language) {
+                        $language_value = $value->getLanguageValue($language);
+                        $properties[$property . ($language->isDefault() ? "" : $language)] = $language_value;
+                    }
+                } else {
+                    $properties = array($property => $value);
+                }
+                foreach ($properties as $property => $data) {
+                    $data = $this->db->real_escape_string($data);
+                    $property = $this->db->real_escape_string($property);
+                    $sql_values = "$insert_id, '$property', '$data'";
+                    $sql = "INSERT INTO " . self::DATA_TABLE_NAME . " ($sql_fields) VALUES ($sql_values)";
+                    $this->db->query($sql);
+                }
+            }
+
+            // clear page data and enforce row limit setting
+            unset($this->page_data[$page->id]);
+            $this->cleanupExcessRows($page->id, $fields_id);
+
+        }
+        
+    }
+    
+    /**
+     * This function is executed before page markup has been created
+     *
+     * Used for injecting custom scripts, styles and/or markup to admin
+     * page. Purpose of these is to allow viewing and possibly managing
+     * version history.
+     *
+     * @param HookEvent $event
+     */
+    public function inject(HookEvent $event) {
+
+        // this only applies to GET requests
+        if ($_SERVER['REQUEST_METHOD'] !== "GET") return;
+
+        // make sure that value tracking is enabled for template of
+        // the page currently being edited
+        if ($this->input->get->id) $page = $this->pages->get((int) $this->input->get->id);
+        if (!$page || !$page->id || !in_array($page->template->id, $this->enabled_templates)) return;
+
+        // inject scripts and styles
+		$class = $this->className();
+		$info = $this->getModuleInfo();
+		$version = (int) $info['version']; 
+		if (is_file($this->config->paths->$class . "$class.css")) $this->config->styles->add($this->config->urls->$class . "$class.css?v=$version"); 
+		if (is_file($this->config->paths->$class . "$class.js")) $this->config->scripts->add($this->config->urls->$class . "$class.js?v=$version"); 
+
+        // inject settings and translations
+        $process = $this->modules->getModuleID("ProcessRevisionHistoryForTextFields");
+        $processPage = $this->pages->get("process=$process");
+        $this->config->js('VersionControlForTextFields', array(
+            'i18n' => array(
+                'compareWithCurrent' => __("Compare with current"),
+            ),
+            'pageID' => $page->id,
+            'processPage' => $processPage->url(),
+        ));
+
+    }
+
+    /**
+     * Find out which fields belonging to current template have version
+     * control enabled. Added as a new property "versionControlFields"
+     * to Template object.
+     *
+     * @param HookEvent $event
+     */
+    public function versionControlFields(HookEvent $event) {
+
+        $fields = new Fieldgroup();
+        $template = $event->object;
+        foreach ($this->enabled_fields as $field) {
+            if ($template->hasField($field)) {
+                $fields->add($this->fields->get($field));
+            }
+        }
+
+        $event->return = $fields;
+
+    }
+
+    /**
+     * Called only when this module is installed
+     *
+     * Creates new database table for storing data.
+     *
+     */
+    public function ___install() {
+        
+        // main table, contains mostly metadata
+        $sql = "
+        CREATE TABLE IF NOT EXISTS " . self::TABLE_NAME . " (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            pages_id INT UNSIGNED NOT NULL,
+            fields_id INT UNSIGNED NOT NULL,
+            users_id INT UNSIGNED DEFAULT NULL,
+            username VARCHAR(255) DEFAULT NULL,
+            timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY fields_id (fields_id)
+        ) ENGINE = MYISAM DEFAULT CHARSET=utf8;
+        ";
+        $this->db->query($sql);
+
+        // tell the user that we've created new database table
+        $this->message("Created Table: " . self::TABLE_NAME);
+
+        // data table, contains actual content for edited fields
+        // @todo: add other methods for storing data, ie. files,
+        // and make creating and using this table optional.
+        $sql = "
+        CREATE TABLE IF NOT EXISTS " . self::DATA_TABLE_NAME . " (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            " . self::TABLE_NAME . "_id INT UNSIGNED NOT NULL,
+            property VARCHAR(255) NOT NULL,
+            data MEDIUMTEXT DEFAULT NULL,
+            KEY " . self::TABLE_NAME . "_id (" . self::TABLE_NAME . "_id)
+        ) ENGINE = MYISAM DEFAULT CHARSET=utf8;
+        ";
+        $this->db->query($sql);
+
+        // tell the user that we've created new database table
+        $this->message("Created Table: " . self::DATA_TABLE_NAME);
+
+    }
+
+    /**
+     * Called only when this module is uninstalled
+     *
+     * Drops database table associated with this module.
+     *
+     */
+    public function ___uninstall() {
+        
+        if ($this->skip_drop_tables) return;
+        
+        // drop main table if exists
+        $sql = "SHOW TABLES LIKE '" . self::TABLE_NAME . "'";
+        $result = $this->db->query($sql);
+        if ($result->num_rows == 1) {
+            $this->db->query("DROP TABLE " . self::TABLE_NAME);
+            $this->message("Dropped Table: " . self::TABLE_NAME);
+        }
+        
+        // drop data table if exists
+        $sql = "SHOW TABLES LIKE '" . self::DATA_TABLE_NAME . "'";
+        $result = $this->db->query($sql);
+        if ($result->num_rows == 1) {
+            $this->db->query("DROP TABLE " . self::DATA_TABLE_NAME);
+            $this->message("Dropped Table: " . self::DATA_TABLE_NAME);
+        }
+        
+    }
+    
+}

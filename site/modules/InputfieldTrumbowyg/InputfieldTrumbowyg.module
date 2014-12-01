@@ -1,0 +1,217 @@
+<?php
+
+/**
+ * ProcessWire inputfield module for Trumbowyg WYSIWYG editor
+ * 
+ * @copyright Copyright (c) 2014 Teppo Koivula
+ * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
+ *
+ * ProcessWire 2.x 
+ * Copyright (C) 2013 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://processwire.com
+ *
+ * Trumbowyg Copyright (c) 2012-2014 Alexandre Demode (Alex-D)
+ * http://alex-d.github.io/Trumbowyg/
+ *
+ */
+class InputfieldTrumbowyg extends InputfieldTextarea {
+
+    /**
+     * Return information about this module (required)
+     *
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Trumbowyg',
+            'summary' => __('Trumbowyg textarea rich text editor (alpha module)', __FILE__),
+            'author' => 'Teppo Koivula',
+            'version' => '0.0.10',
+        );
+    }
+
+    /**
+     * Default configuration
+     *
+     * @return array
+     */
+    static public function getDefaultData() {
+        return array(
+            'mobile' => true,
+            'tablet' => true,
+            'btns' => 'viewHTML,|,formatting,|,strong,em,underline,strikethrough,|,link,insertImage,|,justifyLeft,justifyCenter,justifyRight,justifyFull,|,unorderedList,orderedList,|,horizontalRule',
+            'semantic' => true,
+            'autogrow' => false,
+            'plugins' => array(),
+        );
+    }
+
+    /**
+     * Placeholder for all configuration options
+     *
+     */
+    protected $options = array();
+
+    /**
+     * Construct and set default configuration
+     *
+     */
+    public function __construct() {
+        parent::__construct();
+        // store default values for options and option names
+        foreach (self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+            $this->options[] = $key;
+        }
+        // plugins directory
+        $module_dir = substr($this->config->urls->{$this->className}, strlen($this->config->urls->root)-1);
+        $this->plugins_dir = $module_dir . 'trumbowyg/plugins/';
+        // get module version
+        $info = self::getModuleInfo();
+        $this->version = $info['version'];
+    }
+
+    /**
+     * Render the output code for Trumbowyg
+     *
+     * @return string rendered field markup
+     */
+    public function ___render() {
+
+        // load trumbowyg
+        $this->config->scripts->add($this->config->urls->{$this->className} . "trumbowyg/trumbowyg.min.js?v=" . $this->version);
+        $this->config->styles->add($this->config->urls->{$this->className} . "trumbowyg/design/css/trumbowyg.css?v=" . $this->version);
+
+        // load plugins
+        foreach ($this->plugins as $plugin) {
+            $file = $this->getPlugin($plugin);
+            if ($file) $this->config->scripts->add($this->config->urls->root . $file . "?v=" . $this->version);
+        }
+
+        // config settings
+        $config = array();
+        foreach ($this->options as $option) {
+            if ($option == 'btns' && $this->$option && !is_array($this->$option)) {
+                $this->$option = explode(",", $this->$option);
+            }
+            $config[$option] = $this->$option;
+        }
+
+        // localization
+        $lang = $this->_('en'); // Language code
+        if (basename($lang) == $lang) {
+            $lang_file = "trumbowyg/langs/{$lang}.js";
+            if (file_exists($this->config->paths->{$this->className} . $lang_file)) {
+                $this->config->scripts->add($this->config->urls->{$this->className} . $lang_file . "?v=" . $this->version);
+                $config['lang'] = $lang;
+            }
+        }
+
+        // return output
+        $script = "<script>$('textarea[name={$this->name}]').trumbowyg(" . json_encode($config) . ");</script>";
+        return parent::___render() . $script;
+
+    }
+
+    /**
+     * Process data submitted to a Trumbowyg field
+     *
+     * @param WireInputData $input
+     * @return InputfieldTrumbowyg
+     */
+    public function processInput(WireInputData $input) {
+
+        $value = trim($input[$this->name]); 
+
+        if ($value != $this->attr('value')) {
+            $this->trackChange('value');
+            $this->setAttribute('value', $value);     
+        }
+
+        return $this;
+
+    }
+
+    /**
+     * Inputfield configuration screen
+     * 
+     * Available Trumbowyg config settings are explained here:
+     * http://alex-d.github.io/Trumbowyg/documentation.html
+     *
+     * @return InputfieldWrapper
+     */
+    public function getConfigInputfields() {
+
+        $fields = parent::___getConfigInputfields();
+        
+        // fieldset for Trumbowyg settings
+        $wrapper = wire('modules')->get('InputfieldFieldset');
+        $wrapper->label = $this->_('Trumbowyg Settings');
+        $fields->add($wrapper);
+
+        // buttons
+        $field = wire('modules')->get('InputfieldText');
+        $field->name = 'btns';
+        $field->label = $this->_('Buttons');
+        $field->description = $this->_('Choose the buttons that appear in the button pane. This option is a string of comma-separated values representing buttons or vertical separators (using the pipe character).');
+        $field->value = $this->btns;
+        $wrapper->add($field);
+
+        // semantic
+        $field = wire('modules')->get('InputfieldCheckbox');
+        $field->name = 'semantic';
+        $field->label = $this->_('Enable semantic output');
+        $field->description = $this->_('Generates a better, more semantic HTML (i.e. <em> instead of <i>, <strong> intsead of <b>, etc.).');
+        $field->notes = $this->_('ALPHA: This feature is in development and not completely functional.');
+        $field->checked = $this->{$field->name};
+        $wrapper->add($field);
+
+        // auto grow
+        $field = wire('modules')->get('InputfieldCheckbox');
+        $field->name = 'autogrow';
+        $field->label = $this->_('Enable auto grow');
+        $field->description = $this->_('The editor textarea can extend itself automatically when writing a long text.');
+        $field->checked = $this->{$field->name};
+        $wrapper->add($field);
+
+        // plugins
+        $field = wire('modules')->get('InputfieldAsmSelect');
+        $field->setAsmSelectOption('hideDeleted', false);
+        $field->name = 'plugins';
+        $field->label = $this->_('Plugins');
+        $field->description = $this->_('List of plugins that Trumbowyg should load.');
+        $field->notes = $this->_('Plugins found from Trumbowyg plugins directory are automatically listed here. Enabling plugins may require manual additions to the button pane.');
+        $plugins = scandir($this->config->paths->root . $this->plugins_dir);
+        foreach ($plugins as $plugin) {
+            if ($this->getPlugin($plugin)) {
+                $field->addOption($plugin);
+            }
+        }
+        $field->value = $this->{$field->name};
+        $wrapper->add($field);
+
+        return $fields; 
+
+    }
+
+    /**
+     * Get plugin file based on plugin name
+     *
+     * @param string $plugin name of plugin
+     * @return string|null filename or null
+     */
+    protected function getPlugin($plugin) {
+        $file = null;
+        if ($plugin === basename($plugin) && strpos($plugin, '.') !== 0) {
+            $root = $this->config->paths->root;
+            $file = $this->plugins_dir . $plugin . "/trumbowyg." . $plugin;
+            if (is_file($root . $file . ".min.js")) $file .= "$file.min.js";
+            else if (is_file($root . $file . ".js")) $file .= "$file.js";
+            else $file = null;
+        }
+        return $file;
+    }
+
+}

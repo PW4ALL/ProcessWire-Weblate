@@ -1,0 +1,105 @@
+<?php
+
+/**
+ * ProcessWire Smarty Module
+ *
+ * Copyright (C) 2013 by Jerzy Głowacki - jerzyglowacki@gmail.com
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ */
+
+class SmartyTemplating extends WireData implements Module, ConfigurableModule {
+
+	protected $smarty;
+
+	public static function getModuleInfo() {
+		return array('title' => __('Smarty Templating'),
+				'summary' => __('Enable Smarty template engine in ProcessWire'),
+				'version' => 100,
+				'singular' => true,
+				'autoload' => true
+			);
+	}
+    
+	public static function getDefaults() {
+		   return array(
+				'caching' => 1,
+				'cache_lifetime' => 3600
+		);
+	}
+	
+	public function init() {
+		require_once wire('config')->paths->SmartyTemplating . 'Smarty/libs/Smarty.class.php';
+		$this->smarty = new Smarty();
+		$this->addHookAfter('Page::render', $this, 'bootstrapSmarty');
+		$this->pages->addHookAfter('save', $this, 'clearCache'); 
+		$this->pages->addHookAfter('saveField', $this, 'clearCache');
+	}
+
+	public function ___bootstrapSmarty($event) {
+		//Disable Smarty for admin panel
+		if($event->object->template == 'admin')
+			return;
+
+		$this->smarty->caching = $this->data['caching'] ? 1 : 0;
+		$this->smarty->cache_lifetime = intval($this->data['cache_lifetime']);
+        
+		$this->smarty->setTemplateDir(wire('config')->paths->templates);
+		$this->smarty->setCompileDir(wire('config')->paths->cache . 'SmartyTemplates_c/');
+		$this->smarty->setConfigDir(wire('config')->paths->cache . 'SmartyConfigs/');
+		$this->smarty->setCacheDir(wire('config')->paths->cache . 'SmartyCache/');
+
+		//Assign ProcessWire objects to Smarty templates
+		$this->smarty->assign('page', $event->object);
+		$this->smarty->assign('pages', wire('pages'));
+		$this->smarty->assign('file', wire('file'));
+		$this->smarty->assign('files', wire('files'));
+		$this->smarty->assign('user', wire('user'));
+		$this->smarty->assign('users', wire('users'));
+		$this->smarty->assign('roles', wire('roles'));
+		$this->smarty->assign('permissions', wire('permissions'));
+		$this->smarty->assign('templates', wire('templates'));
+		$this->smarty->assign('fields', wire('fields'));
+		$this->smarty->assign('input', wire('input'));
+		$this->smarty->assign('sanitizer', wire('sanitizer'));
+		$this->smarty->assign('session', wire('session'));
+		$this->smarty->assign('config', wire('config'));
+		$this->smarty->assign('modules', wire('modules'));
+
+		$event->return = $this->smarty->fetch($event->object->template->filename);
+	}
+
+	public function ___clearCache($event) {
+		$this->smarty->clearAllCache();
+	}
+
+	static public function getModuleConfigInputfields(Array $data) {
+		$fields = new InputfieldWrapper();
+		$modules = wire('modules');		
+		$data = array_merge(self::getDefaults(), $data);
+
+		//Create folders if they don't exist
+		wireMkdir(wire('config')->paths->cache . 'SmartyTemplates_c/');
+		wireMkdir(wire('config')->paths->cache . 'SmartyConfigs/');
+		wireMkdir(wire('config')->paths->cache . 'SmartyCache/');
+	
+		$field = $modules->get("InputfieldCheckbox");
+		$field->name = "caching";
+		$field->label = "Enable caching";
+		$field->description = "Enable caching of Smarty templates";
+		$field->value = 1;
+		$field->attr('checked', empty($data['caching']) ? '' : 'checked');
+		$fields->add($field);
+		
+		$field = $modules->get("InputfieldText");
+		$field->name = 'cache_lifetime';
+		$field->label = "Cache lifetime";
+		$field->description = "Lifetime of cached templates (in seconds)";
+		$field->size = 6;
+		$field->value = $data['cache_lifetime'];
+		$fields->append($field);
+	
+		return $fields;
+	}
+	
+}

@@ -1,0 +1,47 @@
+{
+    "name": "SEO",
+    "description": "Fields for SEO (meta description, …)",
+    "prefix": "seo",
+    "dependencies": [
+        {
+            "name": "TextareaCounter",
+            "zip": "https://github.com/boundaryfunctions/TextareaCounter/zipball/master",
+            "core": false
+        }
+    ],
+    "fields": [
+        {
+            "name": "tab",
+            "type": "FieldtypeFieldsetTabOpen",
+            "label": "SEO"
+        },
+        {
+            "name": "meta_description",
+            "type": "FieldtypeTextarea",
+            "label": "Meta Description",
+            "attributes": [
+                {
+                    "name": "maxchars",
+                    "value": 160
+                }
+            ]
+        },
+        {
+            "name": "close_tab",
+            "type": "FieldtypeFieldsetClose",
+            "label": ""
+        }
+    ],
+    "templates": [
+        {
+            "name": "home",
+            "prefab": true,
+            "fields": ["seo_tab", "seo_meta_description", "seo_close_tab"]
+        },
+        {
+            "name": "basic-page",
+            "prefab": true,
+            "fields": ["seo_tab", "seo_meta_description", "seo_close_tab"]
+        }
+    ]
+}

@@ -1,0 +1,94 @@
+<?php
+
+class PassiveCronDemo extends WireData implements Module, ConfigurableModule
+{
+
+    public static function getModuleInfo()
+    {
+        return array(
+            'title' => 'PassiveCron Demo Module',
+            'author' => 'Conclurer GbR',
+            'summary' => 'Demonstrates how PassiveCron works',
+            'version' => '100',
+            'requires' => 'PassiveCron',
+            'href' => 'https://www.conclurer.com',
+            'autoload' => true,
+            'singular' => true
+        );
+    }
+
+    public function init()
+    {
+        $this->cron = $this->modules->get('PassiveCron');
+    }
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->cron = null;
+        $this->cronModuleRegistered = false;
+        $this->executionBCount = 0;
+    }
+
+
+    public function ___install()
+    {
+        // Do only require PassiveCron at install if your module is deeply based on it!
+        $this->cron = $this->modules->get('PassiveCron');
+
+        // Tries to register the module at cron.pw
+        if ($this->cron->registerModule($this)) {
+            $this->cronModuleRegistered = true;
+            $this->save_configuration();
+        } else throw new WireException('Unable to register module at cron.pw');
+
+        if ($this->cronModuleRegistered) {
+            // Add a non-repeating task for method 'exampleAsyncMethodA' to occur in 1 minute
+            $taskId = $this->cron->newTask->in(1, 'minute')->run($this, 'exampleAsyncMethodA');
+            $this->message("Added TaskId $taskId (Task A)");
+
+            // Add a task for method 'exampleAsyncMethodB' to occur in 1 minute and to be repeated every 30 minutes
+            $taskId = $this->cron->newTask->in(1, 'minute')->every(30, 'minutes')->run($this, 'exampleAsyncMethodB');
+            $this->message("Added TaskId $taskId (Task B)");
+        }
+    }
+
+    public function ___uninstall()
+    {
+        $this->cron = $this->modules->get('PassiveCron');
+
+        // Remove the module from cron.pw - Important!
+        $this->cron->disableModule($this);
+    }
+
+    private function save_configuration()
+    {
+        wire('modules')->saveModuleConfigData($this, array(
+            'cronModuleRegistered' => $this->cronModuleRegistered,
+            'executionBCount' => $this->executionBCount
+        ));
+    }
+
+    public function exampleAsyncMethodA(CronRequestExecution $execution, $parameters)
+    {
+        // Return a successful status with a additional array
+        $execution->returnSuccess('000', 'Successfully completed', array('task' => 'exampleAsyncMethodA', 'key' => 'value'));
+    }
+
+    public function exampleAsyncMethodB(CronRequestExecution $execution, $parameters)
+    {
+        $this->executionBCount++;
+        $this->save_configuration();
+
+        // This response will be increased over time - check it out on the dashboard of cron.pw
+        $execution->returnSuccess('001', 'Great execution', array('id' => $this->executionBCount, 'submittedParameters' => $parameters));
+    }
+
+    public static function getModuleConfigInputFields(array $data)
+    {
+        $fields = new InputfieldWrapper();
+
+        return $fields;
+    }
+
+}

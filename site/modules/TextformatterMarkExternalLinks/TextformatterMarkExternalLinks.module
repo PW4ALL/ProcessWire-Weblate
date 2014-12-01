@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * ProcessWire Mark External Links
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class TextformatterMarkExternalLinks extends Textformatter {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Mark External Links', 
+			'version' => 102, 
+			'summary' => "Adds a class='external' and a rel='nofollow' to every external link."
+		); 
+	}
+
+	public function format(&$str) {
+		$str = preg_replace_callback('%<(a\s[^>]+)>%isU', array($this,"mark_external"), $str);
+	}
+	
+	function mark_external($match) { 
+	    list($original, $tag) = $match;  
+
+	    $blog_url = 'http://'.$this->config->httpHost.$this->config->urls->root;
+	
+	    if(strpos($tag, "nofollow")) {
+	        return $original;
+	    } elseif(!strpos($tag, 'http')) {
+	    	 return $original;
+	    } elseif(strpos($tag, $blog_url)) {
+	    	 return $original;
+	    } else {
+	        return "<$tag rel='nofollow' class='external'>";
+	    }
+	}
+
+}
+?>

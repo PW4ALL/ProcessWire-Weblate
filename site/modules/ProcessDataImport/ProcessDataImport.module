@@ -1,0 +1,623 @@
+<?php
+
+class ProcessDataImport extends Process {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Data import',
+			'summary' => 'Import data from any feed (xml, json, csv supported) and save it as native pw-pages.',
+			'href' => 'http://processwire.com/talk/',
+			'version' => 001,
+			'permanent' => false,
+			'autoload' => false,
+			'singular' => true,
+		);
+	}
+
+	public function init() {
+		parent::init();
+		$this->addHook('LazyCron::every10Minutes', $this, 'cron10Minutes');
+		$this->addHook('LazyCron::every30Minutes', $this, 'cron30Minutes');
+		$this->addHook('LazyCron::everyHour', $this, 'cronHour');
+		$this->addHook('LazyCron::every6Hours', $this, 'cron6Hours');
+		$this->addHook('LazyCron::every12Hours', $this, 'cron12Hours');
+		$this->addHook('LazyCron::everyDay', $this, 'cronDay');
+		$this->addHook('LazyCron::everyWeek', $this, 'cronWeek');
+		$this->addHook('LazyCron::every4Weeks', $this, 'cron4Weeks');
+	}
+
+	public function ___execute() {
+		$this->setFuel('processHeadline', 'Data imports');
+		
+		$table = $this->modules->get("MarkupAdminDataTable");
+		$table->setEncodeEntities(false);
+		$table->headerRow(array('Source url', 'Cron interval', 'Fetch', 'Unique fields', 'Delete'));
+
+		$result = $this->db->query("SELECT * FROM {$this->className} ORDER BY source_url");
+
+		while($row = $result->fetch_assoc()) {
+
+			 // output in table rows with edit link and delete checkbox?
+			 $table->row(array(
+				 $row['source_url'] => "edit/?id=$row[id]",
+				 $row['cron_interval'] => "edit/?id=$row[id]",
+				 'fetch' => "fetch/?id=$row[id]",
+				 $row['unique_fields'],
+				 "<input type='checkbox' name='delete[]' value='$row[id]' />"
+				 ));
+		}
+
+		$button = $this->modules->get("InputfieldButton");
+		$button->type = 'submit';
+		$button->id = 'submit_delete';
+		$button->value = 'Remove selected sources';
+
+		$table->action(array('Add source' => 'add/'));
+
+		// Is there clean way to add button to right side?
+		return "<form action='./delete/' method='post'>" .$table->render() . $button->render() . "</form>";
+	}
+
+	/**
+	 * Edit/Add Redirect - Called when the URL is: ./edit/
+	 *
+	 */
+	public function ___executeAdd() {
+		$this->fuel->breadcrumbs->add(new Breadcrumb('../', 'Data imports'));
+		$this->setFuel('processHeadline', "Add import source");
+		
+		$form = $this->modules->get("InputfieldForm");
+		$form->method = 'post';
+		$form->action = '../load/';
+
+		$field = $this->modules->get("InputfieldURL");
+		$field->label = 'Source url';
+		$field->description = 'Enter full url to the data source you want to import. Ie. http://www.nytimes.com/services/xml/rss/nyt/HomePage.xml';
+		$field->name = 'source_url';
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldSelect");
+		$field->label = 'Source data format';
+		$field->addOption('unknown', "I don't know");
+		$field->addOption('JSON');
+		$field->addOption('XML');
+		$field->name = 'data_format';
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldPageListSelect");
+		$field->label = 'Parent page';
+		$field->attr('id+name', 'parent_page');
+		$field->startLabel = "Select Page";
+		$field->parent_id = 0; // tell it to start from homepage
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldSelect");
+		$field->label = 'Template for new pages';
+		$field->name = 'template';
+		foreach ($this->templates as $template) {
+			$field->addOption("$template");
+		}
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldButton");
+		$field->type = 'submit';
+		$field->value = 'Continue';
+
+		$form->add($field);
+
+		return $form->render();
+	}
+	
+	public function ___executeLoad() {
+		$this->fuel->breadcrumbs->add(new Breadcrumb('../', 'Data imports'));
+		$source_url = $this->input->post->source_url;
+		$parent_id = $this->input->post->parent_page;
+		$template = $this->templates->get($this->input->post->template);
+		$data_format = $this->input->post->data_format;
+		
+		$out = "<p class='description'>Click on the array which has items that you want to save. After that you can map those values to your template fields.</p>";
+		$out .= '<form id="map" method="post" action="../save"><ul class="di"><li data-path="|+|ROOT"><div>ROOT</div>';
+		
+		if (strlen($source_url) > 8) {
+			$data = file_get_contents($source_url);
+		}
+		
+		if ($json_data = json_decode($data)) {
+			$data_format = 'json';
+			$data = new iterateObject($json_data);
+			$out .= $data->iterate();
+		} elseif ($xml_data = new SimpleXMLElement($data)) {
+			$data1 = simplexml2array($xml_data);
+			$data_format = 'xml';
+			$data = new iterateObject($data1);
+			$out .= $data->iterate();
+		}
+		$out .= '</li></ul>';
+		
+		// This keeps all the fields that this template has (js file copies this after every variable)
+		$out .= '<select id="fields">';
+		$out .= '<option selected="selected"></option>';
+
+		foreach ($template->fields as $field) {
+			$out .= "<option value='$field->id'>$field</option>";
+		}
+		$out .= '</select><button type="submit" name="submit">Continue</button>';
+		
+		$out .= "<input type='hidden' value='$source_url' name='source_url' />";
+		$out .= "<input type='hidden' value='$parent_id' name='parent_id' />";
+		$out .= "<input type='hidden' value='{$template->id}' name='template_id' />";
+		$out .= "<input type='hidden' value='{$data_format}' name='data_format' />";
+		
+		$out .= '</form>';
+		
+		return $out;
+		
+	}
+	
+	/**
+	 * Save Redirect - Called when the URL is ./save/
+	 *
+	 */
+	public function ___executeSave() {
+		$source_url = $this->input->post->source_url;
+		$data_format = $this->input->post->data_format;
+		$data_root = $this->input->post->data_root;
+		$parent_id = $this->input->post->parent_id;
+		
+		if (!$parent_id) {
+			return "Parent id missing, remember to choose parent page.";
+		}
+		
+		// I use |+| string as delimeter (probably not the best one here, but hopely something that no one is using in their keys..)
+		$data_root = preg_split('/\|\+\|/', $data_root, NULL, PREG_SPLIT_NO_EMPTY);
+		$data_root = serialize($data_root);
+		
+		$template_id = $this->input->post->template_id;
+		$parent_id = $this->input->post->parent_id;
+		$sql = "INSERT INTO {$this->className} SET source_url = '$source_url', data_format = '$data_format', data_root = '$data_root', parent_id = '$parent_id', template_id = '$template_id' ON DUPLICATE KEY UPDATE id = id;";
+		$this->db->query($sql);
+		$source_id = $this->db->insert_id;
+		$fields = $this->input->post;
+		unset($fields['submit']);
+		
+		$out = '';
+		foreach($fields['fields'] as $key => $value) {
+			$key = preg_split('/\|\+\|/', $key, NULL, PREG_SPLIT_NO_EMPTY);
+			$key_s = serialize($key);
+			$sql = "INSERT INTO {$this->className}mappings SET source_id = '$source_id', from_field = '$key_s', to_field = '$value' ON DUPLICATE KEY UPDATE id = id;";
+			$this->db->query($sql);
+			$out .= '<br>' . var_dump($key) . "=> " . $value;
+		}
+		
+		
+		return $out;
+	}
+	
+	public function ___executeUpdate() {
+		$this->fuel->breadcrumbs->add(new Breadcrumb('../', 'Data imports'));
+		$id = $this->input->post->id;
+		$source_url = $this->input->post->source_url;
+		$data_format = $this->input->post->data_format;
+		$parent_id = $this->input->post->parent_page;
+		$cron_interval = $this->input->post->cron_interval;
+		
+		$this->db->query("UPDATE {$this->className} SET source_url = '$source_url', cron_interval = '$cron_interval', data_format = '$data_format', parent_id = '$parent_id' WHERE id=$id");
+		
+		$this->message("Data import updated");
+		$this->session->redirect("../"); // back to list
+	}
+	
+	public function ___executeEdit() {
+		$this->fuel->breadcrumbs->add(new Breadcrumb('../', 'Data imports'));
+		$id = (int) $this->input->get->id;
+		$this->setFuel('processHeadline', "Edit data source");
+		
+		if($id > 0) {
+			$result = $this->db->query("SELECT id, source_url, cron_interval, data_root, data_format, parent_id, template_id, unique_fields FROM {$this->className} WHERE id=$id");
+			list($id, $source_url, $cron_interval, $data_root, $data_format, $parent_id, $template_id, $unique_fields) = $result->fetch_array();
+		}
+		
+		$form = $this->modules->get("InputfieldForm");
+		$form->method = 'post';
+		$form->action = '../update/';
+		
+		$field = $this->modules->get("InputfieldHidden");
+		$field->name = 'id';
+		$field->value = $id;
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldURL");
+		$field->label = 'Source url';
+		$field->description = 'Enter full url to the data source you want to import. Ie. http://www.nytimes.com/services/xml/rss/nyt/HomePage.xml';
+		$field->attr('id+name', 'source_url');
+		$field->value = $source_url;
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldSelect");
+		$field->label = 'CRON interval';
+		$field->attr('id+name', 'cron_interval');
+		$field->description = 'Interval how often we fetch new data from source';
+		$field->addOption($cron_interval, $cron_interval, array('selected' => 'selected'));
+		$field->addOption('manual', 'Manual only');
+		$field->addOption('10Minutes', '10 Minutes');
+		$field->addOption('30Minutes', '30 Minutes');
+		$field->addOption('Hour', '1 Hour');
+		$field->addOption('6Hours', '6 Hours');
+		$field->addOption('12Hours', '12 Hours');
+		$field->addOption('Day', 'Day');
+		$field->addOption('Week', 'Week');
+		$field->addOption('4Weeks', 'Month');
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldText");
+		$field->setAttribute('disabled', 'disabled');
+		$data_root = unserialize($data_root);
+		$path = '';
+		foreach($data_root as $data_path) {
+			$path .= '=> ' . $data_path .' ';
+		}
+		$field->value = $path;
+		$field->name = 'data_root';
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldSelect");
+		$field->label = 'Data format';
+		$field->attr('id+name', 'data_format');
+		$field->addOption($data_format);
+		$field->addOption('json');
+		$field->addOption('xml');
+		$field->addOption('csv');
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldPageListSelect");
+		$field->label = 'Parent page';
+		$field->attr('id+name', 'parent_page');
+		$field->startLabel = "Select Page";
+		$field->parent_id = 0; // tell it to start from homepage
+		$field->value = $parent_id;
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldButton");
+		$field->type = 'submit';
+		$field->value = 'Save';
+		$form->add($field);
+		
+		$out = $form->render();
+		
+		
+		
+		return $out;
+	}
+	
+	public function ___executeFetch($id = 0) {
+		$newPages = 0;
+		
+		if ($id == 0) {
+			$id = (int) $this->input->get->id;
+		}
+		$this->fuel->breadcrumbs->add(new Breadcrumb('../', 'Data imports'));
+		$this->setFuel('processHeadline', "Fetching data from source");
+		
+		$result = $this->db->query("SELECT id, source_url, cron_interval, data_root, data_format, parent_id, template_id, unique_fields FROM {$this->className} WHERE id=$id");
+		list($id, $source_url, $cron_interval, $data_root, $data_format, $parent_id, $template_id, $unique_fields) = $result->fetch_array();
+		
+		
+		$fieldMappings = Array();
+		$i = 0;
+		$result = $this->db->query("SELECT id, source_id, from_field, to_field FROM {$this->className}mappings WHERE source_id = $id");
+		while($row = $result->fetch_array()) {
+			$fieldMappings[$i]['id'] =  $row['id'];
+			$fieldMappings[$i]['source_id'] =  $row['source_id'];
+			$fieldMappings[$i]['from_field'] =  unserialize($row['from_field']);
+			$fieldMappings[$i]['to_field'] =  $row['to_field'];
+			$i++;
+		}
+		
+		if (strlen($source_url) > 8) {
+			$data = file_get_contents($source_url);
+		}
+		
+		if ($data_format == "json") {
+			$data = json_decode($data);
+		} elseif ($data_format == "xml") {
+			$data = new SimpleXMLElement($data);
+			$data = simplexml2array($data);
+		}
+		
+		$out = '';
+		
+		$data_root = unserialize($data_root);
+		
+		
+		// If there is more than one item, then we are deeper than root
+		if (count($data_root) > 1) {
+			if($key = array_search('ROOT', $data_root)) {
+				unset($data_root[$key]);
+			}
+			
+			$data_root = array_reverse($data_root);
+			
+			if ($data_format == 'xml') {
+				$loopdata = map_array($data, $data_root);
+			} elseif ($data_format == 'json') {
+				$loopdata = map_property($data, $data_root);
+			}
+			
+		}
+		// We are in the root, so just fetch from it
+		else {
+			$loopdata = $data;
+		}
+		
+		$values = array();
+		foreach($loopdata as $key => $item) {
+			
+			foreach($fieldMappings as $fieldMap) {
+				
+				// There is one unnecessary item in the beginning, we remove that
+				array_shift($fieldMap['from_field']);
+				$field_root = $fieldMap['from_field'];
+				
+				if ($data_format == 'xml') {
+					$a = map_array($item,$field_root);
+				} elseif ($data_format == 'json') {
+					$a = map_property($item,$field_root);
+				}
+				
+				
+				$to_field = $fieldMap["to_field"];
+				
+				// Values will hold $to_field as key
+				$values[$key][$to_field] = $a;
+				
+			}
+		}
+		
+		$curPages = $this->pages->get($parent_id)->children();
+		$template = $this->templates->get($template_id);
+		
+		// Here we create the pages
+		foreach($values as $item) {
+			$pageName = $this->sanitizer->pageName($item[1], true); // 1 is ID for title field
+			$p = $curPages->get("template=$template, name=$pageName");
+			if (isset($p->id)) {
+				
+				// We already have the page, just update the values
+			} else {
+				$p = new Page();
+				$p->template = $template; 
+				$p->parent = $this->pages->get($parent_id);
+				$newPages++;
+			}
+			
+			foreach($item as $key => $value) {
+				$field = $this->fields->get($key);
+				$fName = $field->name;
+				$p->$fName = $value;
+			}
+			
+			$p->name = $pageName;
+			$p->save();
+		}
+		
+		$out = "$newPages new pages added.";
+		
+		return $out;
+		
+		
+		
+	}
+
+	public function ___executeDelete() {
+
+		$count = 0;
+
+		if(!is_array($this->input->post->delete) || empty($this->input->post->delete)) {
+			$this->message("Nothing to delete");
+			$this->session->redirect("../"); // back to list
+		}
+
+		foreach($this->input->post->delete as $id) {
+			$id = (int) $id;
+			$this->db->query("DELETE FROM {$this->className} WHERE id=$id");
+			$this->db->query("DELETE FROM {$this->className}mappings WHERE source_id=$id");
+			$count++;
+		}
+
+		$this->message("Deleted " . $count . " data sources");
+		$this->session->redirect("../"); // back to list
+	}
+
+	public function ___install() {
+		parent::___install();
+
+		$p = new Page();
+		$p->template = $this->templates->get("admin");
+		$p->parent = $this->pages->get("template=admin, name=setup");
+		$p->title = 'Data imports';
+		$p->name = 'data-imports';
+		$p->process = $this;
+		$p->save();
+
+		$sql = <<< _END
+
+		CREATE TABLE {$this->className} (
+			id int unsigned NOT NULL auto_increment,
+			source_url varchar(255) NOT NULL DEFAULT '',
+			cron_interval varchar(255) NOT NULL DEFAULT '',
+			data_root varchar(255) NOT NULL DEFAULT '',
+			data_format varchar(255) NOT NULL DEFAULT '',
+			parent_id int unsigned NOT NULL,
+			template_id int unsigned NOT NULL,
+			unique_fields text,
+			PRIMARY KEY(id),
+			UNIQUE KEY(source_url)
+		) ENGINE = MYISAM;
+
+_END;
+
+		$this->db->query($sql);
+		
+		$sql2 = <<< _END
+
+		CREATE TABLE {$this->className}mappings (
+			id int unsigned NOT NULL auto_increment,
+			source_id int unsigned NOT NULL,
+			from_field varchar(255) NOT NULL DEFAULT '',
+			to_field int unsigned NOT NULL,
+			PRIMARY KEY(id)
+		) ENGINE = MYISAM;
+
+_END;
+
+		$this->db->query($sql2);
+
+	}
+
+	public function ___uninstall() {
+		$p = $this->pages->get('template=admin, name=data-imports');
+		$p->delete();
+		$this->db->query("DROP TABLE {$this->className}");
+		$this->db->query("DROP TABLE {$this->className}mappings");
+	}
+	
+	public function cron10Minutes(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = '10Minutes';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cron30Minutes(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = '30Minutes';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cronHour(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = 'Hour';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cron6Hours(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = '6Hours';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cron12Hours(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = '12Hours';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cronDay(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = 'Day';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cronWeek(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = 'Week';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+	
+	public function cron4Weeks(HookEvent $e) {
+		$result = $this->db->query("SELECT id FROM {$this->className} WHERE cron_interval = '4Weeks';");
+		while($row = $result->fetch_array()) {
+			$this->___executeFetch($row['id']);
+		}
+	}
+}
+
+class iterateObject {
+	
+	public $data = '';
+	
+	function __construct($data) {
+		$this->data = $data;
+	}
+	
+	function iterate($depth = 1) {
+		$out = '<ul class="di">';
+		$lastKey = '';
+		foreach ($this->data as $key => $value) {
+			
+			// Second item in array or if there is same key twice (repeating elements) then we break out of the loop
+			if ($key === 1 || $lastKey === $key) {
+				$out .= ' <span class="more">--- there are more items in this array ---</span>';
+				break;
+			}
+			
+			if (is_array($value)) {
+				$type = 'array';
+				$out .= '<li data-path="|+|'. $key .'"><div>' . $key . ' <span class="type">'.$type.'</span></div>';
+			} elseif (is_object($value)) {
+				$type = 'object';
+				$out .= '<li data-path="|+|'. $key .'">' . $key . ' <span class="type">'.$type.'</span>';
+			} else {
+				$type = 'value';
+				$out .= '<li data-path="|+|'. $key .'"><a title="'.$value.'">' . $key . '</a>';
+			}
+			
+			$lastKey = $key;
+			
+			if ($type == 'array' || $type == 'object') {
+				$data = new iterateObject($value);
+				$out .= $data->iterate();
+			}
+			
+			$out .= '</li>';
+				
+		}
+		$out .= '</ul>';
+		return $out;
+	}
+}
+
+function simplexml2array($xml) {
+	if (is_object($xml)) {
+		if (get_class($xml) == 'SimpleXMLElement') {
+			$attributes = $xml->attributes();
+			foreach($attributes as $k=>$v) {
+				if ($v) $a[$k] = (string) $v;
+			}
+			$x = $xml;
+			$xml = get_object_vars($xml);
+		}
+	}
+   
+   if (is_array($xml)) {
+       if (count($xml) == 0) return (string) $x; // for CDATA
+       foreach($xml as $key=>$value) {
+           $r[$key] = simplexml2array($value);
+       }
+       if (isset($a)) $r['@'] = $a;    // Attributes
+       return $r;
+   }
+   return (string) $xml;
+}
+
+function map_property($obj, $array) {
+  $ret = $obj;
+  foreach($array as $prop) {
+    $ret = $ret->$prop;
+  }
+  return $ret;
+}
+
+function map_array($a, $array) {
+  $ret = $a;
+  foreach($array as $prop) {
+    $ret = $ret[$prop];
+  }
+  return $ret;
+}

@@ -1,0 +1,35 @@
+h1. Field Change Notifier
+
+h2. Description
+
+Allows you to setup watch conditions on fields (in specific contexts) and specify groups of users that should be notified when the condition is met.
+
+
+h2. Installation
+
+# Copy the ProcessFieldChangeNotifier.module file into site/modules
+# In the admin interface, navigate to the modules page and hit the "Check for new modules" button
+# Click on "ProcessFieldChangeNotifier" in the new module message or scroll down until you locate it
+# Click the "Install" button
+
+
+h2. Hooks
+
+You can hook the @triggerMatch()@ method if you want to define your own custom actions when a watch triggers.
+
+
+h2. License
+
+GPL v2.
+
+
+h2. Versions
+
+| 0.6.0 | Changes for PSR conformity. Make @triggerMatch@ hookable. Allow detection of changes to/from empty strings. |
+| 0.5.0 | Make strings translatable. Fix another xdebug notice when the hook is triggered. |
+| 0.4.0 | Only query the DB on a page save (Thanks Antti.) Fix xdebug notice when no watches are defined (thanks ceberlin.) |
+| 0.3.1 | Adds the @$page@ to the context passed to the tag parser. You can now access page properties using the @{page.subfield}@ syntax. |
+| 0.3.0 | Allow individual recipient users to be selected. |
+| 0.2.0 | Allow multiple recipient roles to be selected and stop duplicate sends to users with more than one matching role. |
+| 0.1.1 | Make compatible with Soma's ModuleManager. |
+| 0.1.0 | Initial release. |

@@ -1,0 +1,183 @@
+<?php
+
+/**
+ * ProcessWire HotKey Module
+ *
+ * Add hot keys to PW admin.
+ *
+ * 2012/07/18 by Soma Philipp Urlich
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class AdminHotKeys extends WireData implements Module, ConfigurableModule {
+
+	protected static $defaults = array(
+		'hk_save' => 'ctrl+s',
+		'hk_addnew' => 'ctrl+n',
+		'hk_view' => 'ctrl+v',
+		'hk_pageedit' => 'alt+q',
+		'hk_pagefields' => 'title body',
+		'hk_openpages' => 'ctrl+shift+p',
+		'hk_opensetup' => 'ctrl+shift+s',
+		'hk_openmodules' => 'ctrl+shift+m',
+		'hk_openaccess' => 'ctrl+shift+a',
+		'hk_templateedit' => 'ctrl+shift+t',
+		'hk_fieldedit' => 'ctrl+shift+f'
+	);
+
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'Hot Keys',
+			'version' => 9,
+			'summary' => 'Adds hot key functionality in ProcessWire backend. For defining hot keys see jQuery hotkeys plugin hot key options https://github.com/jeresig/jquery.hotkeys',
+			'href' => 'http://processwire.com/talk/topic/1524-admin-hot-keys/',
+			'singular' => true,
+			'autoload' => "admin"
+			);
+	}
+
+	public function init() {
+		// add js config to admin output
+		$config = self::$defaults;
+		foreach($config as $key => $unused) $config[$key] = $this->get($key) == null ? $config[$key] : $this->get($key);
+
+		foreach($this->templates as $tmpl) {
+			$suffix = ($tmpl->flags & Template::flagSystem) ? '*' : '' ;
+			$config['hk_pwtemplates'][$tmpl->name . $suffix] = $tmpl->id;
+		}
+		foreach($this->fields as $fld) {
+			$suffix = ($fld->flags & Field::flagSystem) ? '*' : '' ;
+			$config['hk_pwfields'][$fld->name . $suffix] = $fld->id;
+		}
+
+		$this->config->js($this->className(), $config);
+
+		// add hook to add scripts
+		if(strpos($_SERVER["REQUEST_URI"], $this->config->urls->admin) !== false){
+			$this->addHookAfter('Process::execute', $this, 'addHotKeys');
+			$this->addHookAfter('Process::executeEdit', $this, 'addHotKeys');
+		}
+	}
+
+	public function addHotKeys(HookEvent $event) {
+		// if on login no need to go further
+		if($this->process == 'ProcessLogin') return;
+		$conf = $this->getModuleInfo();
+		$version = (int) $conf['version'];
+		$this->config->scripts->add($this->config->urls->AdminHotKeys . "jquery.hotkeys.js?v={$version}");
+		$this->config->scripts->add($this->config->urls->AdminHotKeys . "AdminHotKeys.js?v={$version}");
+		$this->config->styles->add($this->config->urls->AdminHotKeys . "AdminHotKeys.css?v={$version}");
+	}
+
+	static public function getModuleConfigInputfields(array $data) {
+		$data = array_merge(self::$defaults, $data);
+
+		$fields = new InputfieldWrapper();
+		$modules = wire("modules");
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_save');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_save']);
+		$field->label = "Save";
+		$field->description = "Enter the hot key to save. Works on all edit screens.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_view');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_view']);
+		$field->label = "View Page";
+		$field->description = "Enter the hot key to view the page. Works on all pages edit screen.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_addnew');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_addnew']);
+		$field->label = "Add New";
+		$field->description = "Enter the hot key add new item (Template, Field, User, Child page...).";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_pageedit');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_pageedit']);
+		$field->label = "Open Pages search";
+		$field->description = "Enter the hot key to open autocomplete for a quick page search.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_pagefields');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_pagefields']);
+		$field->label = "Search fields for page search (above)";
+		$field->description = "Enter the field(s) to search. Default 'title body'.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_templateedit');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_templateedit']);
+		$field->label = "Open Template search";
+		$field->description = "Enter the hot key to open autocomplete for templates search.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_fieldedit');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_fieldedit']);
+		$field->label = "Open Field search";
+		$field->description = "Enter the hot key to open autocomplete for fields search.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_openpages');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_openpages']);
+		$field->label = "Goto Pages";
+		$field->description = "Enter the hot key to open Pages page.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_opensetup');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_opensetup']);
+		$field->label = "Goto Setup";
+		$field->description = "Enter the hot key to open Setup page.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_openmodules');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_openmodules']);
+		$field->label = "Goto Modules";
+		$field->description = "Enter the hot key to open Modules page.";
+		$fields->append($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'hk_openaccess');
+		$field->attr('size', 15);
+		$field->attr('value', $data['hk_openaccess']);
+		$field->label = "Goto Access";
+		$field->description = "Enter the hot key to open Access page.";
+		$fields->append($field);
+
+		return $fields;
+	}
+
+}

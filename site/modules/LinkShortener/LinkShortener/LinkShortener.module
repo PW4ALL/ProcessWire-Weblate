@@ -1,0 +1,422 @@
+<?php
+
+/**
+ * LinkShortener
+ *
+ * Allows the addition of a URL shortener to ProcessWire using mostly existing PW functionality.
+ *
+ * You can create as many bins for these short links (which are just PW pages) that uses the LinkShortenerHome
+ * template as you need and each bin can control the features of the stored short links. Anytime you create a new
+ * page in any of these bins, it will automatically be named with a short, random, string that is not already
+ * in use. You get the chance to review this short string before adding the full URL and saving the page.
+ *
+ * Once the page is saved any visit to the short link will be redirected to the full link.
+ **/
+class LinkShortener extends WireData implements Module
+{
+
+	public static function getModuleInfo()
+	{
+		return array(
+			'title'     => 'URL Link Shortener',
+			'version'   => 110,
+			'summary'   => 'Creates short URLs from long ones and handles redirects',
+			'permanent' => false,
+			'singular'  => true,
+			'autoload'  => true,
+			'author'    => 'Netcarver',
+			'requires'  => 'CryptoPPP',
+			);
+	}
+
+
+	/**
+	 * Initialize hooks
+	 */
+	public function init()
+	{
+		$this->addHookAfter( 'Inputfield::render', $this, 'renderShortLink' );
+	}
+
+
+	/**
+	 * Adds a summary of the shortened URL under the long URL input field for copy-n-paste convenience.
+	 **/
+	protected function renderShortLink(HookEvent $event)
+	{
+		if( 'full_link' == $event->object->name && $event->object->value ) {
+	
+			if(isset($_POST['id'])) 
+				$id = (int) $_POST['id']; 
+			elseif(isset($_GET['id'])) 
+				$id = (int) $_GET['id'];
+			else
+				return;
+
+			$page = wire()->pages->get($id); 
+
+			$link = $url = $page->httpUrl;
+			$link = htmlspecialchars( $link, ENT_QUOTES, "UTF-8" );
+			$link = __("Your short URL to the above is: ", __FILE__) . "<strong>$link</strong> &#8212; <a href=\"$url\"><span class=\"\">Go!</span></a>";
+			$event->return .= $link;
+		}
+	}
+
+
+
+	/**
+	 * Automate the creation of random, short, unused, pagenames for new child pages of anything using the
+	 * URLShortenerHome template.
+	 **/
+	public function ready()
+	{
+		if($this->page->template != 'admin') return;
+
+		$parent_id = $this->input->get->parent_id;
+
+		if( !$parent_id ) return;
+		$parent = wire()->pages->get($parent_id);
+		if($parent->template->name != __CLASS__ . "Home") return;
+
+		// only add our hook if template is admin and there a parent_id GET variable with the value we want
+		$this->addHookBefore('InputfieldPageName::render', $this, 'hookRender');
+	}
+
+
+	public function hookRender(HookEvent $event) 
+	{
+		// if process isn't ProcessPageAdd, exit now
+		if($this->process != 'ProcessPageAdd') return;
+
+		$inputfield = $event->object;
+
+		// if the input already has a populated value (possibly from another hook?), exit now
+		if(strlen($inputfield->attr('value'))) return; 
+
+		$len   = $inputfield->parentPage->short_link_length;
+		$ext   = $inputfield->parentPage->short_link_ext;
+		$tries = $inputfield->parentPage->short_link_tries;
+
+		if (!$len) $len = 6;
+		if (!$tries) $tries = 16;
+		if (!isset($ext)) $ext = true;
+		$name = self::generateUnusedRandomPagename( $inputfield->parentPage, $len, $ext, $tries );
+
+		// if we made it here, populate the value attribute
+		$inputfield->attr('value', $name);  
+	}
+
+
+	/**
+	 * Attempts to generates a short, random, name for a new page that is not already in use by its immediate sibling pages.
+	 *
+	 * A limited number of attempts at pagename creation at a fixed length are allowed before the routine either gives up and 
+	 * lets the user define the pagename or tries using a pagename that is one character longer.
+	 *
+	 * As PW lower-cases the URLs it generates from the pagename we only use lowercase in the generated
+	 * short name.
+	 **/
+	protected static function generateUnusedRandomPagename( $parent, $len, $extend, $tries )
+	{
+		do {
+			$name = CryptoPPP::keyToToken( CryptoPPP::genKeys(1), $len, "abcdfghijkmnpqrstuvwxyz23456789" );
+			$id   = $parent->child("name=$name, include=all")->id;
+			if( 0 == $tries-- ) {
+				if( $extend ) 
+					// If extension allowed, move to a longer url but don't allow indefinite extension or tries...
+					return self::generateUnusedRandomPagename( $parent, $len+1, false, 4 );
+				else
+					// If we can't generate a unique name in reasonable cost and no extension allowed, let the user choose.
+					return '';
+			}
+		} while( $id );
+		return $name;
+	}
+
+
+	/**
+	 * Adds a new short link to the given full link.
+	 *
+	 * param $full_url     string          The url you wish to generate a short link to.
+	 * param $parent_id    string/int/null If a string, this is the id of the parent bin to put the shortlink in
+	 * param $short_url    string/null     If a string, use as the short link, don't generate a random string
+	 *
+	 * return string                       The short url
+	 * throws WireException                On parameter errors or failure to locate parent bin or adding link creates duplicate page
+	 **/
+	public static function addNewLink( $full_url, $parent_id = null, $short_url = null )
+	{
+		if( !is_string($full_url) || empty($full_url) )
+			 throw new WireException('$full_url must be a non-empty string.');
+
+		// Determine the parent bin...
+		$parents = wire()->pages->find('template=' . __CLASS__ . 'Home, include=all');
+
+		if( 0 == count($parents) )
+			throw new WireException('No short-url holding bins found');
+
+		if( 1 == count($parents) ) {
+			// Only one possible parent so use it...
+			$parent = $parents->first();
+		}
+		else {
+			// Locate the correct parent or assign to first bin if that's not possible...
+			if(  !$parent_id )
+				$parent = $parents->first();
+			else {
+				$parent_id = (string)$parent_id;
+				$parent = $parents->get("id=$parent_id");
+				if ( !($parent instanceof Page))
+					throw new WireException("Could not locate bin '$parent_id' for short url.");
+			}
+		}
+
+		if( !is_string($short_url) || '' == $short_url ) {
+			// generate a new short_url name...
+			$len   = $parent->short_link_length;
+			$ext   = $parent->short_link_ext;
+			$tries = $parent->short_link_tries;
+
+			if (!$len) $len = 6;
+			if (!$tries) $tries = 16;
+			if (!isset($ext)) $ext = true;
+
+			$short_url = self::generateUnusedRandomPagename( $parent, $len, $ext, $tries );
+
+			if( '' == $short_url )
+			   throw new WireException('Failed to generate a random page name. Is the bin nearly full?');
+		}
+
+		if( $parent->child("name=$short_url, include=all")->id )
+			throw new WireException("Page '$short_url' already exists, cannot use this name");
+
+		// We have everything we need to add a short URL page...
+		$ls_template = wire()->templates->get(__CLASS__);
+		$page = new Page($ls_template);
+		$page->parent = $parent;
+		$page->title  = "";
+		$page->full_link = $full_url;
+		$page->name   = $short_url;
+		$page->save();
+
+		return $page->httpUrl;
+	}
+
+
+
+	/**
+ 	 * Installs new fields/fieldgroups/templates/template files used by this module
+	 */
+	public function ___install()
+	{
+		// Create the full_link field...
+		$full_f = $this->fields->get('full_link');
+		if (!$full_f) {
+			$full_f            = new Field();
+			$full_f->type      = $this->modules->get("FieldtypeURL");
+			$full_f->name      = 'full_link';
+			$full_f->size      = 0;
+			$full_f->maxlength = 1024;
+			$full_f->label     = 'The full URL of your link';
+			$full_f->required  = 1;
+			$full_f->save();
+			$this->message("Added field 'full_link'.");
+		}
+
+		// Create the short_link_length field...
+		$len_f = $this->fields->get('short_link_length');
+		if (!$len_f) {
+			$len_f            = new Field();
+			$len_f->type      = $this->modules->get("FieldtypeInteger");
+			$len_f->name      = 'short_link_length';
+			$len_f->label     = 'The length of the short URLs generated under this page.';
+			$len_f->required  = 1;
+			$len_f->save();
+			$this->message("Added field 'short_link_length'.");
+		}
+
+		// Create the short_link_try field (controls how many attempts at generating a unique pagename are allowed)...
+		$try_f = $this->fields->get('short_link_tries');
+		if (!$try_f) {
+			$try_f            = new Field();
+			$try_f->type      = $this->modules->get("FieldtypeInteger");
+			$try_f->name      = 'short_link_tries';
+			$try_f->required  = 1;
+			$try_f->label     = 'How many attempts at creating a name are allowed before giving up (and possibly trying a longer name)?';
+			$try_f->notes     = 'This will only practically come into play if the set of page names is heavily occupied';
+			$try_f->save();
+			$this->message("Added field 'short_link_tries'.");
+		}
+
+		// Create the short_link_ext field (controls name length extension if generating page name fails)...
+		$ext_f = $this->fields->get('short_link_ext');
+		if (!$ext_f) {
+			$ext_f            = new Field();
+			$ext_f->type      = $this->modules->get("FieldtypeCheckbox");
+			$ext_f->label     = 'Extend Length?';
+			$ext_f->name      = 'short_link_ext';
+			$ext_f->description = 'Allow short links to exceed the link length if we cannot find an unused page name within the allowed attempts limit?';
+			$ext_f->required  = 1;
+			$ext_f->save();
+			$this->message("Added field 'short_link_ext'.");
+		}
+
+		// Create the LinkShortener fieldgroup + template using the full_link field...
+		$ls_fieldgroup = $this->fieldgroups->get(__CLASS__);
+		if (!$ls_fieldgroup) {
+			$ls_fieldgroup = new Fieldgroup();
+			$ls_fieldgroup->name = __CLASS__;
+			$ls_fieldgroup->add( $this->fields->get('title') );
+			$ls_fieldgroup->add( $full_f );
+			$ls_fieldgroup->save();
+			$this->message("Installed fieldgroup " . __CLASS__);
+		}
+
+		$ls_template = $this->templates->get(__CLASS__);
+		if (!$ls_template) {
+			$ls_template = new Template();
+			$ls_template->name = __CLASS__;
+			$ls_template->fieldgroup = $ls_fieldgroup;
+			$ls_template->set('noChildren', 1);
+			$ls_template->set('slashUrls', 0);
+			$ls_template->save();
+			$this->message("Installed template " . __CLASS__);
+		}
+
+		// Set title field to collapsed hidden in the context of the LinkShortener fieldgroup...
+		$title = $ls_fieldgroup->getField('title', true); 
+		$title->collapsed = Inputfield::collapsedHidden;
+		wire('fields')->saveFieldgroupContext($title, $ls_fieldgroup); 
+
+		// Create the LinkShortenerHome fieldgroup + template using the short_link_length + title field...
+		$lsh_fieldgroup = $this->fieldgroups->get(__CLASS__ . "Home");
+		if (!$lsh_fieldgroup) {
+			$lsh_fieldgroup = new Fieldgroup();
+			$lsh_fieldgroup->name = __CLASS__ . "Home";
+			$lsh_fieldgroup->add( $this->fields->get('title') );
+			$lsh_fieldgroup->add( $len_f );
+			$lsh_fieldgroup->add( $try_f );
+			$lsh_fieldgroup->add( $ext_f );
+			$lsh_fieldgroup->save();
+			$this->message("Installed fieldgroup " . __CLASS__ . "Home" );
+		}
+
+		$lsh_template = $this->templates->get(__CLASS__ . "Home");
+		if (!$lsh_template) {
+			$lsh_template = new Template();
+			$lsh_template->name = __CLASS__ . "Home";
+			$lsh_template->fieldgroup = $lsh_fieldgroup;
+			$lsh_template->set('childTemplates', array($ls_template->id) );
+			$lsh_template->set('slashUrls', 0);
+			$lsh_template->save();
+			$this->message("Installed template " . __CLASS__ . "Home" );
+		}
+
+		// Set the parent template for short-link pages...
+		$ls_template->set('parentTemplates', array($lsh_template->id) );
+		$ls_template->save();
+
+		// Add the template file to the Home template...
+		$basename = __CLASS__ . ".php";
+		$src = $this->config->paths->LinkShortener . $basename;
+		$dst = $this->config->paths->templates . $basename;
+		if (file_exists($dst))
+			$this->message("Template file $basename already present at $dst.");
+		else {
+			if(@copy($src, $dst)) {
+				$this->message("Installed template file $basename in $dst");
+			}	else {
+				$this->error("Templates directory not writable? Unable to auto-install the $basename template file.");
+				$this->error("To complete the installation please copy $basename from $src to $dst");
+			}
+		}
+
+		// Create the "Short Links" page using the LinkShortenerHome template.
+		if (!wire()->pages->get('/')->child("name=r, include=all")->id) {
+			$page = new Page($lsh_template);
+			$page->parent = '/';
+			$page->name = "r";
+			$page->title = "Short Links";
+			$page->short_link_length = 6;
+			$page->short_link_tries  = 16;
+			$page->short_link_ext = 1;
+			$page->addStatus(Page::statusHidden);
+			$page->save();
+			$this->message("Installed page $page->path");
+		}
+	}
+
+
+
+	/**
+	 *	No uninstall actions are taken as the user may have many pages of short links in the DB
+	 *	that might still need to work even if the module is uninstalled.
+	 *
+	 *  If you wish to remove the module, all the templates & fields it created *and* all your
+	 *  short links then you can either do it manually or automatically.
+	 *
+	 *	To fully remove manually...
+	 *	1) Delete all pages+subpages using the LinkShortenerHome template
+	 *	2) Delete the LinkShortener and LinkShortenerHome templates
+	 *	3) Delete the full_url and short_link_length fields
+	 *	4) Delete the LinkShortener.php file from site/templates
+	 *
+	 *	To fully remove automatically you need to remove the lines marked XXXX and YYYY from the following
+	 *	method before you uninstall the module from the modules page.
+	 */
+	public function ___uninstall()
+	{
+		/* XXXX
+		$del = $this->pages->find("template=".__CLASS__."Home, include=all");
+		if (!empty($del)) {
+			foreach ($del as $p) {
+				$this->message("Pruned branch ".$p->name);
+				$this->pages->delete($p, true);
+			}
+		}
+
+		$basename = __CLASS__ . ".php";
+		$dst = $this->config->paths->templates . $basename;
+		@unlink($dst);
+
+		$lsh = $this->templates->get(__CLASS__."Home");
+		$ls  = $this->templates->get(__CLASS__);
+		if ($lsh->id) {
+			$this->templates->delete($lsh);
+			$this->fieldgroups->delete($lsh->fieldgroup);
+			$this->message("Removed template & fieldgroup: ".__CLASS__."Home");
+		}
+		if ($ls->id)  {
+			$this->templates->delete($ls);
+			$this->fieldgroups->delete($ls->fieldgroup);
+			$this->message("Removed template & fieldgroup: ".__CLASS__);
+		}
+
+		$f = $this->fields->get('full_link');
+		if( $f->id ) {
+			$this->fields->delete( $f );
+			$this->message("Removed field: full_link");
+		}
+
+		$f = $this->fields->get('short_link_length');
+		if( $f->id ) {
+			$this->fields->delete( $f );
+			$this->message("Removed field: short_link_length");
+		}
+
+		$f = $this->fields->get('short_link_tries');
+		if( $f->id ) {
+			$this->fields->delete( $f );
+			$this->message("Removed field: short_link_tries");
+		}
+
+		$f = $this->fields->get('short_link_ext');
+		if( $f->id ) {
+			$this->fields->delete( $f );
+			$this->message("Removed field: short_link_ext");
+		}
+		YYYY */
+	}
+
+}
+

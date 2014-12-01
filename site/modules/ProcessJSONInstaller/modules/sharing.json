@@ -1,0 +1,58 @@
+{
+    "name": "Sharing",
+    "description": "Fields for better links on social media",
+    "prefix": "sharing",
+    "dependencies": [
+        {
+            "name": "TextareaCounter",
+            "zip": "https://github.com/boundaryfunctions/TextareaCounter/zipball/master",
+            "core": false
+        }
+    ],
+    "fields": [
+        {
+            "name": "tab",
+            "type": "FieldtypeFieldsetTabOpen",
+            "label": "Sharing"
+        },
+        {
+            "name": "title",
+            "type": "FieldtypeText",
+            "label": "Title"
+        },
+        {
+            "name": "description",
+            "type": "FieldtypeTextarea",
+            "label": "Description",
+            "attributes": [
+                {
+                    "name": "maxchars",
+                    "value": 270
+                }
+            ]
+        },
+        {
+            "name": "image",
+            "type": "FieldtypeImage",
+            "label": "Image",
+            "description": "Has to be square, image will be embedded by Facebook"
+        },
+        {
+            "name": "close_tab",
+            "type": "FieldtypeFieldsetClose",
+            "label": ""
+        }
+    ],
+    "templates": [
+        {
+            "name": "home",
+            "prefab": true,
+            "fields": ["sharing_tab", "sharing_title", "sharing_description", "sharing_image", "sharing_close_tab"]
+        },
+        {
+            "name": "basic-page",
+            "prefab": true,
+            "fields": ["sharing_tab", "sharing_title", "sharing_description", "sharing_image", "sharing_close_tab"]
+        }
+    ]
+}

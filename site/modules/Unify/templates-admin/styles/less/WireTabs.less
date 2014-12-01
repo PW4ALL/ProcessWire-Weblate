@@ -1,0 +1,35 @@
+.WireTabs {
+	left: 0!important;
+	margin: 0;
+	display: block;
+	list-style: none!important;
+	list-style-type: none!important;
+	.clearfix();
+	padding: 12px 10px;
+	border:  1px solid rgba(0,0,0,0.15);
+	background: #fff;
+	.box-shadow( 0 0 4px rgba(0,0,0,0.1) );
+	li {
+		background: transparent!important;
+		a{
+		    color: #999;
+		   	border: 1px solid transparent!important;
+		   	padding: 8px 10px;
+		   	display: block!important;
+		   	float: left;
+		   	margin: 0 8px 0 0;
+		    font-weight: bold;
+		    text-transform: uppercase;
+		}
+		a:hover {
+		    color: @grayDark;
+		}
+		a.on:hover, 
+		a.on{
+			background: @blue;
+			border-color: rgba(0,0,0,0.15)!important;
+			color: #fff;
+		}
+	}
+}
+

@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * ProcessWire Twig Module
+ *
+ * Adds a Twig render method to Page 
+ * Copyright (C) 2012 by Paul Sheean porl42@gmail.com
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ */
+
+class TemplateTwig extends WireData implements Module, ConfigurableModule {
+
+	public static function getModuleInfo() {
+		return array('title' => __('Twig Render'),
+				// Module Title
+				'summary' => __('Adds a Twig property to Page (page->twig).'),
+				// Module Summary
+				'version' => 102,
+				'singular' => true,
+				'autoload' => true,
+			);
+	}
+
+	public static function getDefaults() {
+		   return array(
+				'cacheEnable' => true,
+				'cacheDir' => "twig/",
+				'cacheAutoReload' => true,
+		   		'viewsDir' => "views/",
+		   		'autoEscape' => true
+		);
+	}
+	
+	public function init() {
+
+		// initialise Twig
+		require_once wire('config')->paths->TemplateTwig . 'Twig/Autoloader.php';
+		Twig_Autoloader::register();
+
+		// add twig property to page object
+		$this->addHookProperty('Page::twig', $this, 'renderTwigPage');
+		
+	}
+
+	public function renderTwigPage($event) {
+		//set up environment vars
+		$cache = $this->data['cacheEnable'] ? wire('config')->paths->cache . $this->data['cacheDir'] : false;
+		$viewsDir = wire('config')->paths->templates . $this->data['viewsDir'];
+		
+		//enable alternate functionality to work with Twig
+		Page::$issetHas = true;
+		wire('config')->disableUnknownMethodException = false;
+		
+		$loader = new Twig_Loader_Filesystem($viewsDir);
+		$twig = new Twig_Environment($loader,
+				array(
+						'cache' => $cache,
+						'auto_reload' => $this->data['cacheAutoReload'],
+						'autoescape' => $this->data['AutoEscape'],
+				)
+			);
+		$event->return = $twig;
+	}
+	
+	static public function getModuleConfigInputfields(Array $data) {
+		$fields = new InputfieldWrapper();
+		$modules = wire('modules');
+		
+		//default values
+		$data = array_merge(self::getDefaults(), $data);
+		
+		// cache enabled field
+		$field = $modules->get("InputfieldCheckbox");
+		$field->name = "cacheEnable";
+		$field->label = "Enable Cache";
+		$field->description = "Enable Twig cache";
+		$field->value = 1; // providing a "checked" value for the checkbox is necessary
+		$field->attr('checked', empty($data['cacheEnable']) ? '' : 'checked');
+		$fields->add($field);
+		
+		
+		//cache directory name
+		$field = $modules->get("InputfieldText");
+		$field->name = 'cacheDir';
+		$field->label = "Cache Directory";
+		$field->description = "Directory name for Twig cache (relative to site/assets/cache/)";
+		$field->size = 45;
+		$field->value = $data['cacheDir'];
+		$fields->append($field);
+		
+		//cache auto reload
+		$field = $modules->get("InputfieldCheckbox");
+		$field->name = "cacheAutoReload";
+		$field->label = "Auto Reload Twig Cache";
+		$field->description = "Reload cache on Twig template modification";
+		$field->value = 1; // providing a "checked" value for the checkbox is necessary
+		$field->attr('checked', empty($data['cacheAutoReload']) ? '' : 'checked');
+		$fields->add($field);
+		
+		//views directory name
+		$field = $modules->get("InputfieldText");
+		$field->name = 'viewsDir';
+		$field->label = "Views Directory";
+		$field->description = "Directory name for Twig views (relative to site/templates/)";
+		$field->size = 45;
+		$field->value = $data['viewsDir'];
+		$fields->append($field);
+		
+		//auto escape variables
+		$field = $modules->get("InputfieldCheckbox");
+		$field->name = "autoEscape";
+		$field->label = "Auto Escape Twig variables";
+		$field->description = "Automatically escape variables in Twig templates";
+		$field->value = 1; // providing a "checked" value for the checkbox is necessary
+		$field->attr('checked', empty($data['autoEscape']) ? '' : 'checked');
+		$fields->add($field);
+	
+		return $fields;
+	}
+	
+}

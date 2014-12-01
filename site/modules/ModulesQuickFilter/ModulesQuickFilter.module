@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * ProcessWire Module Quick Filter
+ *
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2010 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ *
+ */
+
+class ModulesQuickFilter extends WireData implements Module, ConfigurableModule  {
+
+    protected static $defaults = array(
+        'collapsed' => '1'
+    );
+
+	public static function getModuleInfo() {
+
+		return array(
+
+			'title' => 'Modules Quick Filter',
+			'version' => 124,
+			'summary' => 'Allows a user to quicly drill down modules to find the one they want.',
+			'href' => '',
+			'singular' => true,
+			'autoload' => true,
+		);
+	}
+
+	/**
+	 * Initialize the module
+	 */
+	public function init() {
+		$this->addHookAfter('ProcessModule::execute', $this, 'startEngine');
+	}
+
+	// attach js to the page only on modules page
+	public function startEngine($event) {
+		if ($this->config->version == '2.2.9') {
+			$this->config->scripts->add($this->config->urls->ModulesQuickFilter . "containsFixOld.js");
+		}
+		else{
+			$this->config->scripts->add($this->config->urls->ModulesQuickFilter . "containsFixNew.js");
+		}
+
+		if($this->process == 'ProcessModule') $this->config->scripts->add($this->config->urls->ModulesQuickFilter . "ModulesQuickFilter.js");
+
+		$quick_filter_fields = 	'<div class="InputfieldForm" style="overflow: hidden;">';
+		$quick_filter_fields .= 		'<ul class="Inputfields">';
+		$quick_filter_fields .= 			'<li class="Inputfield '.($this->collapsed ?'InputfieldStateCollapsed':'').' InputfieldFieldset ui-widget" id="quick_filter_group">';
+		$quick_filter_fields .= 				'<label class="ui-widget-header InputfieldHeader InputfieldStateToggle">'.__("Filter Modules").'</label>';
+		$quick_filter_fields .= 				'<div class="ui-widget-content InputfieldContent">';
+		$quick_filter_fields .=				'<p class="description" style="clear: both;">'.__("Using one filter type will override the results from the other.").'</p>';
+
+		$quick_filter_fields .= 				'<ul class="Inputfields ui-helper-clearfix">';
+		$quick_filter_fields .=					'<li class="Inputfield ui-widget InputfieldColumnWidth InputfieldColumnWidthFirst" style="width: 50%;">';
+		$quick_filter_fields .= 						'<label class="ui-widget-header InputfieldHeader InputfieldStateToggle" for="Inputfield_title">'.__("By Name").'</label>';
+		$quick_filter_fields .= 						'<div class="ui-widget-content  InputfieldContent" style="overflow: hidden;">';
+		$quick_filter_fields .= 							'<input placeholder="'.__("Leave blank to show all").'" id="quick_filter_title" class="InputfieldMaxWidth" name="quick_filter_title" type="text" maxlength="255">';
+		$quick_filter_fields .= 						'</div>';
+		$quick_filter_fields .= 					'</li>';
+		$quick_filter_fields .=					'<li class="Inputfield InputfieldText ui-widget InputfieldColumnWidth" style="width: 49%;">';
+		$quick_filter_fields .=						'<label class="ui-widget-header InputfieldHeader InputfieldStateToggle" for="Inputfield_headline">'.__("By Category").'</label>';
+		$quick_filter_fields .=						'<div class="ui-widget-content  InputfieldContent InputfieldSelect" style="overflow: hidden;">';
+		$quick_filter_fields .=							'<select class="InputfieldMaxWidth" name="quick_filter_category" id="quick_filter_category">';
+		$quick_filter_fields .= 								'<option value="">'.__("All").'</option>';
+		$quick_filter_fields .=							'</select>';
+		$quick_filter_fields .=						'</div>';
+		$quick_filter_fields .=					'</li>';
+		$quick_filter_fields .=				'</ul>';
+
+		$quick_filter_fields .=				'</div>';
+		$quick_filter_fields .=			'</li>';
+		$quick_filter_fields .=		'</ul>';
+		$quick_filter_fields .=	'</div>';
+		// $quick_filter_fields .=	'<div style="display: none;" id="quick_filter_results"><h2 id="quick_filter_results_heading">Results</h2><table class="AdminDataTable AdminDataList AdminDataTableSortable"><thead><tr><th class="header">Module</th><th class="header">Version</th><th class="header">Summary</th></tr></thead><tbody></tbody></table></div>';
+		$event->return = $quick_filter_fields . $event->return;
+	}
+
+    static public function getModuleConfigInputfields(array $data) {
+        $data = array_merge(self::$defaults, $data);
+
+        $fields = new InputfieldWrapper();
+        $modules = wire("modules");
+
+        $field = $modules->get("InputfieldCheckbox");
+        $field->attr('name', 'collapsed');
+        $field->attr('checked', 'checked');
+        $field->label = "Collapsed By Default?";
+        $fields->append($field);
+
+        return $fields;
+    }
+}

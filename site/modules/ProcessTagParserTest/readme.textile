@@ -1,0 +1,18 @@
+h1. Tag Parser Test Module
+
+Provides an admin page under the setup section that allows simple testing of the TextformatterTagParser module to be undertaken.
+
+h2. Installation
+
+Copy the entire ProcessTagParserTest/ directory into your site/modules/ directory, go into the modules admin page, check for new module and install it.
+
+You can also install this from the module manager (if you have it installed.)
+
+h2. Usage
+
+You should see a new page under the admin setup section. On the page, enter the template you wish to parse. Parsing will always be done in the context of the guest user but you can add one additional page to the context using the page selection list if you want to.
+
+h2. License
+
+GPLv2
+

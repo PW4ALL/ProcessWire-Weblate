@@ -1,0 +1,540 @@
+<?php
+
+/**
+ * Spex: An asset and template management module for the ProcessWire.
+ * 
+ * By Jonathan Dart
+ * http://metricmarketing.ca/blog/author/jonathan-dart
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+class Spex extends WireData implements Module, ConfigurableModule
+{
+	protected 
+		$capturedJs = '',
+		$layout = 'default',
+		$templateVars = array(),
+		$baseLayout = '_base',
+		$slots = array(),
+		$images = array(),
+		$lateLoad = array(),
+		$activePage = null,
+		$breadcrumbs = null;
+
+	static $defaults = array(
+		'cache' => true
+	);
+
+	public static function getModuleInfo() 
+	{
+		return array(
+			'title' => 'Spex', 
+			'version' => 99, 
+			'summary' => 'An asset and template management module.',
+			'href' => 'https://github.com/jdart/Spex',
+			'singular' => true, 
+			'autoload' => true,
+		);
+	}
+
+	public function ___install()
+	{
+		$tpl_dir = $this->config->paths->templates;
+
+		$this->createDir($tpl_dir.'layouts');
+		$this->copyFile(__DIR__.'/example-site/layouts/_base.php', $tpl_dir.'layouts/_base.php');
+		$this->copyFile(__DIR__.'/example-site/layouts/one-column.php', $tpl_dir.'layouts/one-column.php');
+		$this->createDir($tpl_dir.'partials');
+		$this->copyFile(__DIR__.'/example-site/_init.php', $tpl_dir.'_init.php');
+	}
+
+	public function copyFile($source, $dest, $overwrite=false)
+	{
+		if ($overwrite && is_file($dest))
+			unlink($dest);
+
+		if (!is_file($dest)) {
+			copy($source, $dest);
+			chmod($dest, octdec($this->config->chmodFile));
+		}
+	}
+
+	public function createDir($path)
+	{
+		if (!is_dir($path))
+			mkdir($path, octdec($this->config->chmodDir), true);
+	}
+
+	public function init() 
+	{
+		$this->addHookBefore('TemplateFile::render', $this, 'templateFileRenderBefore');
+		$this->addHookAfter('TemplateFile::render', $this, 'templateFileRenderAfter');
+		$this->addHookBefore('Page::render', $this, 'pageRenderBefore');
+
+		require_once __DIR__.'/SpexProfiler.php';
+		$this->profiler = new SpexProfiler;
+	}
+
+	public static function getModuleConfigInputfields(array $data)
+	{
+		$fields = new InputfieldWrapper();
+		$modules = Wire::getFuel('modules');
+
+		$field = $modules->get("InputfieldCheckbox");
+		$field->name = "cache";
+		$field->label = __("Enable cache");
+		$field->checked = static::dataValueOrDefault('cache', $data);
+		$field->description = __("This will enable caching on partials.");
+		$fields->add($field);
+
+		return $fields;
+	}
+
+	public static function dataValueOrDefault($key, $data=null)
+	{
+		if ( ! isset($data[$key]))
+			if (isset(static::$defaults[$key]))
+				return static::$defaults[$key];
+			else
+				return null;
+
+		return $data[$key];
+	}
+
+	public function valueOrDefault($key)
+	{
+		$value = $this->get($key);
+
+		if (is_null($value)) {
+			if (isset(static::$defaults[$key]))
+				return static::$defaults[$key];
+			return $value;
+		}
+
+		return $value;
+	}
+
+	public function enableProceduralHelpers()
+	{
+		require_once __DIR__.'/spex.php';
+	}
+
+	public function pageRenderBefore($event)
+	{
+		if ( ! isset($this->activePage))
+			$this->activePage = $event->object;
+	}
+
+	public function setActivePage($page)
+	{
+		$this->activePage = $page;
+	}
+
+	public function renderPage($page)
+	{
+		$this->setActivePage($page);
+		return $page->render();
+	}
+
+	public function templateFileRenderBefore($event)
+	{
+		if ( ! $this->isActiveForPage($this->page) || ! $this->isActiveForEvent($event))
+			return;
+
+		extract($this->getTemplateVars());
+
+		$init_file = $this->config->paths->templates . '_init.php';
+
+		$this->profiler->start('init');
+		if (is_file($init_file))
+			require_once $init_file;
+		$this->profiler->stop();
+
+		foreach ($this->getTemplateVars(false) as $key => $value)
+			$event->object->setGlobal($key, $value);
+
+		$this->profiler->start('template: '.pathinfo($event->object->filename, PATHINFO_FILENAME));
+	}
+
+	public function templateFileRenderAfter($event)
+	{
+		if ( ! $this->isActiveForPage($this->page) || ! $this->isActiveForEvent($event))
+			return;
+
+		$this->profiler->stop(); // template render
+
+		if ( ! $this->layout)
+			return;
+
+		$this->slot('content', $event->return);
+
+		extract($this->getTemplateVars());
+
+		$this->profiler->start('layout: '.$this->layout);
+		$this->captureSlot();
+		require $config->paths->templates.'layouts/'.$this->layout.'.php';
+		$this->captureSlot('content');
+		$this->profiler->stop(); // layout
+
+		$this->profiler->start('layout: '.$this->baseLayout);
+		ob_start(); // wrap layout output with base layout (head and assets stuff)
+		require $config->paths->templates.'layouts/'.$this->baseLayout.'.php';
+		$event->return = ob_get_clean();
+		$this->profiler->stop(); // base layout
+
+		$event->return = str_replace('</body>', $this->profiler->render().'</body>', $event->return);
+	}
+
+	public function pageIsFormBuilder($page)
+	{
+		$form_builder = $this->pages->get('template=form-builder');
+
+		return $form_builder && $page->rootParent->id == $form_builder->id;
+	}
+
+	public function isActiveForPage($page)
+	{
+		return $page->id == $this->config->http404PageID
+			|| (
+				$this->activePage
+				&& $page->id == $this->activePage->id
+				&& $page->template->name != 'admin' 
+				&& !$this->pageIsFormBuilder($page)
+			)
+		;
+	}
+
+	public function isActiveForEvent($event)
+	{
+		$filename = $event->object->get('filename');
+
+		return strpos($filename, '/FormBuilder/') === false
+			&& ! isset($event->object->hanna);
+	}
+
+	public function setLayout($layout)
+	{
+		$this->layout = $layout;
+	}
+
+	public function setBaseLayout($baseLayout)
+	{
+		$this->baseLayout = $baseLayout;
+	}
+
+	public function getLayout()
+	{
+		return $this->layout;
+	}
+
+	public function addTemplateVar($key, $value)
+	{
+		$this->templateVars[$key] = $value;
+		return $value;
+	}
+
+	public function getTemplateVars($include_fuel=true)
+	{
+		return array_merge(
+			$include_fuel ? fuel()->getArray() : array(),
+			array('spex' => $this),
+			array('slots' => $this->slots),
+			$this->templateVars
+		);
+	}
+
+	public function addScript($input, $root='')
+	{
+		if (!is_array($input))
+			$input = array($input);
+
+		foreach ($input as $js)
+			$this->config->scripts->add($root.$js);
+	}
+
+	public function getScripts()
+	{
+		return $this->config->scripts->getIterator()->getArrayCopy();
+	}
+
+	public function addStyle($input, $root='')
+	{
+		if (pathinfo($input, PATHINFO_EXTENSION) === 'less' && ! $this->modules->isInstalled('AllInOneMinify')) {
+			throw new Exception('You must install AllInOneMinify to get less support.');
+		}
+
+		if (!is_array($input))
+			$input = array($input);
+
+		foreach ($input as $css)
+			$this->config->styles->add($root.$css);
+	}
+
+
+	public function getStyles()
+	{
+		return $this->config->styles->getIterator()->getArrayCopy();
+	}
+
+	public function addImage($src)
+	{
+		$this->images[] = $src;
+		return $src;
+	}
+
+	public function includeDocReady()
+	{
+		if ( ! $this->capturedJs && ! $this->images && ! $this->lateLoad)
+			return;
+
+?><script type="text/javascript">
+(function($){
+	<?php if ($this->capturedJs): ?>
+	$(function(){
+		<?php echo $this->capturedJs ?>
+	});
+	<?php endif ?>
+	<?php if ($this->images || $this->lateLoad): ?>
+	$(window).load(function(){
+		<?php if ($this->images): ?>
+		$.each(<?php echo json_encode($this->images) ?>, function(i, src){
+			$('<img/>')[0].src = src;
+		});
+		<?php endif ?>
+		<?php if ($this->lateLoad): ?>
+		$.each(<?php echo json_encode($this->lateLoad) ?>, function(id, html){
+			$('#'+id).replaceWith(html);
+		});
+		<?php endif ?>
+	});
+	<?php endif ?>
+})(jQuery);
+</script><?php
+	}
+
+	public function docReady($js=null)
+	{
+		static $captureStarted = false;
+
+		if (!is_null($js)) {
+			$this->capturedJs .= $js.';';
+			return;
+		}
+
+		if (empty($captureStarted)) { 
+			$captureStarted = true;
+			ob_start();
+			return;
+		}
+
+		$this->capturedJs .= str_ireplace(
+			array('<script>', '<script type="text/javascript">', '</script>', "<script type='text/javascript'>"), 
+			'', 
+			ob_get_clean()
+		).';';
+
+		$captureStarted = false;
+	}
+
+	protected function wakeCachedPartialData(&$data)
+	{
+		$data = unserialize($data);
+
+		foreach ($data['slots'] as $slotName => $slotContent)
+			$this->slot($slotName, $slotContent);
+
+		foreach ($data['styles'] as $style)
+			$this->addStyle($style);
+
+		foreach ($data['scripts'] as $script)
+			$this->addScript($script);
+
+		foreach ($data['lateLoad'] as $lateLoad)
+			$this->lateLoadMarkup($lateLoad, false);
+
+		foreach ($data['images'] as $image)
+			$this->addImage($image);
+
+		$this->docReady($data['docReady']);
+
+		return $data['body'];
+	}
+
+	protected function createPartialData($name, $template_vars)
+	{
+		$stylesBefore = clone $this->config->styles;
+		$scriptBefore = clone $this->config->scripts;
+		$imagesBefore = $this->images;
+		$lateLoadBefore = $this->lateLoad;
+		$docReadyBefore = $this->capturedJs;
+		$slotsBefore = $this->slots;
+
+		$output = $this->getPartialOutput($name, $template_vars);
+
+		return array(
+			'body' => $output, 
+			'styles' => $this->getArrayDiff($this->config->styles, $stylesBefore),
+			'scripts' => $this->getArrayDiff($this->config->scripts, $scriptBefore),
+			'docReady' => str_replace($docReadyBefore, '', $this->capturedJs),
+			'lateLoad' => $this->getArrayDiff($this->lateLoad, $lateLoadBefore),
+			'images' => $this->getArrayDiff($this->images, $imagesBefore),
+			'slots' => $this->getArrayDiff($this->slots, $slotsBefore),
+		);
+	}
+
+	protected function getPartialOutput($name, $template_vars)
+	{
+		$path = sprintf('%spartials/%s.php', $this->config->paths->templates, $name);
+
+		if ( ! is_file($path))
+			return '';
+
+		if (is_array($template_vars))
+			$template_vars = array_merge($this->getTemplateVars(), $template_vars);
+		else
+			$template_vars = $this->getTemplateVars();
+
+		extract($template_vars);
+		$page = $this->page;
+
+		ob_start();
+		require $path;
+		return ob_get_clean();
+	}
+
+	/**
+	 * @param integer $cache_lifetime In seconds, null for no cacheing
+	 * @param string|bool $cache_key If a string then treated as cache key, if true then use the url, if false then always the same.
+	 */
+	public function partial($name, $template_vars=array(), $cache_lifetime=null, $cache_key=false)
+	{
+		$this->profiler->start('partial: '.$name);
+
+		$output = '';
+
+		if ( ! is_null($cache_lifetime) && $this->valueOrDefault('cache')) {
+
+			$cache_hash_string = $name;
+
+			if (is_string($cache_key))
+				$cache_hash_string .= ':'.$cache_key;
+			elseif ($cache_key === true)
+				$cache_hash_string .= ':'.$_SERVER['REQUEST_URI'];
+
+			$cache = $this->modules->get('MarkupCache');
+
+			if ($rawData = $cache->get(md5($cache_hash_string), $cache_lifetime)) {
+
+				$output = $this->wakeCachedPartialData($rawData);
+
+			} elseif ($data = $this->createPartialData($name, $template_vars)) {
+
+				$cache->save(serialize($data));
+				$output = $data['body'];		
+			}
+
+		} else {
+
+			$output = $this->getPartialOutput($name, $template_vars);
+		}
+
+		$this->profiler->stop();
+
+		return $output;
+	}
+
+	protected function getArrayDiff($after, $before)
+	{
+		if ($after instanceof FilenameArray)
+			$after = $after->getIterator()->getArrayCopy();
+		if ($before instanceof FilenameArray)
+			$before = $before->getIterator()->getArrayCopy();
+
+		return array_diff($after, $before);
+	}
+
+	public function slot($name, $value=null)
+	{
+		if (is_null($value)) {
+			if ($this->hasSlot($name))
+				return $this->slots[$name];
+			return false;
+		}
+
+		$this->slots[$name] = $value;
+	}
+
+	public function hasSlot($name)
+	{
+		return isset($this->slots[$name]);
+	}
+
+	public function captureSlot($name=null)
+	{
+		static $captureStarted = false;
+
+		if (empty($captureStarted)) { 
+			$captureStarted = true;
+			ob_start();
+			return;
+		}
+
+		$this->slots[$name] = ob_get_clean();
+
+		$captureStarted = false;
+	}
+
+	public function lateLoad()
+	{
+		static $captureStarted = false;
+
+		if (empty($captureStarted)) { 
+			$captureStarted = true;
+			ob_start();
+			return;
+		}
+
+		$this->lateLoadMarkup(ob_get_clean());
+
+		$captureStarted = false;
+	}
+
+	protected function lateLoadMarkup($markup, $echo=true)
+	{
+		$key = 'late-load-'.count($this->lateLoad);
+
+		$this->lateLoad[$key] = $markup;
+
+		if ($echo)
+			echo '<div id="'.$key.'"></div>';
+
+		$captureStarted = false;
+	}
+
+	public function addBreadcrumb($url, $title)
+	{
+		$breadcrumbs = $this->getBreadcrumbs();
+		$breadcrumb = new Breadcrumb($url, $title);
+		$breadcrumbs->add($breadcrumb);
+	}
+
+	public function getBreadcrumbs()
+	{
+		if (!isset($this->breadcrumbs)) {
+			$this->breadcrumbs = new Breadcrumbs;
+		}
+
+		return $this->breadcrumbs;
+	}
+}

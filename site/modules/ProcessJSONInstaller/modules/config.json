@@ -1,0 +1,36 @@
+{
+    "name": "Configuration",
+    "description": "Creates a configuration page",
+    "prefix": "config",
+    "dependencies": [],
+    "fields": [],
+    "templates": [
+        {
+            "name": "config",
+            "label": "Configuration",
+            "fields": [
+                "title"
+            ]
+        },
+        {
+            "name": "empty",
+            "label": "Empty",
+            "fields": [
+                "title"
+            ]
+        }
+    ],
+    "pages": [
+        {
+            "name": "config",
+            "template": "config",
+            "hidden": true,
+            "defaults": [
+                {
+                    "field": "title",
+                    "value": "Configuration"
+                }
+            ]
+        }
+    ]
+}

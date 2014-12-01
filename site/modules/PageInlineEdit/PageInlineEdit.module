@@ -1,0 +1,93 @@
+<?php
+/*
+* Page Inline Edit
+* Adds possibility to edit pages in the frontend if the user is logged in
+
+* MODULE Info
+* @author Luis Mendez
+* <http://misterui.de>
+*
+* ProcessWire 2.3
+* Copyright (C) 2011 by Ryan Cramer
+* Licensed under GNU/GPL v2, see LICENSE.TXT
+*
+* http://www.processwire.com
+*
+*/
+
+class PageInlineEdit extends WireData implements Module
+{
+	
+  public static function getModuleInfo(){
+    return array(
+        'title' => 'Page Inline Edit',
+        'summary' => 'Let the user edit a page via frontend.',
+        'version' => 1,
+        'author' => 'Luis Mendez',
+        'href' => 'http://misterui.de/',
+        'autoload' => true,
+    );
+  }
+
+  public function init(){
+     //check if page is called by inline edit
+     if($this->input->post->saveInlineEdit)$this->addHookAfter('Page::render', $this, 'processInlineEdit');     
+	 
+     //append all needed Divs, as etc and edit Inline Edit JS to the page
+     $this->addHookBefore('Page::render', $this, 'addDivs');
+     $this->addHookAfter('Page::render', $this, 'addInlineEdit');
+   }
+
+//saving changes
+  public function processInlineEdit($event){
+  	if($event->object->template == 'admin') return;
+	if(!$event->object->editable()) return;
+	if($this->input->post->ajaxifiedContent){
+		$page = $event->object;
+		$newBody = $this->input->post->ajaxifiedContent;	
+		$page->of(false);
+		$page->body = $newBody;
+		$page->save();
+		$page->of(true);	
+		 
+	}
+	echo $page->body;
+	 exit();
+  }
+
+//surround $page->body with divs to make the content clickable  
+  public function addDivs($event){
+  	if($event->object->template == 'admin') return;
+	if(!$event->object->editable()) return;
+	$body = $event->object->body;
+  	$event->object->body = '<div class="ajaxified">';
+	$event->object->body .= $body;
+	$event->object->body .= '</div>';	
+  }
+ 
+//add js files to the page bottom 
+  public function addInlineEdit($event){
+
+	if($event->object->template == 'admin') return;
+	if(!$event->object->editable()) return;
+    $page = $event->object;  
+	
+    $url = $this->config->urls->siteModules . "PageInlineEdit/";
+	$tiny = $this->config->urls->modules . "Inputfield/InputfieldTinyMCE/tinymce-3.5.8/";
+    $out .= "
+	<script type='text/javascript' src='{$tiny}tiny_mce.js'></script>
+	<script>
+	var ajax_load = '<img src=\"{$this->config->urls->siteModules}PageInlineEdit/load.gif\" alt=\"loading...\" />';
+	var loadUrl = '{$this->page->url}';
+    var cssUrl = '{$this->config->urls->siteModules}PageInlineEdit/frontendedit.css';
+    </script>
+    <script type='text/javascript' src='{$url}ajaxifier.js'></script>
+    </body>
+";
+    //print inlineedit.js in the bottom
+    $event->return = str_ireplace('</body>', $out, $event->return);
+  }
+	
+}
+
+?>

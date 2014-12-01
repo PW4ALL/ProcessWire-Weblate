@@ -1,0 +1,185 @@
+<?php
+
+/**
+ * ProcessWire Tag Parser Test
+ * 
+ * ProcessTagParserTest provides an admin page to test the TextformatterTagParser module.
+ * You get to enter a template with tags then select a simple context in which to parse it
+ * and then inspect the result.
+ *
+ * @copyright Copyright (c) 2012-2014, Netcarver (https://github.com/netcarver)
+ *
+ */
+
+class ProcessTagParserTest extends Process {
+
+	const pageName = 'tagparser-test';
+
+	private $view;
+
+	const defaultString = "Hello {user.name>title}, where have you been? It's {datetime} now and we haven't seen you in two weeks.\n\nLast edit was on page '{page.title|name>title}' from address {REMOTE_ADDR} but you can login anytime using '{user.email|name>lower}'";
+
+	static public function getModuleInfo() {
+		return array(
+			'title'    => 'Tag parser test page',
+			'summary'  => 'Test the tag parser from the PW admin interface',
+			'version'  => 100,
+			'requires' => 'TextformatterTagParser',
+			'author'   => 'Netcarver',
+		);
+	}
+
+
+	public function init() {
+		parent::init();
+		$this->view = new TemplateFile($this->config->paths->{$this->className} . "view.php");
+		$this->view->result = '';
+	}
+
+
+	public function renderInputForm() {
+
+		$m = $this->modules;
+
+		// Form for fields
+		$form = $m->get("InputfieldForm");
+		$form->attr('id', 'tagparsertest_input_form');
+		$form->attr('method', 'post');
+		$form->attr('action', './');
+
+		// Textarea for input string
+		$field = $m->get("InputfieldTextarea");
+		$field->attr('id+name', 'tagparsertest_input');
+		$field->label = $this->_("Block of text with tags to parse");
+		$field->value = (wire('session')->get('tagparsertest_input')) ? wire('session')->get('tagparsertest_input') : self::defaultString;
+		$form->add($field);
+
+		// Input for additional context page selection (if any)
+		$field = $m->get("InputfieldPageListSelect");
+		$field->label = $this->_("Additional context page to send to parser");
+		$field->description = _("The user you are currently logged in as will always be passed to the parser as the 'user' context, you can choose one additional 'page' context to send with it.");
+		$field->attr('id+name', 'tagparsertest_context');
+		$field->showRootPage = false;
+		$field->showChildren = false;
+		$field->showPath = false;
+		$field->startLabel = _("Select additional page context");
+		$field->value = wire('session')->get('tagparsertest_context');
+		$form->add($field);
+
+		$field = $m->get("InputfieldCheckbox");
+		$field->label = $this->_("Show debug info?");
+		$field->attr('id+name', 'tagparsertest_debug');
+		$field->checked = wire('session')->get('tagparsertest_debug');
+		$field->columnWidth = "50";
+		$form->add($field);
+
+		$field = $m->get("InputfieldSelect");
+		$field->label = $this->_("Select a transformation to apply to all replacements");
+		$field->attr('id+name', 'tagparsertest_global');
+		$field->addOption('', '', (!wire('session')->get('tagparsertest_global')) ? array('selected'=>'selected') : array() );
+		foreach( TextformatterTagParser::getTransformations() as $id => $xf ) {
+			$atts = array();
+			if(wire('session')->get('tagparsertest_global') == $xf) $atts['selected'] = 'selected';
+			$field->addOption($xf, $xf, $atts);
+		}
+		$field->columnWidth = "50";
+		$form->add($field);
+
+		// Submit button
+		$field = $m->get("InputfieldButton");
+		$field->type = 'submit';
+		$field->name = 'tagparsertest_submit';
+		$field->value = $this->_("Run parser");
+		$form->add($field);
+
+		$this->view->inputForm = $form->render();
+	}
+
+
+	public function ___execute() {
+
+		$this->saveQueryToSession();
+		$this->renderInputForm();
+
+		$string = wire('session')->get('tagparsertest_input');
+		$context['user'] = wire()->user;
+
+		if($string) {
+
+			$extra_context = wire('session')->get('tagparsertest_context');
+			if($extra_context)
+				$context['page'] = wire()->pages->get($extra_context);
+
+			$parser = $this->modules->get("TextformatterTagParser");
+
+			// Setup the context for the substitution of tags...
+			$parser->set('context', $context);
+
+			// Setup debug...
+			$parser->set('debug', wire('session')->get('tagparsertest_debug') );
+
+			// setup global transformation (if any)...
+			$xf = wire('session')->get('tagparsertest_global');
+			if($xf) $parser->set($xf, 'true');
+
+			// actually do the parse of tags...
+			$parser->format($string);
+
+			unset($parser);
+
+			$this->view->result = $string;
+		}
+		return $this->view->render();
+	}
+
+
+	private function saveQueryToSession() {
+		if($this->input->post->tagparsertest_submit) {
+			wire('session')->set('tagparsertest_input',   $this->input->post->tagparsertest_input);
+			wire('session')->set('tagparsertest_context', $this->input->post->tagparsertest_context);
+			wire('session')->set('tagparsertest_debug',   $this->input->post->tagparsertest_debug);
+			wire('session')->set('tagparsertest_global',  $this->input->post->tagparsertest_global);
+		}
+	}
+
+
+	public function ___install() {
+
+		// create the page our module will be assigned to
+		$page = new Page();
+		$page->template = 'admin';
+		$page->name = self::pageName; 
+
+		// installs to the admin "Setup" menu
+		$page->parent = $this->pages->get($this->config->adminRootPageID)->child('name=setup');
+		// check if the page already exists (--> throw an exception if it does)
+		$existingPage = $page->parent->child("name={$page->name}, include=all");
+		if($existingPage->id) {
+			$this->error(sprintf($this->_("There is already a page at %s - maybe a previous installation?"), $existingPage->path));
+			throw new WireException($this->_("Page already exists"));
+		}
+		$page->process = $this; 
+
+		// page title from module info
+		$info = self::getModuleInfo();
+		$page->title = $info['title'];
+
+		// save the page
+		$page->save();
+
+		// tell the user we created this page
+		$this->message(sprintf($this->_("Created page: %s - check it out!"), $page->path));
+	}
+
+
+	public function ___uninstall() {
+
+		$moduleID = $this->modules->getModuleID($this);
+		$page = $this->pages->get("template=admin, process=$moduleID, name=" . self::pageName);
+
+		if($page->id) {
+			$this->message(sprintf($this->_("Deleted page: %s"), $page->path));
+			$page->delete();
+		}
+	}
+}

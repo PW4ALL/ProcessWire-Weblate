@@ -1,0 +1,80 @@
+<?php
+
+class PageEditFoldStatus extends WireData implements Module {
+
+	public static function getModuleInfo() {
+		return array(
+			'title'		=> 'Page Edit Fold Status',
+			'version'	=> '0.1',
+			'summary'	=> 'Uses session to remember fold status of fields on page edit',
+			'href'		=> '',
+			'permanent' => false,
+			'singular' => true,
+			'autoload' => true
+		); 
+	}
+	
+	public function init() {
+        // make sure we the request is from backend as ProcessPageView is used for all page views
+        if(strpos($_SERVER['REQUEST_URI'], $this->config->urls->admin) !== 0) return;
+        $this->addHookAfter('ProcessPageView::execute', $this, 'triggerScript');
+    }
+	
+	public function triggerScript(HookEvent $event) {
+		if($event->process != "ProcessPageEdit") return;
+		
+		$pageid = $this->input->get->id;
+		$processurl = $this->config->urls->admin . "pageeditfoldstatus";
+		
+		$script = <<< _END
+<script type="text/javascript">
+	$(document).ready(function(){
+		$('button[name=submit_save]').click(function(event) {
+			var set = {};
+			var button = $(this);
+			$('label.ui-widget-header').parent().each(function(index) {
+				id = $(this).attr('id');
+				state = $(this).hasClass('InputfieldStateCollapsed') ? true : false;
+				set[id] = state;
+			});
+			var postdata = {"foldstatus": JSON.stringify(set)};
+			$.post('$processurl/savestatus/?pageid=$pageid', postdata, function(data) {
+				button.unbind(event);
+				button.trigger('click');
+			});
+			return false;
+		});
+			
+		$.get('$processurl/loadstatus/?pageid=$pageid', function(data) {
+			$.each(data, function(key, value) {
+				if(value === true) {
+					$('#' + key).addClass('InputfieldStateCollapsed');
+				} else {
+					$('#' + key).removeClass('InputfieldStateCollapsed');
+				}
+			});
+		});
+	});
+</script>
+_END;
+		$event->return = str_replace("</body>", $script . "</body>", $event->return);
+	}
+	
+	public function ___install() {
+		$process = $this->modules->get("ProcessPageEditFoldStatus");
+		$p = new Page();
+		$p->template = $this->templates->get("admin");
+		$p->parent = $this->pages->get(2);
+		$p->title = 'PageEditFoldStatus';
+		$p->name = 'pageeditfoldstatus';
+		$p->process = $process;
+		$p->status = Page::statusHidden;
+		$p->save();
+	}
+	
+	public function ___uninstall() {
+		$p = $this->pages->get('template=admin, name=pageeditfoldstatus');
+		if($p->id) $p->delete();
+	}
+	
+}

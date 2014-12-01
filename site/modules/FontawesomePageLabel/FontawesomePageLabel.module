@@ -1,0 +1,408 @@
+<?php
+
+/**
+ * ProcessWire 'Font Awesome Page Label' module
+ *
+ * Without Font Awesome this module is worth nothing. Big thanks to the creator
+ * and maintainer of the font, Dave Gandy. (http://fontawesome.io/)
+ *
+ * To add styling to the icons, edit the template FontawesomePageLabel.php.
+ * The template file should be placed in './site/templates/'. 
+ * 
+ * - You need to submit (save) the module at least one time to initialize the 
+ *   styles.
+ *
+ * - The styles input in the module settings must contain at least 1 character,  
+ *   else it resets to the styles default. (leaving a css comment is sufficient)
+ * 
+ * @author: Martijn Geerts
+ * 
+ *
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+
+class FontawesomePageLabel extends WireData implements Module, ConfigurableModule { 
+
+	/**
+	 * Provide required info.
+	 *
+	 */
+
+	public static function getModuleInfo() {
+
+		// information
+		return array(
+			'title' => 'Font Awesome Page Label',
+			'version' => 65,
+			'summary' => "Pagelist Label with Font Awesome font icons.",
+			'author' => "Martijn Geerts",
+			'href' => 'http://www.processwire.com',
+			'singular' => true,
+			'autoload' => true,
+			);
+	}
+	
+	/**
+	 * Set defaultConfigData
+	 *
+	 */
+
+	public static $defaultConfigData = array(
+		"default" => "icon-file-text", // default CSS class name for icon
+		"selectors" => "", // key value, indentifier, icon class name
+		"styles" => "", // CSS to build
+		"file" => "icon-file-alt", // show file icons.
+		"folder_open" => "icon-folder-open-alt", // show folder icons.
+		"folder_close" => "icon-folder-close-alt", // show folder icons.
+		);
+
+	/**
+	 * Initialize the Module, add hooks
+	 *
+	 */
+
+	public function ready() {
+		if($this->page->template != 'admin') return;
+		$this->addHookBefore('ProcessPageList::execute', $this, 'appendStylesScripts');
+ 		$this->addHookBefore('Page::render', $this, 'addToConfig');
+	}
+
+	// empty init. See Module interface why.
+	public function init() {
+	}
+
+	protected function appendStylesScripts(HookEvent $event) {
+
+		$class = $this->classname();
+		$config = $this->config;
+
+		$stylesheets = wire('pages')->get("parent={$config->adminRootPageID}, template=FontawesomePageLabel, include=hidden");
+
+		$config->styles->append($stylesheets->httpUrl);
+		$config->scripts->append("{$config->urls->$class}/{$class}.js");
+	}
+
+	/**
+	 * addToConfig
+	 *
+	 */
+
+	protected function addToConfig(HookEvent $event) {
+
+		// if there are no selectors, return 
+		if((bool) $this->data['selectors'] === false) $event->return;
+
+		$lines = explode("\n", $this->data['selectors']);
+
+		$selectors = array();
+		$selectors['default-icon'] = $this->default;
+		$selectors['file'] = $this->file;
+		$selectors['folder-open'] = $this->folder_open;
+		$selectors['folder-close'] = $this->folder_close;
+
+		foreach($lines as $line) {
+			$line = explode("/", $line);
+			$line =  $line[0];
+			$x = explode(",", $line);
+			if(count($x) !== 2 ) continue;
+			$selector = trim($x[0]);
+			$classname = trim($x[1]);
+			if(strpos($classname, "icon-") !== 0) continue;
+			$selectors[$selector] = $classname;
+		}
+
+		$this->config->js('icons', $selectors);
+	}
+
+	/**
+	 * Temporary storage of the styles and selectors.
+	 *
+	 */
+
+	private static $selectors; // default Selectors
+	public static $styles; // default Styles
+
+	/**
+	 * Create default selectors and styles and store them in the private staic 
+	 * methodes above.
+	 *
+	 */
+
+	public function getDefaults() {
+
+		$templates = wire("templates");
+		$selectors = "";
+
+		$styles .= "/* Leave me here, I prevent styles reset. */\n\n";
+
+		$styles .= ".PageListPage i {\n" .
+			"\tfont-size: 14px;\n" .
+			"\tmargin-left: 3px;\n" .
+			"}\n\n";
+
+		$styles .= "/* default icon style */\n" .
+			"span[class^='icon-'] {\n" .
+			"\tfont-size: 14px;\n" .
+			"\tcolor: #FFF;\n" .
+			"\theight: 16px;\n" .
+			"\tmin-width: 16px;\n" .
+			"\tline-height: 16px;\n" .
+			"\ttext-align: center;\n" .
+			"\tbackground: rgba(0,0,0, .085);\n" .
+			"\tdisplay: inline-block;\n" .
+			"\tmargin-right: 3px;\n" .
+			"\tbox-shadow: inset 0 1px 1px 0 rgba(0,0,0, .25);\n" .
+			"\tborder-radius: 2px;\n" .
+			"\ttext-shadow: 0 1px 1px rgba(0,0,0, .45);\n" .
+			"}\n\n";
+
+		$users_id = wire("pages")->get("template=user")->parent("name=users")->id;
+
+		$defaults = array(
+			// template name based indentifiers
+			"admin" => array("icon-gears", "admin"),
+			"basic-page" => array("icon-file-text", "basic-page"),
+			"home" => array("icon-home", "home template"),
+			"search" => array("icon-search", "search"),
+			"sitemap" => array("icon-sitemap", "sitemap"),
+			"user" => array("icon-user", "user"),
+			// ID based indetifiers
+			$users_id => array("icon-group", "Users folder ID"),
+			wire('config')->http404PageID => array("icon-warning-sign", "404 page ID"),
+			wire('config')->adminRootPageID => array("icon-gears", "Admin root page ID"),
+			wire('config')->trashPageID => array("icon-trash", "Trash page ID"),
+			);
+
+		/**
+		 * Find out which defaults are usefull?
+		 *
+		 */
+
+		// loop through all templates
+		foreach ($templates as $template) {
+			// search defaults, on find append settings string
+			if(isset($defaults[$template->name])) {
+				$array = $defaults[$template->name];
+				$selectors .= "{$template->name}, {$array[0]}\n";
+				$styles .= "/* {$array[1]} */\nspan.{$array[0]} {\n\t\n}\n\n";
+			}
+		}
+
+		// append http404PageID, adminRootPageID & trashPageID id to settings
+		foreach ($defaults as $key => $value) {
+			// skip if key is an ID				
+			if(!is_int($key)) continue;
+			// append page IDs to settings string
+			$selectors .= trim("{$key}, {$value[0]} /* {$value[1]} */") . "\n";
+			$styles .= "/* $value[1] */\nspan.{$value[0]} {\n\t\n}\n\n";
+		}
+
+		self::$selectors = $selectors;
+		self::$styles = $styles;
+
+	}
+
+	/**
+	 * Render CSS
+	 *
+	 */
+
+	public function render(){
+		return $this->styles;
+	}
+
+	/**
+	 * Module configuration screen
+	 *
+	 */
+
+	public static function getModuleConfigInputfields(array $data) {
+
+		foreach(self::$defaultConfigData as $key => $value) {
+			if(!isset($data[$key])) $data[$key] = $value; 
+		}
+
+		/**
+		 * Populate empty styles and/or selectors. Triggered if $data['styles'] 
+		 * and/or $data['selectors'] is empty.
+		 *
+		 */
+
+		if(!strlen($data["styles"]) or !strlen($data["selectors"])) {
+			// initialize default styles & selectors
+			self::getDefaults();
+			// get default styles & selectors
+			if(empty($data["styles"])) {
+				$data["styles"] = self::$styles;
+			}
+			if(empty($data["selectors"])) {
+				$data["selectors"] = self::$selectors;
+			}
+		}
+
+		$tpl = wire('config')->paths->templates . "FontawesomePageLabel.php";
+	
+		$inputfields = new InputfieldWrapper();
+		$modules = wire("modules");
+		$templates = wire("templates");
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', "default"); 
+		$f->value = trim($data["default"]);
+		$f->required = "required";
+		$f->label = __("Default Class Name");
+		$f->notes .= __("If not covered with Classname Selectors. (Find the CSS class name at the [Font Awesome](http://fontawesome.io/icons/) website.)");
+		$inputfields->append($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', "file"); 
+		$f->columnWidth = 34;
+		$f->value = $data["file"] ? $data["file"] : null;
+		$f->label = __("File Icon Classname");
+		$f->notes = __("Leave empty for no file indication");
+		$inputfields->append($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', "folder_open");
+		$f->columnWidth = 33;
+		$f->value = $data["folder_open"];
+		$f->label = __("Open Folder Icon Classname");
+		$f->notes = __("Leave empty for no open folder indication");
+		$inputfields->append($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', "folder_close"); 
+		$f->columnWidth = 33;
+		$f->value = $data["folder_close"];
+		$f->label = __("Closed Folder Icon Classname");
+		$f->notes = __("Leave empty for no closed folder indication");
+		$inputfields->append($f);
+
+		$f = $modules->get("InputfieldTextarea");
+		$f->attr('name', "selectors"); 
+		$f->value = trim($data["selectors"]);
+		$f->required = "required";
+		$f->label = "Classname Selectors";
+		$f->description = __("Indentify a page with 'template name' or 'page id', add a comma, followed by a class name. You can find the CSS class names at the: [Font Awesome](http://fontawesome.io/icons/) website.");
+		$f->rows = 10;
+		$notes = "Templates: ";
+		foreach ($templates as $template) $notes .= "{$template->name}, ";
+		$f->notes .= str_replace( ", {$template->name}, "," & {$template->name}", $notes ) . ".\n";
+		$inputfields->append($f);		
+
+		$f = $modules->get("InputfieldTextarea");
+		$f->attr('name', "styles"); 
+		$f->value = trim($data["styles"]);
+		$f->label = "styles";
+
+		if (!is_file($tpl)) {
+			$f->description = __("Please copy the styles below to the \"FontawesomePageLabel.php\" template and put the template in your \"./site/templates/\" folder. You can edit the CSS in that template file or in the field below. Beware that the field below should not be empty.");
+		} else {
+			$f->description = __("You can edit the \"FontawesomePageLabel.php\" template file directly or add your styles in here. (please leave at least a comment or a default style in the input field, else the styles will be reset to default.)");
+		}
+
+		$f->rows = 10;
+		$inputfields->append($f);
+
+		return $inputfields; 
+	}
+
+	/**
+	 * Install the module, create template & page
+	 *
+	 */
+	public function ___install() {
+		
+		$roles = wire("roles");
+		$pages = wire("pages");
+		$config = wire("config");
+		$templates = wire("templates");
+		
+		$fg = new fieldgroup();
+		$fg->name = "FontawesomePageLabel";
+		$fg->add("title");
+		$fg->save();
+		
+		$tpl = new Template();
+		$tpl->name = "FontawesomePageLabel";
+		$tpl->slashUrls = 0;
+		$tpl->fieldgroup = $fg;
+		$tpl->noUnpublish = 1;
+		$tpl->noGlobal = 1;
+		$tpl->useRoles = 1;
+		
+		$roles = $pages->get($config->rolesPageID)->children(); 
+		$guestRole = $roles->get("name=guest");
+		$role[] = (int) $guestRole->id;
+		$tpl->set("roles", $role);
+		// needs array of template id's
+		$tpl->parentTemplates = array($config->adminRootPageID);
+		$tpl->flags = Template::flagSystem; // needs Template::flagSystemOverride to disable
+		$tpl->save();
+		
+		$linkPage = new Page();
+		$linkPage->template = $tpl;
+		$linkPage->parent = $pages->get($config->adminRootPageID);
+		$linkPage->name = 'fontawesomepagelabel.css';
+		$linkPage->title = 'FontawesomePageLabel';
+		$linkPage->addStatus(Page::statusHidden);
+		$linkPage->save();
+
+		/**
+		 * copy the template file to the ./site/templates/ folder
+		 *
+		 */
+
+		$orig = $config->paths->FontawesomePageLabel . "FontawesomePageLabel.php";
+		$dest = $config->paths->templates . "FontawesomePageLabel.php";
+
+		$msg = array(
+			"error" => __("FontawesomePageLabel.php could not be copied to your \"./site/templates/\" folder."), 
+			"succes" => __("FontawesomePageLabel.php is succesfully copied to the \"./site/templates/\" folder."),
+			"save" => __("Press submit to initialize this module."),
+			);
+
+		if(!is_file($dest)) {
+			$copy = copy($orig, $dest);
+			if(!$copy) $this->message($msg["error"]);
+			if($copy) $this->message($msg["succes"]);
+			if($copy) $this->message($msg["save"]);
+		} else { 
+			$this->message($msg["save"]);
+		}
+	}
+
+	/**
+	 * Uninstall the module, clean up
+	 *
+	 */	
+	public function ___uninstall() {
+		
+		$pages = wire("pages");
+		$config = wire("config");
+		$templates = wire("templates");
+		$fieldgroups = wire("fieldgroups");
+
+		$linkPage = $pages->get("parent={$config->adminRootPageID}, template=FontawesomePageLabel, include=hidden");
+		if ($linkPage->id != null) $linkPage->delete();
+			
+		$template = $templates->get("FontawesomePageLabel");
+		$fieldgroupId = (int) $template->fields->id;
+		$fieldgroup = $fieldgroups->get($fieldgroupId); 
+				
+		if ($template->id != null) {
+			$template->flags = Template::flagSystemOverride; 
+			$template->flags = 0;
+			$templates->delete($template);
+		}	
+		if ($fieldgroup->id != null) $fieldgroups->delete($fieldgroup);
+					
+	}
+}

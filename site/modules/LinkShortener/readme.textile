@@ -1,0 +1,63 @@
+h1. LinkShortener Module For ProcessWire
+
+Provides a simple URL shortening service using PW's native pages feature and a single template-file.
+
+h2. Installation
+
+Copy the entire /LinkShortener/* directory into your site/modules/ directory then navigate to the modules page in the admin interface and hit the "Search for new modules" button. Choose the LinkShortener from the new modules and click the "Install" button.
+
+h3. Installation notes
+
+Installation will create the following templates/template files and fields...
+
+* Field "full_url" which is added to the "LinkShortener" template.
+* Field "short_link_length" which is added to the "LinkShortenerHome" template.
+* Template file "LinkShortener" which handles redirections of incoming short links.
+
+The "LinkShortener" template cannot have children and can only live under a page using the "LinkShortenerHome" template.
+
+Installation will also create an initial parent page for your short links (just off the root of your site) entitled "Short Links" and using the path /r/. By default this parent will use random 6-character strings for the shortened URL but you can change this by editing the page and setting the "short_link_length" to whatever value you want. The longer the string, the more links can be stored under that parent. 6 characters will give you a maximum of 887,503,681 links.
+
+The generated links use a 31 character alphabet so the number of links vs length works out as 31[^length^].
+
+|_. Length |_. Number of links |
+| 1 |>. 31 |
+| 2 |>. 961 |
+| 3 |>. 29,791 |
+| 4 |>. 923,521 |
+| 5 |>. 28,629,151 |
+| 6 |>. 887,503,681 |
+| 7 |>. 27,512,614,111 |
+| 8 |>. 852,891,037,441 |
+
+h2. Creating Short Links Via PW's Admin Interface
+
+Navigate to your "Short Links" page in the page tree and hit the "new" button. A new page will be created using the "LinkShortener" template that automatically generates a random short string that is not currently in use under that parent. If you are happy with this (you probably will be) just hit the "Add" button to take you through to the field where you can enter the full URL you want the short link to redirect to. Once you've pasted that it, hit save and you're done.
+
+The short link will now be displayed under the full link field and you can either copy & paste it as needed or hit the "Go!" link to test your short link => full link redirection.
+
+h2. Creating Short Links Via API
+
+You can use the @LinkShortener::addNewLink()@ API call to programmatically install a new short link into your PW installation. Check the tests/api.php file for a concrete example.
+
+bc.. $full = 'http://www.howtoforge.com/pfsense-squid-squidguard-traffic-shaping-tutorial';
+$short1 = LinkShortener::addNewLink( $full );            // Automatically create and name a short link to $full in the first shortlink bin. 
+$short2 = LinkShortener::addNewLink( $full, 1138, 'x' ); // Create a shortlink called 'x' in the bin with id 1138
+
+h2. Uninstalling The Link Shortener
+
+You can safely uninstall the module and any links that you created will still work.
+
+If you wish to remove the module, its supporting elements _and_ the links you created using it then there are two ways to do this...
+
+# By editing the module code prior to uninstall and removing the two comment lines marked XXXX and YYYY prior to uninstalling the module (search for those strings and you'll find them.)
+# By manually removing things...
+## Delete all pages using the LinkShortenerHome template and then delete them from the trash
+## Delete the LinkShortener and LinkShortenerHome templates
+## Delete the full_url, short_link_tries, short_link_ext and short_link_length fields
+## Delete the LinkShortener.php file from site/templates
+
+
+h2. License
+
+GPLv2.
