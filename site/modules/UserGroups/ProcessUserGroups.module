@@ -1,0 +1,570 @@
+<?php
+
+class ProcessUserGroups extends Process {
+
+	/**
+	 * Return information about this module (required)
+	 *
+	 */
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('User Groups', __FILE__),
+			'summary' => __('Manage user groups for ProcessWire for streamlined access management', __FILE__),
+			'version' => 6,
+			'author' => 'Antti Peisa, Niklas Lakanen, Teppo Koivula',
+			'href' => 'http://modules.processwire.com/',
+			'permission' => 'user-admin'
+		);
+	}
+
+	/**
+	 * The name that will be used for the page this module creates
+	 *
+	 * It should be unique and the same (or similar) to the module name, but all lowercase.
+	 * It should not be the same as any other ProcessWire admin page name.
+	 *
+	 */
+	const pageName = 'usergroups';
+
+	/**
+	 * This is an optional initialization function called before any execute functions.
+	 *
+	 */
+	public function init() {
+		parent::init(); // required
+		$this->userGroups = $this->modules->get("UserGroups");
+	}
+
+	/**
+	 * This function is executed when a page with your Process assigned is accessed.
+	 *
+	 * Output table of all currently existing groups along with member count and
+	 * actions, such as "remove".
+	 *
+	 * @return string rendered table
+	 */
+	public function ___execute() {
+
+		$out = "";
+		$group_str = $this->_('Group');
+		$description_str = $this->_('Description');
+		$users_count_str = $this->_("Users");
+		$remove_str = $this->_('Remove');
+
+
+		// Grab filter form
+		$form = $this->getFilterForm();
+		if ($form instanceof InputfieldFieldset || $form instanceof InputfieldForm) {
+			$out .= $form->render();
+		} else if ($form) {
+			$out .= $form;
+		}
+
+		$table = $this->modules->get("MarkupAdminDataTable");
+		$table->setEncodeEntities(false);
+		$table->headerRow(array(
+			$group_str,
+			$description_str,
+			$users_count_str,
+			$remove_str
+		));
+
+		// Build filter selector (if filter form exists)
+		$selector = array('limit=25');
+		if ( $form ) {
+			$selector[] = $this->getFilterSelector();
+		}
+		$selector = implode(',',$selector);
+		$groups = $this->page->children($selector);
+
+		foreach ($groups as $group) {
+
+			if ($group->name == "everyone") {
+				$table->row(array(
+					$group->title,
+					'',
+					"&#8734;",
+					"&nbsp;"
+				));
+			} elseif ($group->name == "logged") {
+				$table->row(array(
+					$group->title,
+					'',
+					wire('users')->count(),
+					"&nbsp;"
+				));
+			} else {
+				$table->row(array(
+					// not using "title => url"  because it doesn't work if the group's title is a number
+					'<a href="./edit/?group_id='.$group->id.'">'.$group->title.'</a>',
+					$group->group_description,
+					wire('users')->find("user_groups={$group->id}, limit=2")->getTotal(),
+					$remove_str => "./remove/?group_id=" . $group->id
+				));
+			}
+
+		}
+
+		$table->action(array($this->_('Add New Group') => 'add/'));
+
+		$out .= $table->render().$groups->renderPager();
+
+		return $out;
+	}
+
+	public function ___executeAdd() {
+
+		Wire::setFuel('processHeadline', $this->_('Add New Group'));
+		$this->breadcrumbs->add(new Breadcrumb('../', $this->_('User Groups')));
+
+		if ($this->input->post->group_title) {
+			$newgroup = wire('pages')->add('user-group', wire('page'), array(
+				'title' => $this->input->post->group_title,
+				'group_description' => $this->input->post->group_description
+			));
+			$this->message($this->_("New group added:") . " " . $this->input->post->group_title);
+			$this->session->redirect("../");
+		}
+
+		$form = $this->modules->get("InputfieldForm");
+		$form->action = "./";
+		$field = $this->modules->get("InputfieldText");
+		$field->attr('id+name', 'group_title');
+		$field->label = $this->_("Group title");
+		$form->add($field);
+
+		$field = $this->modules->get("InputfieldText");
+		$field->attr('id+name', 'group_description');
+		$field->label = $this->_("Group description (optional)");
+		$form->add($field);
+
+		$submit = $this->modules->get("InputfieldSubmit");
+		$submit->value = $this->_("Create New Group");
+		$form->add($submit);
+
+		return $form->render();
+	}
+
+	public function ___executeEdit() {
+		$group_id = (int) $this->input->get->group_id;
+		if ($group_id < 1) throw new WireException("Invalid group id");
+
+		$this->input->whitelist("group_id", $group_id);
+
+		$group = $this->pages->get($group_id);
+		$usersInGroup = $this->users->find("user_groups=$group");
+
+		$out = '';
+
+		Wire::setFuel('processHeadline', $group->title);
+
+		$this->breadcrumbs->add(new Breadcrumb('../', $this->_('User Groups')));
+
+		if ($this->input->post->submit) {
+
+			// Add new users into group
+			foreach ($this->input->post->direct_users as $user_id) {
+				if (empty($user_id)) continue;
+				$user_id = trim($user_id, " ,");
+				if (strpos($user_id, ',')) {
+					// For some reason pageListSelectMultiple returns array, but with only one item comma separating values (123,1234)
+					foreach (explode(",", $user_id) as $user_id) {
+						$u = wire('users')->get($user_id);
+						if (!$u->id) continue;
+						$u->user_groups->add($group);
+						$u->save();
+					}
+				} else {
+					$u = wire('users')->get($user_id);
+					if (!$u->id) continue;
+					$u->user_groups->add($group);
+					$u->save();
+				}
+
+			}
+
+			if ($this->input->post->remove) {
+				foreach ($this->input->post->remove as $user_id) {
+					$u = wire('users')->get($user_id);
+					$u->user_groups->remove($group);
+					$u->save();
+				}
+			}
+
+			$this->session->redirect("./?group_id=$group_id");
+		}
+
+		if ($usersInGroup->count() > 0)	{
+			$table = $this->modules->get("MarkupAdminDataTable");
+			$table->setEncodeEntities(false);
+			$table->headerRow(array(
+				$this->_("Name"),
+				$this->_("Email"),
+				$this->_("Remove")
+				));
+
+			foreach ($usersInGroup as $u) {
+
+				$str = '';
+
+				if (empty($str)) $str = "<input type='checkbox' name='remove[]' value='{$u->id}' />";
+
+				$table->row(array(
+					$u->name,
+					$u->email,
+					$str
+					));
+			}
+
+			$html = $table->render();
+		} else {
+			$html = $this->_("No users in group");
+		}
+
+		$form = $this->modules->get("InputfieldForm");
+		$form->action = "./?group_id=$group_id";
+
+		$markup = $this->modules->get("InputfieldMarkup");
+		$markup->label = $this->_("Users in this group");
+		$markup->value = $html;
+		//$markup->value .= $usersInGroup->renderPager();
+		$form->add($markup);
+
+		//echo "<pre>";
+		//var_dump($group->getInputfields()->get("roles"));
+		//exit();
+
+/*
+		$field = $group->getInputfields()->get("roles");
+		$field->columnWidth = 50;
+		$form->add($field);
+*/
+
+		$field = $this->modules->get("InputfieldPageAutocomplete");
+//		$field->columnWidth = 50;
+		$field->label = $this->_("Add users to group");
+		$field->name = "direct_users";
+		$field->template_id = $this->config->userTemplateID;
+		$field->labelFieldName = "name";
+		$field->searchFields = "name email";
+		$form->add($field);
+
+		$submit = $this->modules->get("InputfieldSubmit");
+		$form->add($submit);
+		$out .= $form->render();
+
+		return $out;
+	}
+
+	/**
+	 * Removes specified group
+	 *
+	 * If GET param confirm is set and evaluates to true, group specified by GET
+	 * param group_id is removed, otherwise confirmation form is displayed.
+	 *
+	 * @return mixed confirm form markup or void
+	 */
+	public function ___executeRemove() {
+
+		Wire::setFuel('processHeadline', $this->_('Remove Group'));
+		$this->breadcrumbs->add(new Breadcrumb('../', $this->_('User Groups')));
+
+		$group_id = (int) $this->input->get->group_id;
+		if (!$group_id) throw new WireException("Invalid group id");
+
+		$group = $this->pages->get("template=user-group, id=$group_id");
+		if (!$group->id) throw new WireException("Invalid group");
+
+		if ($this->input->get->confirm) {
+
+			// remove users from group (or group from users, whatever)
+			foreach ($this->users->find("user_groups=$group") as $user) {
+				$user->user_groups->remove($group);
+				$user->save();
+			}
+
+			// remove group (grab title for message use first, though)
+			$group_title = $group->title;
+			$group->delete();
+
+			// set message and redirect to groups page
+			$this->message($this->_("Group Removed:") . " " . $group_title);
+			$this->session->redirect("../");
+
+		} else {
+
+			// output confirmation form to avoid accidentally removing groups
+			$form = $this->modules->get("InputfieldForm");
+			$form->method = "GET";
+			$form->action = ".";
+
+			$field = $this->modules->get("InputfieldHidden");
+			$field->attr('name', 'group_id');
+			$field->attr('value', $group_id);
+			$form->add($field);
+
+			$field = $this->modules->get("InputfieldCheckbox");
+			$field->attr('name', 'confirm');
+			$field->attr('value', 1);
+			$field->label = sprintf($this->_("Permanently remove group %s"), $group->title);
+			$field->description = $this->_("Once removed, groups cannot be recovered. Members of removed group are not affected (other than being removed from said group).");
+			$form->add($field);
+
+			$submit = $this->modules->get("InputfieldSubmit");
+			$submit->value = $this->_("Remove Group");
+			$form->add($submit);
+
+			return $form->render();
+
+		}
+
+	}
+
+	/**
+	 * Build filter forms for execute method
+	 *
+	 * This being a method of it's own helps us both keep this separate from
+	 * main execute method, but also makes it possible for external code to
+	 * alter return value (add/remove fields etc.) based on their needs.
+	 *
+	 * @return mixed InputfieldFieldset by default, but can be altered by hooks
+	 */
+	public function ___getFilterForm() {
+		
+		$fields = $this->modules->get("InputfieldFieldset");
+
+		$form = $this->modules->get("InputfieldForm");
+		$form->attr('method', 'get');
+		$form->attr('id', 'userSearch');
+		$form->label = $this->_("Filter Groups");
+		if (!$this->input->get->search) {
+			$form->collapsed = Inputfield::collapsedYes;
+		}
+		
+		$field = $this->modules->get("InputfieldText");
+		$field->attr('name', 'search');
+		$field->label = $this->_("Search");
+		if ($this->input->get->search) {
+			$this->input->whitelist('search', $this->input->get->search);
+			$field->attr('value', $this->sanitizer->text($this->input->get->search));
+		}
+		$form->add($field);
+		
+		$field = $this->modules->get("InputfieldSubmit");
+		$field->attr('value', $this->_("Search"));
+		$form->add($field);
+		
+		$fields->add($form);
+		
+		return $fields;
+		
+	}
+	
+	/**
+	 * Build selector for execute method
+	 *
+	 * @return string selector string
+	 */
+	public function ___getFilterSelector() {
+
+		$selector = "check_access=0";
+		
+		if ($this->input->whitelist->search) {
+			$search = $this->sanitizer->selectorValue($this->input->whitelist->search);
+			$selector .= ", title%=$search";
+		}
+
+		return $selector;
+
+	}
+
+	/**
+	 * This creates a new page with this Process module assigned.
+	 */
+	public function ___install() {
+
+		// create the page our module will be assigned to
+		$page = new Page();
+		$page->template = 'admin';
+		$page->name = self::pageName;
+
+		$page->parent = $this->pages->get($this->config->adminRootPageID)->child('name=access');
+		$page->process = $this;
+
+		$info = self::getModuleInfo();
+		$page->title = $info['title'];
+
+		// save the page
+		$page->save();
+
+		// tell the user we created this page
+		$this->message("Created Page: {$page->path}");
+
+		// new field
+		$f = $this->fields->get('group_description');
+		if ( ! $f->id ) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = "group_description";
+			$f->label = "Group description";
+			$f->inputfield = 'InputfieldText';
+			$f->save();
+		}
+
+		// new fieldgroup
+		$ug = new Fieldgroup();
+		$ug->name = "user-group";
+		$ug->add($this->fields->get('title'));
+		$ug->add($f);
+		$ug->save();
+
+		// new template using the fieldgroup
+		$t = new Template();
+		$t->name = "user-group";
+		$t->fieldgroup = $ug; // add the fieldgroup
+		$t->flags = Template::flagSystem;
+		$t->noGlobal = 1;
+		$t->save();
+
+		// Add new field user template (user_groups that user belongs to)
+		$f = $this->fields->get('user_groups');
+		if (! $f->id) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = "user_groups";
+			$f->label = "User Groups";
+			$f->inputfield = 'InputfieldAsmSelect';
+			$f->findPagesSelector = "template=user-group, name!=everyone|logged, include=all";
+			$f->labelFieldName = "title";
+			$f->save();
+		}
+		$ufg = $this->fieldgroups->get("user");
+		$ufg->add($f);
+		$ufg->save();
+
+		$f = $this->fields->get('manage_access');
+		if ( ! $f->id) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeCheckbox");
+			$f->name = "manage_access";
+			$f->label = "Manage access";
+			$f->description = "Choose if you want to select groups that can view or edit this page. Otherwise access is inherited from parent page";
+			$f->inputfield = "InputfieldCheckbox";
+			$f->flags = Field::flagGlobal;
+			$f->collapsed = Inputfield::collapsedHidden;
+			$f->save();
+		}
+
+		$f = $this->fields->get('view_groups');
+		if ( ! $f->id) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = "view_groups";
+			$f->label = "View Groups";
+			$f->description = "Groups that can view this page";
+			$f->inputfield = "InputfieldAsmSelect";
+			$f->parent_id = $page->id;
+			$f->template_id = $t->id;
+			$f->labelFieldName = "title";
+			$f->flags = Field::flagGlobal;
+			$f->collapsed = Inputfield::collapsedHidden;
+			$f->save();
+		}
+
+		$f = $this->fields->get('edit_groups');
+		if ( ! $f->id) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = "edit_groups";
+			$f->label = "Edit Groups";
+			$f->description = "Groups that can edit this page";
+			$f->inputfield = "InputfieldAsmSelect";
+			$f->findPagesSelector = "template=user-group, name!=everyone|logged, include=all";
+			$f->labelFieldName = "title";
+			$f->flags = Field::flagGlobal;
+			$f->collapsed = Inputfield::collapsedHidden;
+			$f->save();
+		}
+
+		$f = $this->fields->get('inherit_access');
+		if ( ! $f->id) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = "inherit_access";
+			$f->label = "Inherit Access";
+			$f->description = "Page that this page inherits access from";
+			$f->inputfield = "InputfieldPageListSelect";
+			$f->labelFieldName = "path";
+			$f->derefAsPage = FieldtypePage::derefAsPageOrFalse;
+			$f->flags = Field::flagGlobal;
+			$f->collapsed = Inputfield::collapsedHidden;
+			# required for inheritance to work when a page is unpublished
+			$f->allowUnpub = 1;
+			$f->save();
+		}
+
+		$newpage = $this->pages->add('user-group', $page, 'everyone', array('title' => 'Everyone'));
+		$newpage->save();
+		$everyoneGroupId = $newpage->id;
+
+		$newpage = $this->pages->add('user-group', $page, 'logged', array('title' => 'Logged in users'));
+		$newpage->save();
+
+		// Lets activate the manage access for home page
+		$home = $this->pages->get(1);
+		$home->manage_access = 1;
+		// And let's give group "Everyone" view access to get things going
+		$home->view_groups->add($everyoneGroupId);
+		$home->save();
+
+	}
+
+	/**
+	 * Called only when your module is uninstalled
+	 *
+	 * This should return the site to the same state it was in before the module was installed.
+	 *
+	 */
+	public function ___uninstall() {
+
+		// find the page we installed, locating it by the process field (which has the module ID)
+		// it would probably be sufficient just to locate by name, but this is just to be extra sure.
+		$moduleID = $this->modules->getModuleID($this);
+		$page = $this->pages->get("template=admin, process=$moduleID, name=" . self::pageName);
+
+		if($page->id) {
+			// if we found the page, let the user know and delete it
+			$this->message("Deleting Page: {$page->path}");
+			wire('pages')->delete($page, true);
+		}
+
+		$t = $this->templates->get('user-group');
+		if ($t->id) {
+			$t->flags = Template::flagSystemOverride;
+			$t->flags = 0;
+			$this->templates->delete($t);
+			$fg = $this->fieldgroups->get('user-group');
+			if ($fg->id) $this->fieldgroups->delete($fg);
+		}
+
+		$rFields = $this->fields->find("name=user_groups|inherit_access|manage_access|view_groups|edit_groups|group_description");
+		foreach ($rFields as $f) {
+			$f->flags = 0;
+			$f->save();
+		}
+
+		foreach ($this->fieldgroups as $fg) {
+			$fg->remove($this->fields->get('manage_access'));
+			$fg->remove($this->fields->get('view_groups'));
+			$fg->remove($this->fields->get('edit_groups'));
+			$fg->remove($this->fields->get('user_groups'));
+			$fg->remove($this->fields->get('inherit_access'));
+			$fg->save();
+		}
+
+		foreach ($rFields as $f) {
+			$this->fields->delete($f);
+		}
+
+	}
+}

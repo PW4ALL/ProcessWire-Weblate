@@ -1,0 +1,134 @@
+<?php
+
+class PageLastAccess extends WireData implements Module
+{
+
+    public static function getModuleInfo()
+    {
+        return array(
+            'title' => __('Last Access'),
+            'summary' => __('Allows to check when a page has been access the last time by a specific user.'),
+            'author' => 'Conclurer GbR',
+            'version' => '100',
+            'autoload' => true
+        );
+    }
+
+    const table = 'pages_last_accesses';
+
+    public function init()
+    {
+        $this->addHookAfter('Page::render', $this, 'hookPageLoad');
+        $this->addHookProperty('Page::lastAccess', $this, 'hookPageLastAccessProperty');
+        $this->addHook('User::accessedPages', $this, 'hookUserAccessedPages');
+    }
+
+    public function ___install()
+    {
+        $table = self::table;
+        $this->database->exec("CREATE TABLE IF NOT EXISTS `$table` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `page_id` int(11) NOT NULL,
+  `last_access` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`,`page_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;");
+    }
+
+    public function ___uninstall()
+    {
+        $table = self::table;
+        $this->database->exec("DROP TABLE `$table`;");
+    }
+
+    public function hookPageLoad(HookEvent $event)
+    {
+        $page = $event->object;
+        $table = self::table;
+
+        // Cancel if acting as guest
+        if ($this->user->isGuest()) return;
+
+        // Check if database record already exists
+        $statement = $this->database->prepare("SELECT count(1) as c FROM $table WHERE user_id = ? AND page_id = ? LIMIT 1");
+        $statement->execute(array($this->user->id, $page->id));
+        $set = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($set['c'] == 0) {
+            // No database record found -> insert new
+            $insert = $this->database->prepare("INSERT INTO $table (user_id, page_id, last_access) VALUES (?, ?, ?)");
+            $insert->execute(array($this->user->id, $page->id, time()));
+        } else {
+            // Update existing record
+            $update = $this->database->prepare("UPDATE $table SET last_access = ? WHERE user_id = ? AND page_id = ?");
+            $update->execute(array(time(), $this->user->id, $page->id));
+        }
+    }
+
+    public function hookPageLastAccessProperty(HookEvent $event)
+    {
+        $page = $event->object;
+        $table = self::table;
+
+        // Cancel if acting as guest
+        if ($this->user->isGuest()) return;
+
+        $select = $this->database->prepare("SELECT last_access FROM $table WHERE user_id = ? AND page_id = ? LIMIT 1");
+        $select->execute(array($this->user->id, $page->id));
+
+        $result = $select->fetch(PDO::FETCH_ASSOC);
+
+        // If no data
+        if ($result == null) return;
+
+        $event->return = intval($result['last_access']);
+    }
+
+    public function hookUserAccessedPages(HookEvent $event)
+    {
+        $user = $event->object;
+        $table = self::table;
+
+        $direction = $event->arguments[0] == 'before' ? '<' : '>';
+        $timestamp = intval($event->arguments[1]);
+
+        // Cancel if user is guest user
+        if ($user == $this->users->getGuestUser()) {
+            $event->return = array();
+            return;
+        }
+
+        $re = array();
+
+        if (empty($timestamp)) {
+            $select = $this->database->prepare("SELECT page_id, last_access FROM $table WHERE user_id = ? ORDER BY last_access ASC");
+            $select->execute(array($user->id));
+        } else {
+            $select = $this->database->prepare("SELECT page_id, last_access FROM $table WHERE user_id = ? AND last_access $direction ? ORDER BY last_access ASC");
+            $select->execute(array($user->id, $timestamp));
+        }
+
+        while (($result = $select->fetch(PDO::FETCH_ASSOC)) !== false) {
+            $re[] = new PageAccessElement($result['page_id'], $result['last_access']);
+        }
+
+        $event->return = $re;
+    }
+}
+
+class PageAccessElement
+{
+    protected $page, $timestamp;
+
+    public function __construct($page_id, $timestamp)
+    {
+        $this->page = wire('pages')->get("id=$page_id");
+        $this->timestamp = $timestamp;
+    }
+
+    public function __get($i)
+    {
+        return $this->$i;
+    }
+}

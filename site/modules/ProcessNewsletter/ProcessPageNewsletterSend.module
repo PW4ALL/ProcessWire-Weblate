@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * ProcessPageNewsletterSend
+ *
+ * By Nico Knoll (http://www.nico.is/)
+ *
+ */
+
+class ProcessPageNewsletterSend extends WireData implements Module {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('Newsletter Quick Send Link'), 
+			'version' => '1.00',
+			'summary' => __('Adds a send link to the newsletters in the page list. Not required but could be useful.'),
+			'permission' => 'page-newsletter',
+			'autoload' => 'process=ProcessPageList',
+			'requires' => array('ProcessNewsletter')
+		);
+	}
+
+	public function ready() {		
+		$process = wire('page')->process;
+		$this->addHookAfter("ProcessPageListRender::getPageActions", $this, 'hookPageListActions');
+	}
+
+	public function hookPageListActions(HookEvent $event) {
+		$page = $event->arguments[0];
+
+		if($page->template->name == 'pw_newsletter' && $this->user->hasPermission('page-newsletter')) {
+
+			$actions = $event->return;
+
+			$new_action = array(
+				'cn' => 'send',
+				'name' => __('Send'),
+				'url' => $this->config->urls->admin . "setup/newsletter/send/?id=".$page->id
+			);
+
+			$actions[] = $new_action;
+
+			$event->return = $actions;
+		}
+	}
+}

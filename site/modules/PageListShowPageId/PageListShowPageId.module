@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * PageListShowPageId
+ * @author  Philipp Urlich "Soma"
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+
+class PageListShowPageId extends WireData implements Module {
+
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Page List Show Page Id', 
+            'version' => 1, 
+            'summary' => "Module prepends page ID in the page list tree labels. Only visible for superusers",
+            'href' => '',
+            'author' => 'Soma',
+            'singular' => true,
+            'autoload' => true
+            );
+    }
+
+    public function init() {
+       if($this->user->isSuperuser()){
+            $this->addHookAfter('ProcessPageListRender::getPageLabel', $this, 'addPageIdLabel');
+        }
+    }
+
+    public function addPageIdLabel($event){
+        $page = $event->arguments('page');
+        $event->return = "($page->id) " . $event->return;
+    }
+}

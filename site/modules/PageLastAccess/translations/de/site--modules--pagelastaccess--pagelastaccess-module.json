@@ -1,0 +1,12 @@
+{
+    "file": "site\\modules\\PageLastAccess\\PageLastAccess.module",
+    "textdomain": "site--modules--pagelastaccess--pagelastaccess-module",
+    "translations": {
+        "91d522fe68c9ac8ac16026371421018f": {
+            "text": "Letzter Zugriff"
+        },
+        "8d4ec8921af521f78bf76ff3d8f0dc91": {
+            "text": "Erm\u00f6glicht festzustellen, wann auf eine Seite zuletzt von einem bestimmten Benutzer zugegriffen wurde."
+        }
+    }
+}

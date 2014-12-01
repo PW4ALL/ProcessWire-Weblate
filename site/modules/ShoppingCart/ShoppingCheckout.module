@@ -1,0 +1,1206 @@
+<?php
+
+class ShoppingCheckout extends WireData implements Module, ConfigurableModule
+{
+	public static function getModuleInfo()
+	{
+		return array(
+			'title' => 'Shopping Checkout',
+			'version' => 003,
+			'summary' => 'Handles checkout process, order saving etc. Main module for PW Shop',
+			'singular' => false,
+			'autoload' => false,
+			'requires' => array(
+				"ShoppingCart"
+			)
+		);
+	}
+
+	static public function getDefaultFields() {
+
+		$required = array(
+			'visible' => 1,
+			'required' => 1
+		);
+		$visible = array(
+			'visible' => 1,
+			'required' => 0
+		);
+		$hidden = array(
+			'visible' => 0,
+			'required' => 0
+		);
+
+		return array(
+				'firstname' => array(
+						'label' 	=> __('First name'),
+						'defaults' 	=> $required
+				),
+				'lastname' => array(
+						'label' 	=> __('Last name'),
+						'defaults'	=> $required
+				),
+				'streetaddress'	=> array(
+						'label'		=> __('Street address'),
+						'defaults'	=> $required
+				),
+				'zip' => array(
+						'label'		=> __('Zip'),
+						'defaults'	=> $hidden
+				),
+				'city' => array(
+						'label'		=> __('City'),
+						'defaults'	=> $required
+				),
+				'country' => array(
+						'label'		=> __('Country'),
+						'defaults'	=> $hidden
+				),
+				'email'	=> array(
+						'label'		=> __('Email'),
+						'defaults'	=> $required
+				),
+				'phone'	=> array(
+						'label'		=> __('Phone number'),
+						'defaults'	=> $visible
+				),
+				'greetings' => array(
+						'label'		=> __('Details about my order'),
+						'defaults'	=> $visible,
+						'type'		=> 'textarea'
+				),
+				'custom1' => array(
+						'label'		=> __('Custom field #1'),
+						'defaults'	=> $hidden
+				),
+				'custom2' => array(
+						'label'		=> __('Custom field #2'),
+						'defaults'	=> $hidden
+				)
+	    );
+	}
+
+	static public function getDefaultData() {
+
+
+		$defaultData = array(
+		   'confirmationUrlSegment' => "confirmation",
+		   'paymentUrlSegment' 		=> "payment",
+		   'completedUrlSegment' 	=> "completed",
+		   'customThankyou' => 0
+			);
+
+		foreach(self::getDefaultFields() as $key => $arr) {
+			if ($arr['defaults']['visible']) $defaultData[$key] = 1;
+
+			$reqKey = $key . 'Required';
+			if ($arr['defaults']['required']) $defaultData[$reqKey] = 1;
+
+			$defaultData['label'] = $arr['label'];
+		}
+
+		return $defaultData;
+
+
+	}
+
+	/**
+	 * Populate the default config data
+	 *
+	 * ProcessWire will automatically overwrite it with anything the user has specifically configured.
+	 * This is done in construct() rather than init() because ProcessWire populates config data after
+	 * construct(), but before init().
+	 *
+	 */
+	public function __construct() {
+		foreach(self::getDefaultData() as $key => $value) {
+		   $this->$key = $value;
+	   }
+	}
+
+	public function init()
+	{
+		// update from 001 to 002 check added missing sc_phone field
+		$info = self::getModuleInfo();
+		$moduleVersion = $info['version'];
+		if($moduleVersion > 1) {
+			if (!$this->fields->get('sc_phone')) {
+				$this->updateAddPhoneField();
+			}
+		}
+	}
+
+	public function ready()
+	{
+	}
+
+	/*
+	 * Simple controller to handle checkout process. Actually 4 steps:
+	 *
+	 * 1. renderInformation()
+	 * 2. renderConfirmation()
+	 * 3. renderPayment()
+	 * 4. renderCompleted()
+	 *
+	 */
+	public function renderCheckout()
+	{
+		if(!$this->input->urlSegment1) {
+			$out = $this->renderInformation();
+		}
+		else if ($this->input->urlSegment1 == $this->confirmationUrlSegment) {
+			$out = $this->renderConfirmation();
+		}
+		else if ($this->input->urlSegment1 == $this->paymentUrlSegment) {
+			$out = $this->renderPayment();
+		}
+		else if ($this->input->urlSegment1 == $this->completedUrlSegment) {
+			$out = $this->renderCompleted();
+		}
+
+		return $out;
+	}
+
+	/*
+	 * Returns form to ask customer information before proceeding to confirmation.
+	 * After valid information redirects to confirmation url.
+	 *
+	 */
+	public function renderInformation() {
+
+		// First we check if there already is unprocessed order with this user
+		$sid = $this->modules->get("ShoppingCart")->getSession();
+		$order = $this->pages->get("template=sc-order, sc_session={$sid}, status=unpublished, limit=1, sort=-created");
+
+		// If we have already an order, we either go to payment or remove it, depending if customer is already added new products
+		if ($order->id) {
+			// Customer has failed order, but has added new products to cart. Remove old one and continue with new
+			if ($this->modules->ShoppingCart->getNumberOfItems() > 0) {
+				$this->pages->delete($order, true);
+			} else {
+				$this->session->redirect("./{$this->paymentUrlSegment}/");
+			}
+		}
+
+		if ($this->modules->get('ShoppingCart')->getNumberOfItems() === 0) {
+			return "<p>" . $this->_("Your shopping cart is empty.") . "</p>";
+		}
+
+		if (!$this->input->post->submit) {
+			$this->validateInformation(false);
+		} else {
+			$orderArray = $this->validateInformation(true);
+			if($orderArray['valid']) {
+				$this->session->redirect("./{$this->confirmationUrlSegment}/");
+			}
+		}
+
+		$out = "<h2>" . $this->_("Please provide your shipping address and contact information.") . "</h2>";
+		$out .= "<form action='./' method='post'>";
+
+		$out .= $this->renderInformationFormItems();
+
+		$out .= $this->renderShippingOptions();
+		$out .= $this->renderPaymentMethods();
+
+
+
+		$out .= "</form>";
+
+		return $out;
+	}
+
+	public function renderCart() {
+		return $this->modules->ShoppingCart->renderCart();
+	}
+
+	/*
+	 * Returns simple view to review order status before proceeding to payment.
+	 *
+	 */
+	public function renderConfirmation() {
+		if ($this->input->post->submit) {
+			$this->validateInformation(true); // We still need to validate here
+			$this->createOrder();
+			$this->session->redirect("../{$this->paymentUrlSegment}/");
+		}
+
+		$paymentmethod = $this->modules->get($this->session->orderArray['paymentmethod']['value']);
+		$paymentmethodInfo = $paymentmethod->getModuleInfo();
+
+		if (isset($this->session->orderArray['shippingoption']['value'])) {
+			$shippingOption = $this->modules->get($this->session->orderArray['shippingoption']['value']);
+		} else {
+			$shippingOption = NULL;
+		}
+
+		$out = "<h2>" . $this->_('Approve details of your order') . "</h2>";
+		$out .= $this->modules->ShoppingCart->renderCart(true, $shippingOption);
+		$out .= "<form action='./' method='post'>";
+
+		if ($shippingOption) {
+			$out .= "<input type='hidden' name='shippingoption' value='". $this->session->orderArray['shippingoption']['value'] ."' />";
+		}
+		$out .= $this->renderInformationFormItems(true);
+
+		$out .= "<p class='paymentmethod required'><label for='paymentmethod'>" . $this->_("Payment method") . ":<span class='reqstar'>*</span></label><span>". $paymentmethod->title . "</span></p>";
+		$out .= "<input type='hidden' name='paymentmethod' value='". $this->session->orderArray['paymentmethod']['value'] ."' />";
+
+		$out .= "<p><input type='submit' class='submit payorder' name='submit' value='". $this->_("Place your order") . "' /></p>";
+		$out .= "</form>";
+		$out .= "<a href='../'>". $this->_("Go back to edit your information") ."</a>";
+
+		return $out;
+	}
+
+	/*
+	 * Returns processPayment() method from chosen paymentMethod class.
+	 *
+	 */
+	public function renderPayment() {
+		// Get latest unpublished order from current user
+		$sid = $this->modules->get("ShoppingCart")->getSession();
+		$order = $this->pages->get("template=sc-order, sc_session={$sid}, status=unpublished, limit=1, sort=-created");
+		if ($order->id) {
+			$paymentmethod = $this->modules->get("{$order->sc_paymentmethod}");
+			return $paymentmethod->processPayment($order);
+		} else {
+			return $this->_("You don't have any unpaid orders.");
+		}
+	}
+
+	/*
+	 * Simple view after the payent. Renders information about whether the order
+	 * was success or not
+	 *
+	 */
+	public function renderCompleted() {
+		if (!$this->session->orderId) return $this->_("Payment failed, session lost");
+
+		$orderId = $this->session->orderId;
+		$order = $this->pages->get($orderId);
+
+		if(!$order->id)
+			throw new WireExpection("Payment error, order couldn't be found");
+
+		if ($order->is(Page::statusUnpublished)) {
+			$out = "<h2>" . $this->_("Payment cancelled or failed.") . "</h2>";
+			$out .= "<a href='../{$this->paymentUrlSegment}/'>". $this->_("Try making payment again") ." ($order->sc_price &euro;)</a>";
+			return $out;
+		}
+		// Payment ok, order is done!
+		else {
+			$this->calculateNewStock($order);
+			if ($this->customThankyou) {
+				$this->session->redirect($this->pages->get($this->customThankyou)->url);
+			} else {
+				$this->session->remove('orderId');
+				$out = "<h2>" . $this->_("Thank you for ordering from us.") . "</h2>";
+			}
+			return $out;
+		}
+	}
+
+	public function renderShippingOptions() {
+		$out = "";
+		$shoppingCartModule = $this->modules->get("ShoppingCart");
+		$shippingModules = $this->modules->find('className^=Shipping');
+		if ($shippingModules->count() > 0) {
+			$out .= "<p class='required'><label for='shippingoption'>" . $this->_("Choose shipping:") . " <span class='reqstar'>*</span></label>";
+			$out .= "<select name='shippingoption'>";
+			foreach($shippingModules as $module) {
+				$cost = $module->calculateShippingCost();
+				$cost = $shoppingCartModule->renderPrice($cost);
+				if (isset($this->session->orderArray['shippingoption']['value'])) {
+					$selected = ($this->session->orderArray['shippingoption']['value'] == get_class($module)) ? "selected" : "";
+				} else {
+					$selected = '';
+				}
+
+				$out .= "<option $selected value='". get_class($module) ."'>".$module->title." <strong>(+$cost)</strong></option>";
+			}
+			$out .= "</select>";
+			$out .= "</p>";
+
+		} else {
+			$out = "";
+		}
+
+		return $out;
+	}
+
+	public function renderPaymentMethods() {
+		$out = "";
+		$paymentModules = $this->modules->find('className^=Payment');
+		if ($paymentModules->count() > 0) {
+			$out .= "<p class='required'><label for='paymentmethod'>" . $this->_("Choose payment method:") . " <span class='reqstar'>*</span></label>";
+			$out .= "<select name='paymentmethod'>";
+			foreach($paymentModules as $module) {
+				$info = $module->getModuleInfo();
+				$selected = ($this->session->orderArray['paymentmethod']['value'] == get_class($module)) ? "selected" : "";
+				$out .= "<option $selected value='". get_class($module) ."'>".$module->title."</option>";
+			}
+			$out .= "</select>";
+			$out .= "</p>";
+			$out .= "<p>";
+			$out .= "<input class='submit' type='submit' name='submit' value='" . $this->_("Proceed to review your order") . "' />";
+			$out .= "</p>";
+
+		} else {
+			$out .= "<p>No payment methods installed, you should have at least one</p>";
+		}
+
+		return $out;
+	}
+
+	public function calculateNewStock(Page $order) {
+		foreach($order->children as $orderitem) {
+			$product = $orderitem->sc_product;
+			if ($product->id) {
+				$product->setOutputFormatting(false);
+				$product->sc_qty = ($product->sc_qty - $orderitem->sc_qty); // TODO: We need to make sure that negative integers are allowed. Currently not..
+				$product->save();
+			}
+		}
+	}
+	/*
+	 * Return markup for Information form items
+	 *
+	 * @param boolen $viewOnly false|true if you want to allow customer to edit
+	 * information, then use without viewOnly.
+	 *
+	 * @return string markup
+	 *
+	 */
+	public function renderInformationFormItems($viewOnly = false) {
+
+		$out = '';
+		$errors = false;
+		if (empty($this->session->orderArray['fields'])) {
+			return;
+		}
+		foreach($this->session->orderArray['fields'] as $key => $field) {
+
+			$reqKey = $key . 'Required';
+
+			if ($this->$key) {
+				$class  = ($this->$reqKey) ? 'required' : '';
+				$class .= (isset($field['error'])) ? ' error' : '';
+
+
+				if (strlen($field['value']) > 0 || !$viewOnly) {
+					$out .= "<p class='$key $class'>";
+					$out .= "<label for='$key'>";
+					$out .= $field['label'] . ":";
+					if ($this->$reqKey) $out .= "<span class='reqstar'>*</span>";
+					$out .= "</label>";
+				}
+				if (isset($field['error'])) {
+					$out .= "<span class='errormsg'>". $field['error'] ."</span>";
+					$errors = true;
+				}
+
+				if (!$viewOnly) {
+					switch($field['type']) {
+						case "textarea":
+							$out .= "<textarea class='$class' name='$key'>". $field['value'] ."</textarea>";
+							break;
+						default:
+							$out .= "<input type='text' class='$class' name='$key' value='". $field['value'] ."' />";
+					}
+					$out .= "</p>";
+				}
+				else if (strlen($field['value']) > 0) {
+						$out .= "<span>". $field['value'] ."</span>";
+						$out .= "<input type='hidden' name='$key' value='". $field['value'] ."' />";
+						$out .= "</p>";
+				}
+
+			}
+		}
+
+		if($errors) $out = "<p class='error errormsg'>" . $this->_("The formular contains errors, please check your informations.") . "</p>" . $out;
+		return $out;
+	}
+
+	/*
+	 * Returns order data as an array
+	 *
+	 * @param boolean $validate If you validate, it will fetch data from post
+	 * and sanitize & validate that. If false, it will just give you orderArray
+	 * with current (should be default or once validated)
+	 *
+	 * @return array keeps information about order information fields (validation
+	 * errors, actual values etc)
+	 *
+	 */
+	public function validateInformation($validate = true) {
+
+
+		$orderArray = Array();
+		$orderArray['valid'] = true;
+
+		$orderArray['paymentmethod']['value'] = $this->session->orderArray['paymentmethod']['value'];
+		$orderArray['paymentmethod']['label'] = $this->_("Payment method");
+
+		$fields = self::getDefaultFields();
+
+		foreach($fields as $key => $field) {
+
+			// If not visible field, don't add to array
+			if ($this->$key != 1) continue;
+
+			// Set default labels
+			$orderArray['fields'][$key]['label'] = $field['label'];
+
+			// Set the form item type and default to input
+			if (isset($field['type'])) $orderArray['fields'][$key]['type'] = $field['type'];
+			else $orderArray['fields'][$key]['type'] = 'text';
+
+			// Set the custom values for custom field labels (can be set from settings)
+			if ($key == 'custom1' || $key == 'custom2') {
+				$customKey = $key . 'CustomLabel';
+				$orderArray['fields'][$key]['label'] = $this->$customKey;
+
+				$customTextareaKey = $key . 'CustomTextarea';
+				if ($this->$customTextareaKey) $orderArray['fields'][$key]['type'] = 'textarea';
+			}
+
+			// Set empty value for every field
+			$orderArray['fields'][$key]['value'] = '';
+
+			// And if we have value saved on session, update it
+			if(isset($this->session->orderArray['fields'][$key])) {
+				$orderArray['fields'][$key]['value'] = $this->session->orderArray['fields'][$key]['value'];
+			}
+		}
+
+
+		if ($validate) {
+			foreach($orderArray['fields'] as $key => $field) {
+
+				$reqKey = $key . 'Required';
+
+				$field['value'] = $this->input->post->$key;
+
+				$orderArray['fields'][$key]['value'] = $this->sanitizer->text($field['value']);
+
+				if($key == 'email' && !empty($this->input->post->email)) {
+					if($this->sanitizer->email($field['value']) == '') {
+						$orderArray['valid'] = false;
+						$orderArray['fields'][$key]['error'] = $this->_("Email is not in right format.");
+					}
+				}
+
+				if ($this->$reqKey && $orderArray['fields'][$key]['value'] == '') {
+					$orderArray['valid'] = false;
+					$orderArray['fields'][$key]['error'] = $this->_("This is a required field");
+				}
+			}
+
+			if ($this->input->post->shippingoption) {
+				$orderArray['shippingoption']['value'] = $this->sanitizer->fieldName($this->input->post->shippingoption);
+			}
+			$orderArray['paymentmethod']['value'] = $this->sanitizer->fieldName($this->input->post->paymentmethod);
+			$this->session->set('orderArray', $orderArray);
+		}
+
+		if (!isset($this->session->orderArray['valid'])) $this->session->set('orderArray', $orderArray);
+
+		return $orderArray;
+
+	}
+	/*
+	 * return true if success
+	 *
+	 * Saves order page and it children products to database and destroys session
+	 * based shopping cart fron ShoppingCart table
+	 *
+	 */
+	public function createOrder()
+	{
+		if ($this->session->orderArray['valid'] == FALSE) throw new WireException("Non-valid order got through.");
+
+		$fields = $this->session->orderArray['fields'];
+
+		if(isset($this->session->orderArray['shippingoption']['value'])) {
+			$fields['shippingoption']['value'] = $this->session->orderArray['shippingoption']['value'];
+			$shippingOption = $this->modules->get($this->session->orderArray['shippingoption']['value']);
+		} else {
+			$fields['shippingoption']['value'] = '';
+			$shippingOption = NULL;
+		}
+
+		$fields['paymentmethod']['value'] = $this->session->orderArray['paymentmethod']['value'];
+
+		$items = $this->modules->ShoppingCart->getCurrentCart();
+
+		$orderName = time();
+		foreach($fields as $field) {
+			$orderName .= $field;
+		}
+		$orderName = md5($orderName);
+
+		$order = new Page();
+		$order->template = $this->templates->get('sc-order');
+		$order->parent = $this->pages->get("template=admin,name=orders");
+		$order->title = $this->_("Order: ") . $fields['firstname']['value'] . ' ' . $fields['lastname']['value'];
+		$order->name = $orderName;
+		$order->sc_firstname = $fields['firstname']['value'];
+		$order->sc_lastname = $fields['lastname']['value'];
+		$order->email = $fields['email']['value'];
+		$order->sc_streetaddress = $fields['streetaddress']['value'];
+		$order->sc_city = $fields['city']['value'];
+		$order->sc_zip = $fields['zip']['value'];
+		$order->sc_country = $fields['country']['value'];
+		$order->sc_phone = $fields['phone']['value'];
+		$order->sc_greetings = $fields['greetings']['value'];
+		$order->sc_custom1 = $fields['custom1']['value'];
+		$order->sc_custom2 = $fields['custom2']['value'];
+		$order->sc_price = $this->modules->ShoppingCart->getTotalSumFromItems($items, $shippingOption);
+		$order->sc_customer = $this->user;
+		$order->sc_paymentmethod = $fields['paymentmethod']['value'];
+		$order->sc_shippingoption = $fields['shippingoption']['value'];
+		$order->sc_session = $this->modules->ShoppingCart->getSession();
+		$order->addStatus(Page::statusUnpublished);
+
+		// Default status will be first one there is on /shop/settings/statuses/
+		$admin = $this->pages->get($this->config->adminRootPageID);
+		$order->sc_status = $this->pages->get("/{$admin->name}/shop/settings/statuses/")->children("check_access=0")->first();
+
+		$order->save();
+
+		$this->session->set('orderId', $order->id);
+
+		foreach ($items as $item) {
+			$product = $this->pages->get($item->product_id);
+
+			// If the product is repeater, we assume it is a product variation. Se let's prepend the product title before variation
+			if (strpos($product->template->name, "repeater_") === 0) {
+				$parentProduct = $product->getForPage();
+				if ($parentProduct->id) $product->title = $parentProduct->title . ": " . $product->title;
+			}
+
+			$p = new Page();
+			$p->template = $this->templates->get('sc-order-item');
+			$p->parent = $order;
+			$p->title = $product->title;
+			// $p->sc_price = $product->sc_price;
+			$p->sc_price = $this->modules->ShoppingCart->getProductPrice($item);
+			$p->sc_qty = $item->qty;
+			$p->sc_product = $product;
+			$p->save();
+		}
+
+		if($shippingOption) {
+			$p = new Page();
+			$p->template = $this->templates->get('sc-order-item');
+			$p->parent = $order;
+			$p->title = $this->_("Shipping costs");
+			$p->sc_price = $shippingOption->calculateShippingCost();
+			$p->sc_qty = 1;
+			$p->save();
+		}
+
+		$this->session->remove('orderArray');
+		$this->db->query("DELETE FROM ShoppingCart WHERE session_id = '" . $this->modules->ShoppingCart->getSession() . "'");
+
+		return ($order->id) ? true : false;
+	}
+
+	static public function getModuleConfigInputfields(Array $data) {
+		// this is a container for fields, basically like a fieldset
+		$fields = new InputfieldWrapper();
+
+		// since this is a static function, we can't use $this->modules, so get them from the global wire() function
+		$modules = wire('modules');
+
+		$data = array_merge(self::getDefaultData(), $data);
+
+		$field = $modules->get("InputfieldPageListSelect");
+		$field->attr('name', 'customThankyou');
+		$field->attr('value', $data['customThankyou']);
+		$field->label = "Thankyou-page where user is redirected after succesful order";
+		$field->description = 'On that page, you can customize more personal thank you notice. You get order page id from $session->orderId and can display all the details you want from the order.';
+		$fields->add($field);
+
+		$urls = $modules->get("InputfieldFieldset");
+		$urls->label = "Url segments";
+		$urls->set('collapsed', Inputfield::collapsedYes);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'confirmationUrlSegment');
+		$field->attr('value', $data['confirmationUrlSegment']);
+		$field->label = "UrlSegment for confirmation step";
+		$field->description = "This is only shown in the url. Default: confirmation";
+		$urls->add($field);
+		//$fields->add($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'paymentUrlSegment');
+		$field->attr('value', $data['paymentUrlSegment']);
+		$field->label = "UrlSegment for payment step";
+		$field->description = "This is only shown in the url. Default: payment";
+		$urls->add($field);
+		//$fields->add($field);
+
+		$field = $modules->get("InputfieldText");
+		$field->attr('name', 'completedUrlSegment');
+		$field->attr('value', $data['completedUrlSegment']);
+		$field->label = "UrlSegment for completed step";
+		$field->description = "This is only shown in the url. Default: completed";
+		$urls->add($field);
+		//$fields->add($field);
+
+		$fields->add($urls);
+
+		$customer = $modules->get("InputfieldFieldset");
+		$customer->label = "Information asked from customers";
+		$customer->set('collapsed', Inputfield::collapsedYes);
+
+
+		// This creates visible / required settings for each information field
+		foreach(self::getDefaultFields() as $key => $field) {
+			$fs = $modules->get("InputfieldFieldset");
+			$fs->label = $field['label'];
+			//$fs->set('collapsed', Inputfield::collapsedBlank);
+			//
+			//if (isset($data[$key])) {
+			//	$checked = $data[$key];
+			//} else {
+			//	$checked = $informationFields[$key]['defaults']['visible'];
+			//}
+			//
+
+			$f = $modules->get("InputfieldCheckbox");
+			$f->name = $key;
+			$f->label = "Use ". $field['label'] ." field?";
+			$f->value = 1;
+			$f->attr('checked', empty($data[$key]) ? '' : 'checked');
+			$f->set('collapsed', Inputfield::collapsedBlank);
+			$fs->add($f);
+
+
+			$f = $modules->get("InputfieldCheckbox");
+			$name = $key . "Required";
+			$f->name = $name;
+			$f->label = "Is ". $field['label'] ." required?";
+			$f->value = 1;
+			$f->attr('checked', empty($data[$name]) ? '' : 'checked');
+			$f->set('collapsed', Inputfield::collapsedBlank);
+			$fs->add($f);
+
+			if ($key == 'custom1' || $key == 'custom2') {
+				$f = $modules->get("InputfieldText");
+				$name = $key . "CustomLabel";
+				if (empty($data[$name])) $data[$name] = "Custom label";
+				$f->name = $name;
+				$f->label = "Label for this field";
+				$f->attr('value', $data[$name]);
+				$f->set('collapsed', Inputfield::collapsedBlank);
+				$fs->add($f);
+
+				$f = $modules->get("InputfieldCheckbox");
+				$name = $key . "CustomTextarea";
+				$f->name = $name;
+				$f->label = "Use textarea instead of regular input?";
+				$f->value = 1;
+				$f->attr('checked', empty($data[$name]) ? '' : 'checked');
+				$f->set('collapsed', Inputfield::collapsedBlank);
+				$fs->add($f);
+			}
+
+
+			$customer->add($fs);
+		}
+
+		$fields->add($customer);
+
+
+		return $fields;
+	}
+
+	public function install() {
+		$admin = $this->templates->get("admin");
+
+		$list = $this->modules->get('ProcessList');
+
+		$shop = $this->pages->get("template=admin, name=shop, parent=$admin->id");
+
+		if(!$shop->id) {
+			$shop = new Page();
+			$shop->template = $admin;
+			$shop->parent = $this->pages->get($this->config->adminRootPageID);
+			$shop->title = 'Shop';
+			$shop->name = 'shop';
+			$shop->addStatus(Page::statusHidden);
+			//$shop->process = $list;
+			$shop->save();
+		}
+
+
+		if ($shop->id) {
+			$orders = new Page();
+			$orders->template = $this->templates->get("admin");
+			$orders->parent = $shop;
+			$orders->title = 'Orders';
+			//$orders->name = 'orders';
+			$orders->process = $this;
+			$orders->save();
+		}
+
+		//shop/settings/
+		$settings = $this->pages->get("template=admin, name=settings, parent=$shop->id");
+		if (!$settings->id) {
+			$settings = new Page();
+			$settings->template = $admin;
+			$settings->parent = $shop;
+			$settings->title = 'Shop settings';
+			$settings->name = 'settings';
+			$settings->save();
+		}
+
+
+		//shop/settings/statuses/
+		$statuses = $this->pages->get("template=admin, name=statuses, parent=$settings->id");
+		if (!$statuses->id) {
+			$statuses = new Page();
+			$statuses->template = $admin;
+			$statuses->parent = $settings;
+			$statuses->title = 'Order statuses';
+			$statuses->name = 'statuses';
+			$statuses->save();
+		}
+
+
+		//shop/settings/statuses/completed/
+		$p = $this->pages->get("template=admin, name=completed, parent=$statuses->id");
+		if(!$p->id) {
+			$p = new Page();
+			$p->template = $admin;
+			$p->parent = $statuses;
+			$p->title = 'Completed';
+			$p->name = 'completed';
+			$p->save();
+		} else {
+			$p = '';
+		}
+
+		//shop/settings/statuses/in-progress/
+		$p = $this->pages->get("template=admin, name=in-progress, parent=$statuses->id");
+		if(!$p->id) {
+			$p = new Page();
+			$p->template = $admin;
+			$p->parent = $statuses;
+			$p->title = 'In Progress';
+			$p->name = 'in-progress';
+			$p->save();
+		} else {
+			$p = '';
+		}
+
+		//shop/settings/statuses/cancelled/
+		$p = $this->pages->get("template=admin, name=cancelled, parent=$statuses->id");
+		if(!$p->id) {
+			$p = new Page();
+			$p->template = $admin;
+			$p->parent = $statuses;
+			$p->title = 'Cancelled';
+			$p->name = 'cancelled';
+			$p->save();
+		} else {
+			$p = '';
+		}
+
+		$oifg = $this->fieldgroups->get('sc-order-item');
+		if (!$oifg->id) {
+			$oifg = new Fieldgroup();
+			$oifg->name = 'sc-order-item';
+			$oifg->add($this->fields->get('title'));
+			$oifg->save();
+		}
+
+		$oi = $this->templates->get('sc-order-item');
+		if(!$oi->id) {
+			$oi = new Template();
+			$oi->name = 'sc-order-item';
+			$oi->fieldgroup = $oifg;
+			$oi->pageLabelField = 'title';
+			$oi->noChildren = 1;
+			$oi->flags = Template::flagSystem;
+			$oi->save();
+		}
+
+		$fg = $this->fieldgroups->get('sc-order-item');
+		if(!$fg->id) {
+			$fg = new Fieldgroup();
+			$fg->name = 'sc-order';
+			$fg->add($this->fields->get('title'));
+			$fg->save();
+		}
+
+		$t = $this->templates->get('sc-order');
+		if(!$t->id) {
+			$t = new Template();
+			$t->name = 'sc-order';
+			$t->fieldgroup = $fg;
+			$t->pageLabelField = 'title';
+			$t->parentTemplates = array($admin->id);
+			$t->childTemplates = array($oi->id);
+			$t->flags = Template::flagSystem;
+			$t->save();
+		}
+
+		$f = $this->fields->get('sc_price');
+		if (!$f) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeFloat");
+			$f->name = 'sc_price';
+			$f->precision = 2;
+			$f->label = 'Price of the product';
+			$f->save();
+		}
+
+		$fg->add($f);
+		$fg->save();
+		$oifg->add($f);
+		$oifg->save();
+
+		$f = $this->fields->get('sc_qty');
+		if (!$f) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeInteger");
+			$f->name = 'sc_qty';
+			$f->label = 'Quantity';
+			$f->save();
+		}
+		$oifg->add($f);
+		$oifg->save();
+
+		if (!$this->fields->get('sc_product')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = 'sc_product';
+			$f->label = 'Product';
+			$f->derefAsPage = FieldtypePage::derefAsPageOrNullPage;
+			$f->inputfield = 'InputfieldPageListSelect';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$oifg->add($f);
+		$oifg->save();
+
+		if (!$this->fields->get('sc_customer')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = 'sc_customer';
+			$f->label = 'Customer';
+			$f->inputfield = 'InputfieldPageListSelect';
+			$f->derefAsPage = FieldtypePage::derefAsPageOrFalse;
+			$f->parent_id = $this->config->usersPageID;
+			$f->template_id = $this->config->userTemplateID;
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_status')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypePage");
+			$f->name = 'sc_status';
+			$f->label = 'Order Status';
+			$f->inputfield = 'InputfieldSelect';
+			$f->derefAsPage = FieldtypePage::derefAsPageOrFalse;
+			$f->parent_id = $statuses->id;
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_firstname')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_firstname';
+			$f->label = 'First name';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_lastname')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_lastname';
+			$f->label = 'Last name';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_streetaddress')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_streetaddress';
+			$f->label = 'Street address';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_zip')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_zip';
+			$f->label = 'ZIP / Postal code';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_city')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_city';
+			$f->label = 'City';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_country')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_country';
+			$f->label = 'Country';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_phone')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_phone';
+			$f->label = 'Phone';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_greetings')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeTextarea");
+			$f->name = 'sc_greetings';
+			$f->label = 'Greetings for shop';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_custom1')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeTextarea");
+			$f->name = 'sc_custom1';
+			$f->label = 'Custom field #1';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_custom2')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeTextarea");
+			$f->name = 'sc_custom2';
+			$f->label = 'Custom field #2';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_paid')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeDatetime");
+			$f->name = 'sc_paid';
+			$f->label = 'Paid';
+			$f->dateOutputFormat = $this->config->dateFormat;
+			$f->dateInputFormat = $this->config->dateFormat;
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_processed')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeDatetime");
+			$f->name = 'sc_processed';
+			$f->label = 'Processed';
+			$f->dateOutputFormat = $this->config->dateFormat;
+			$f->dateInputFormat = $this->config->dateFormat;
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_paymentmethod')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_paymentmethod';
+			$f->label = 'Payment Method used';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_shippingoption')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_shippingoption';
+			$f->label = 'Shipping Option used';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_paymentid')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_paymentid';
+			$f->label = 'Payment ID returned from payment processor';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		if (!$this->fields->get('sc_session')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeText");
+			$f->name = 'sc_session';
+			$f->label = 'Session ID';
+			$f->flags = Field::flagSystem | Field::flagPermanent;
+			$f->save();
+		}
+		$fg->add($f);
+		$fg->save();
+
+		$f = $this->fields->get('email');
+		$fg->add($f);
+		$fg->save();
+
+		// Only allowed parent template for sc-order-item is sc-order
+		$oi->parentTemplates = array($t->id);
+		$oi->save();
+
+
+		$fg = $this->fieldgroups->get('sc-checkout');
+		if(!$fg->id) {
+			$fg = new Fieldgroup();
+			$fg->name = 'sc-checkout';
+			$fg->add($this->fields->get('title'));
+			$fg->save();
+		}
+
+		$t = $this->templates->get('sc-checkout');
+		if(!$t->id) {
+			$t = new Template();
+			$t->name = 'sc-checkout';
+			$t->fieldgroup = $fg;
+			$t->urlSegments = 1;
+			$t->pageLabelField = 'title';
+			// $t->flags = Template::flagSystem;
+			$t = $t->save();
+		}
+
+		$p = $this->pages->get("template=$t");
+		if(!$p->id) {
+			$p = new Page();
+			$p->template = $t;
+			$p->parent = $this->pages->get(1);
+			$p->title = 'Checkout';
+			$p->addStatus(Page::statusHidden);
+			$p->save();
+		}
+
+
+	}
+
+
+
+	public function uninstall() {
+		$p = $this->pages->get('template=sc-checkout, include=all');
+		if ($p->id) $p->delete();
+
+		$p = $this->pages->get('template=admin, name=shop, include=all');
+		if ($p->id) $this->pages->delete($p, true); // Recursive delete
+
+		$t = $this->templates->get('sc-checkout');
+		if ($t->id) {
+			$t->flags = Template::flagSystemOverride;
+			$t->flags = 0;
+			$this->templates->delete($t);
+			$fg = $this->fieldgroups->get('sc-checkout');
+			if ($fg->id) $this->fieldgroups->delete($fg);
+		}
+
+		$to = $this->templates->get('sc-order');
+		if ($to->id) {
+			$to->flags = Template::flagSystemOverride;
+			$to->flags = 0;
+			$this->templates->delete($to);
+			$fg = $this->fieldgroups->get('sc-order');
+			if ($fg->id) $this->fieldgroups->delete($fg);
+		}
+
+		$toi = $this->templates->get('sc-order-item');
+		if ($toi->id) {
+			$toi->flags = Template::flagSystemOverride;
+			$toi->flags = 0;
+			$this->templates->delete($toi);
+			$fg = $this->fieldgroups->get('sc-order-item');
+			if ($fg->id) $this->fieldgroups->delete($fg);
+		}
+
+
+		// Remove all other sc_fields but sc_price
+		$scFields = $this->fields->find("name^=sc_,name!=sc_price,name!=sc_qty");
+		foreach($scFields as $f) {
+			$f->flags = Field::flagSystemOverride;
+			$f->flags = 0;
+			$this->fields->delete($f);
+		}
+	}
+
+	/**
+	 * adds missing sc_phone field in v001
+	 */
+	protected function updateAddPhoneField() {
+
+		$f = new Field();
+		$f->type = $this->modules->get("FieldtypeText");
+		$f->name = 'sc_phone';
+		$f->label = 'Phone';
+		$f->flags = Field::flagSystem | Field::flagPermanent;
+		$f->save();
+
+		$fg = $this->fieldgroups->get('sc-order-item');
+		$fg->add($f);
+		$fg->save();
+		$this->message("Created and added missing sc_phone field in ShoppinCheckout.module.");
+	}
+}

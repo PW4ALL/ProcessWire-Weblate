@@ -1,0 +1,135 @@
+<?php
+/**
+ * Processwire 'FrontendUserRegister' module
+ * 
+ * Frontend user register module.
+ * 
+ * @author Sturm88x4, pwFoo
+ * @since 2014-10-01
+ * 
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ */
+class FrontendUserRegister extends WireData implements Module {
+    
+    /** 
+     * @var string $username Username value which is required during user creation.
+     * @var string $email    Email address value which is required during user creation.
+     * @var string $password Password value which is required during user creation.
+     */
+    protected $username, $email, $password, $role;
+    
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     * 
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'FrontendUserRegister',
+            'summary' => 'Frontend to register users',
+            'version' => '001',
+            'requires' => array('FormHelper'),
+        );
+    }
+        
+    public function init() {
+        $this->role = "guest";
+    }
+    
+    /** @var array Change FormHelper submit button */
+    private $formSubmit = array('vars' => array('name' => 'submit'), 'attr' => array('value' => 'Register'));
+        
+    /** @var array FormHelper login form fields */
+    private $formFields = array(
+        'username'  => array(
+            'module'    => 'InputfieldText',
+            'vars'      => array('name' => 'username', 'label' => 'Username', 'required' => 1),
+            'attr'      => array('id+name' => 'username'),
+        ),
+        'email'     => array(
+            'module'    => 'InputfieldEmail',
+            'vars'      => array('name' => 'email', 'label' => 'Email', 'required' => 1),
+            'attr'      => array('id+name' => 'email'),
+        ),
+        'password'  => array(
+            'module'    => 'InputfieldPassword',
+            'vars'      => array('name' => 'password', 'label' => 'Password123'),
+            'attr'      => array('id+name' => 'password'),
+        ),
+    );
+    
+    public function register($redirect = null) {
+        // Build form and process it...
+        $fh = $this->buildForm();
+        $process = $fh->formProcess();
+        
+        if ($process) { // form send... 
+            $registerUser = $this->prepareUserRegister($process);   // sanitize values
+            
+            if (!$fh->form->getErrors()) {  // no errors, now create the user...
+                $register = $this->executeRegister($registerUser);
+                
+                if ($register instanceof User) {
+                    //if ($this->autologin) $this->session->login($register->name, $registerUser['pass']);
+                    $this->session->redirect($redirect, false);
+                }
+            }
+        }
+        // Show register form
+        return $fh->render();
+    }
+    
+    protected function ___buildForm() {
+        $fh = $this->modules->get('FormHelper');
+        $fh->createForm($this->formFields, array('submit' => $this->formSubmit));
+        return $fh;
+    }
+    
+    protected function ___prepareUserRegister($data) {
+        $userField  = $data->get('username');
+        $emailField = $data->get('email');
+        
+        // sanitize field values
+        $this->username = $this->sanitizer->name($userField->value);
+        $this->email    = $this->sanitizer->email($emailField->value);
+        $this->password = (string) $data->get('password')->value;
+        
+        // userame or email already exists?
+        if ($this->users->count("name={$this->username}") > 0) {
+            $userField->error($this->_("Username already taken!"));
+        }
+        if ($this->users->count("email={$this->email}") > 0) {
+            $emailField->error($this->_("Email address already taken!"));
+        }
+    }
+    
+    protected function ___executeRegister() {
+        $userObj = new User();
+        $userObj->name  = $this->username;
+        $userObj->pass  = $this->password;
+        $userObj->email = $this->email;
+        $userObj->addRole($this->role);
+        /*
+        // email activation
+         
+        // email notification
+        
+        //  
+        */
+        try {
+            $userObj->of(false);
+            $userObj->save();
+            $userObj->of(true);
+            
+            return $userObj;
+        }
+        catch(Exception $e) {
+            return $e->getMessage();
+        }        
+    }
+}

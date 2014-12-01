@@ -1,0 +1,81 @@
+<?php
+
+class ProcessPageDraft extends Process {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Page Draft Control',
+			'version' => '0.1',
+			'summary' => 'Adds ability to create draft pages (unpublished copies) for edit/preview and then publish them (switch them to live)',
+			'permission' => 'page-delete',
+			'singular' => true,
+			'autoload' => true
+		);
+	}
+	
+	public function ready() {
+		$process = wire('page')->process;
+		if($process == 'ProcessPageList') {
+			$this->addHookAfter("ProcessPageListRender::getPageActions", $this, 'hookPageListActions');
+		}
+	}
+
+	public function hookPageListActions(HookEvent $event) {
+		$page = $event->arguments[0];
+		$actions = $event->return;
+		$new_action = array(
+			'cn' => 'draft',
+			'name' => 'create draft',
+			'url' => $this->config->urls->admin . "page/draft/create/?id={$page->id}"
+		);
+		$actions[] = $new_action;
+		$event->return = $actions;
+	}
+	
+	public function executeCreate() {
+		$page = $this->pages->get((int) $this->input->get->id);
+		
+		$clone = wire('pages')->clone($page);
+		$clone->name = $page->name . '-' . md5(time());
+		$clone->title = $page->title . $this->_('(DRAFT)');
+		$clone->addStatus(Page::statusHidden);
+		$clone->removeStatus(Page::statusUnpublished);
+		$clone->save();
+		
+		$this->session->redirect($this->config->urls->admin . 'page/list/?open=' . $clone->id);
+	}
+	
+	public function ___install() {
+		if(ProcessWire::versionMajor == 2 && ProcessWire::versionMinor < 1) {
+			throw new WireException("This module requires ProcessWire 2.1 or newer");
+		}
+		$page = $this->getInstalledPage();
+		$this->message("Installed to {$page->path}");
+	}
+	
+	public function ___uninstall() {
+		$page = $this->getInstalledPage();	
+		if($page->id) {
+			$this->message("Removed {$page->path}");
+			$this->pages->delete($page);
+		}
+	}
+
+	protected function getInstalledPage() {
+		$parent = $this->pages->get("name=page,parent=".$this->config->adminRootPageID);
+		$page = $parent->child("name=draft");
+
+		if(!$page->id) {
+			$page = new Page();
+			$page->parent = $parent;
+			$page->template = $this->templates->get('admin');
+			$page->name = "draft";
+			$page->title = "Draft Page";
+			$page->process = $this;
+			$page->sort = $parent->numChildren;
+			$page->save();
+		}
+		return $page;
+	}
+	
+}

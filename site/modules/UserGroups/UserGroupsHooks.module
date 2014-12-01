@@ -1,0 +1,773 @@
+<?php
+
+class UserGroupsHooks extends WireData implements Module {
+
+	/**
+	 * @var Page Special group "Everyone"
+	 */
+	private $groupEveryone;
+	/**
+	 * @var Page Special group "Logged in users"
+	 */
+	private $groupLoggedIn;
+	/**
+	 * @var Field Field "manage_access" for testing templates
+	 */
+	private $fieldManageAccess;
+
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'User Groups Hooks',
+			'version' => 10,
+			'summary' => 'Autoload module that attachs all the hooks required by User Groups.',
+			'singular' => true,
+			'autoload' => true,
+			'requires' => 'ProcessUserGroups'
+		);
+	}
+
+	/**
+	 * Initialize the module
+	 *
+	 * ProcessWire calls this when the module is loaded. For 'autoload' modules, this will be called
+	 * when ProcessWire's API is ready. As a result, this is a good place to attach hooks.
+	 *
+	 */
+	public function init() {
+
+		// Add $groups API variable
+		$template = $this->templates->get('user-group');
+		$parent = $this->pages->get("template=admin, name=usergroups");
+		$groups = new PagesType($template, $parent->id);
+		Wire::setFuel('groups', $groups);
+
+		// fetch special groups for later use (find(), viewable())
+		$this->groupEveryone = wire('groups')->get("everyone");
+		$this->groupLoggedIn = wire('groups')->get("logged");
+
+		// fetch "manage_access" field for later use (getAccessPage())
+		$this->fieldManageAccess = wire('fields')->get('manage_access');
+
+		// hooks for those with user-admin permission
+		if(wire('user')->hasPermission('user-admin')) {
+			$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'accessTab');
+			$this->addHookAfter('ProcessPageEdit::processInput', $this, 'accessTabInput');
+		}
+		// hooks (see function declarations for more information)
+		$this->addHookAfter("ProcessPageEdit::buildFormRoles", $this, 'whoCanAccessInfo');
+		$this->addHookBefore("Pages::find", $this, 'find');
+		$this->addHookAfter("Pages::saveReady", $this, 'save');
+		$this->addHookAfter("Pages::moved", $this, 'moved');
+		$this->addHookAfter("Pages::trashed", $this, 'trashed');
+		$this->addHookAfter("Pages::added", $this, 'added');
+		$this->addHookBefore("ProcessPageAdd::getAllowedTemplates", $this, 'allowedTemplates');
+
+		$this->addHookBefore("User::hasPagePermission", $this, 'hasPagePermission');
+		$this->addHookBefore("User::hasTemplatePermission", $this, 'hasTemplatePermission');
+
+		$this->addHookBefore("Page::isPublic", $this, 'isPublic');
+	}
+
+	/**
+	 * Is this page public and viewable by all?
+	 *
+	 * This is a state that persists regardless of user, so has nothing to do with the current user.
+	 * To be public, the page must be published and have view access for group "everyone".
+	 *
+	 * (These describe $event->arguments and $event->return!)
+	 * @return bool True if public, false if not
+	 *
+	 */
+	public function isPublic($event) {
+		$page = $event->object;
+
+		$accessPage = $this->getAccessPage($page);
+
+		// we're done if page based access is not in use
+		if ( ! $accessPage ) return;
+
+		// replace original, default to false
+		$event->replace = true;
+		$event->return = false;
+
+		// page not published --> not public
+		if($this->status >= Page::statusUnpublished) return;
+
+		// page is public if view_groups includes "everyone"
+		if ($accessPage->view_groups->has($this->groupEveryone)) {
+			$event->return = true;
+		}
+	}
+
+	/**
+	 * Does this user have the given permission?
+	 *
+	 * Replacement for User::hasPagePermission() to use page based access control instead of template based one.
+	 *
+	 * (These describe $event->arguments and $event->return!)
+	 * @param string|Permission
+	 * @param Page $page Optional page to check against
+	 * @return bool
+	 *
+	 */
+	public function hasPagePermission($event) {
+		$user = $event->object;
+		$name = $event->arguments[0];
+		$page = null;
+		if (count($event->arguments) > 1) $page = $event->arguments[1];
+
+#		$this->log->message("hasPagePermission: $name" . ($page ? " @ $page->path ($page->id)":"") . " for $user->name ($user->id)");
+
+		$accessPage = null;
+		if($page && $page->id) {
+			$accessPage = $this->getAccessPage($page);
+			// we're done if page based access is not in use
+			if ( ! $accessPage ) return;
+		}
+
+		// let core handle
+		if ($user->isSuperuser()) {
+			return;
+		}
+
+		if ($name instanceof Page) {
+			$name = "$name";
+		} else {
+			// page-add and page-create don't actually exist in the DB, so we substitute page-edit for them
+			if (in_array($name, array('page-add', 'page-create'))) $name = 'page-edit';
+		}
+
+		// these are the permissions handled by this module
+		$editPermissions = array('page-edit', 'page-delete', 'page-move', 'page-sort', 'page-clone', 'page-clone-tree');
+		$viewPermissions = array('page-view');
+		if (in_array($name, $editPermissions)) {
+
+			$event->return = $this->isMemberOfAnEditGroup($user, $page, $accessPage);
+
+#			$this->log->message("** edit / $name: " . ($event->return ? "ok":"nope"));
+			$event->replace = true;
+			return;
+
+		} elseif (in_array($name, $viewPermissions)) {
+
+			// find pages defining view access for any of the groups this user is a member of
+			$userGroups = $this->getUserGroupsSelectorValue($user);
+			$selector = "view_groups=$userGroups, include=hidden";
+
+			// limit to a specific page if one given
+			if ($page && $page->id) $selector .= ", id=$accessPage";
+
+			if ($this->pages->count($selector)) {
+				$event->return = true;
+			} else {
+				// not member of the allowed view groups OR the page defining access was unpublished
+				// --> grant view access if user has edit access (includes also unpublished pages)
+				// this is ok because view access exists always if there's edit access
+				// and this only circumvents the case where view access couldn't be checked because of unpublished status
+				$event->return = $this->isMemberOfAnEditGroup($user, $page, $accessPage);
+			}
+
+#			$this->log->message("** view: " . ($event->return ? "ok":"nope") . " :: $selector");
+			$event->replace = true;
+			return;
+
+		} elseif ($page and $page->id) {
+			// TODO: page-template, page-lock, page-publish --> check users roles for these
+			//       (can't fall back to core as there template access kicks in again)
+			//       --> this module is not resposible for admin-level permissions
+			$this->log->message("UNSUPPORTED page permission: " . $name . " @ " . $page->id . " / " . $page->path);
+		}
+
+#		$this->log->message("Page permission for core: " . $name . " @ " . ($page ? $page->id . " / " . $page->path : ""));
+		// let core handle
+		return;
+	}
+
+	/**
+	 * Is this user a member of a group that has edit access to a page?
+	 *
+	 * @param User $user The user we're checking access for
+	 * @param Page $pageContext The page we're checking access to (may be null, if the check is a general "has any edit access")
+	 * @param Page $accessPage The page where access should be checked from (if context is defined)
+	 *
+	*/
+	protected function isMemberOfAnEditGroup($user, $pageContext, $accessPage) {
+		// find pages defining edit access for any of the groups this user is a member of
+		$userGroups = $this->getUserGroupsSelectorValue($user);
+		$selector = "edit_groups=$userGroups, include=all";
+
+		// check the specific access page if page context has been given
+		if ($pageContext && $pageContext->id) $selector .= ", id=$accessPage";
+
+		if ($this->pages->count($selector)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Does this user have the given permission on the given template?
+	 *
+	 * Replacement for User::hasTemplatePermission() to use page based access control instead of template based one.
+	 *
+	 * (These describe $event->arguments and $event->return!)
+	 * @param string $name Permission name
+	 * @param Template|int|string $template Template object, name or ID
+	 * @return bool
+	 *
+	 */
+	public function hasTemplatePermission($event) {
+
+		$user = $event->object;
+		$name = $event->arguments[0];
+		$template = $event->arguments[1];
+
+#		$this->log->message("hasTemplatePermission: " . $name . " @ " . $template);
+
+		// with this module, there is no such thing as "template permission"
+		// instead it's page permission without page context (or unsupported atm =)
+		$tplEditPermissions = array('page-edit', 'page-create', 'page-add');
+		if (in_array($name, $tplEditPermissions)) {
+			$event->setArgument(1, null);
+			$this->hasPagePermission($event);
+		} else {
+			$this->log->message("UNSUPPORTED tpl permission: " . $name . " @ " . $template->id . " / " . $template->name);
+		}
+		return;
+	}
+
+	/**
+	 * Page trashed, clean up inheritance information
+	 *
+	 * Also save() and moved() get called but they short circuit for trashed pages.
+	 * Restoring pages requires no special care as moved() handles that also.
+	 * Deleting pages (trashed or not) requires no special care as core cleans up refs to deleted pages automagically.
+	 *
+	 */
+	public function trashed($event) {
+
+		$page = $event->arguments[0];
+
+		// skip pages under admin
+		if ($page->parents()->has($this->pages->get($this->config->adminRootPageID))) return;
+
+#		$this->log->message("trashed: $page->id @ $page->path");
+
+		$deletions = array($page->id);
+		foreach ($this->pages->find("has_parent=$page, include=all") as $p) $deletions[] = $p->id;
+
+		if (count($deletions)) {
+			$sql = "DELETE FROM field_inherit_access WHERE pages_id IN(" . implode(',', $deletions) . ")";
+#			$this->log->message($sql);
+			$this->db->query($sql);
+		}
+	}
+
+	/**
+	 * Page added, rebuild for the new page.
+	 *
+	 */
+	public function added($event) {
+
+		$page = $event->arguments[0];
+
+		// skip pages under admin
+		if ($page->parents()->has($this->pages->get($this->config->adminRootPageID))) return;
+
+		// find out where access is inherited from (from direct parent or somewhere further away)
+		$accessPage = $this->getAccessPage($page->parent);
+
+		// we're done if page based access is not in use
+		if ( ! $accessPage ) return;
+
+#		$this->log->message("added: $page->id @ $page->path (access defaults to $accessPage->id @ $accessPage->path)");
+		// rebuild - just this new page actually
+		$this->rebuild($page->id, $accessPage->id);
+	}
+
+
+	/**
+	 * Page moved, rebuild starting from moved page.
+	 *
+	 */
+	public function moved($event) {
+
+		$page = $event->arguments[0];
+
+		// skip pages under admin
+		if ($page->parents()->has($this->pages->get($this->config->adminRootPageID))) return;
+
+		// don't mind trashed pages here
+		if ($page->isTrash()) return;
+
+		// access page is either the moved page (if manage_access has been set)
+		// or the closest parent with manage_access set
+		if ($page->manage_access == 1) $accessPage = $page;
+		else $accessPage = $page->parent("manage_access=1");
+
+#		$this->log->message("moved $page->id");
+
+		// rebuild from moved page, using access page retrieved above
+		$this->rebuild($page->id, $accessPage->id);
+
+	}
+
+	/**
+	 * Page saved: sanity checks and rebuild as needed.
+	 *
+	 */
+	public function save($event) {
+
+		$page = $event->arguments[0];
+
+		// If page doesn't have manage_access field at all, no need to continue
+		if ( ! $page->template->hasField($this->fieldManageAccess)) return;
+
+		// If page has just been added and has no id yet, no need to continue
+		if ( ! $page->id) return;
+
+		// don't mind trashed pages here
+		if ($page->isTrash()) return;
+
+#		$this->log->message("saved: $page->id @ $page->path");
+
+		// are there changes to view or edit groups?
+		if ($page->isChanged('view_groups') || $page->isChanged('edit_groups')) {
+			// make sure all edit groups have view access as well
+			$page->view_groups->add($page->edit_groups);
+		}
+
+		// reset manage_access if no groups are defined for view nor edit
+		if ( ! count($page->view_groups) && ! count($page->edit_groups)) {
+			$page->manage_access = 0;
+		}
+
+		// front page has to have manage_access turned on at all times
+		// frontend should enforce this, here it's a fatal error
+		if($page->id == 1 && $page->manage_access == 0) throw new WireException("Front page must define access at all times");
+
+		// DEBUG
+#		$this->log->message("view groups changed: "   . $page->isChanged('view_groups') . ", now: " . $page->view_groups);
+#		$this->log->message("edit groups changed: "   . $page->isChanged('edit_groups') . ", now: " . $page->edit_groups);
+#		$this->log->message("manage access changed: " . $page->isChanged('manage_access') . ", now: " . $page->manage_access);
+
+		$rebuildNeeded = false;
+
+		// has page been just published? If so, a rebuild is needed
+		if ($page->isChanged('status') && ! $page->is(Page::statusUnpublished)) $rebuildNeeded = true;
+
+		// has access management been toggled? If so, a rebuild is needed
+		if ($page->isChanged('manage_access')) $rebuildNeeded = true;
+
+		if ( ! $rebuildNeeded) return;
+
+		// manage access here
+		if ($page->manage_access == 1) {
+			$accessPage = $page;
+		// inherit access
+		} else {
+			$accessPage = $page->parent("manage_access=1");
+			$page->inherit_access = $accessPage;
+		}
+
+		if ( ! $accessPage->id) $accessPage = $this->pages->get(1);
+
+#		$this->log->message("Access changed: $page->id => $accessPage->id");
+
+		$this->rebuild($page->id, $accessPage->id);
+
+	}
+
+	/**
+	 * Rebuild table field_inherit_access.
+	 *
+	 * Writes a row for each page inheriting access from up above.
+	 * Does *not* write a row for a page managing access itself. (<-- to avoid circular references later on!)
+	 *
+	*/
+	public function rebuild($parent_id = 1, $access_page_id = 1, $rebuild_all = false) {
+
+# 		$this->log->message("rebuild($parent_id: '" . $this->pages->get($parent_id)->path ."', $access_page_id: '" . $this->pages->get($access_page_id)->path . "')");
+ 		$insertions = array();
+ 		$deletions = array();
+		$parent_id = (int) $parent_id;
+		$access_page_id = (int) $access_page_id;
+
+		if ($parent_id == 0) throw new WireException("Invalid parent id");
+		if ($access_page_id == 0) throw new WireException("At least homepage should manage access");
+
+		// Not sure if this is required here..?
+		if ($parent_id == 1) {
+			// if we're going to be rebuilding the entire tree, then just delete all of them now
+			$this->db->query("DELETE FROM field_inherit_access"); // QA
+		}
+
+		$sql =  "SELECT pages.id, count(children.id) AS numChildren " .
+				"FROM pages " .
+				"LEFT JOIN pages AS children ON children.parent_id=pages.id " .
+				"WHERE pages.parent_id=$parent_id " .
+				"GROUP BY pages.id ";
+
+		$result = $this->db->query($sql); // QA
+
+		// make sure there is no row for pages managing access themselves,
+		// but there is one for pages inheriting access
+		if ($parent_id == $access_page_id) $deletions[] = $parent_id;
+		else $insertions[$parent_id] = $access_page_id;
+
+		while ($row = $result->fetch_row()) {
+
+			list($id, $numChildren) = $row;
+
+			// Skip the admin alltogether
+			if ($id == $this->config->adminRootPageID) continue;
+			// ...and the same goes for trash
+			if ($id == $this->config->trashPageID) continue;
+
+			// Look if page manages access, if so, then skip
+			$sql2 = "SELECT data FROM field_manage_access WHERE pages_id = '$id'";
+
+			$result2 = $this->db->query($sql2);
+
+			if ($result2->num_rows > 0) {
+				if ($numChildren) $this->rebuild($id, $id);
+			} else {
+				$insertions[$id] = $access_page_id;
+				// if there are children, rebuild any of them with this access template where applicable
+				if ($numChildren) {
+					$this->rebuild($id, $access_page_id);
+				}
+			}
+
+			$result2->free();
+
+		}
+
+		$result->free();
+
+		if (count($insertions)) {
+			// add the entries to the pages_access table
+			$sql = "INSERT INTO field_inherit_access (pages_id, data) VALUES ";
+			foreach ($insertions as $id => $access_page_id) {
+				$id = (int) $id;
+				$access_page_id = (int) $access_page_id;
+				$sql .= "($id, $access_page_id),";
+			}
+			$sql = rtrim($sql, ",") . " " . "ON DUPLICATE KEY UPDATE data=VALUES(data) ";
+#			$this->log->message($sql);
+			$this->db->query($sql); // QA
+
+		}
+
+		if (count($deletions)) {
+			$sql = "DELETE FROM field_inherit_access WHERE pages_id IN(" . implode(',', $deletions) . ")";
+#			$this->log->message($sql);
+			$this->db->query($sql);
+		}
+
+	}
+
+	/**
+	 * Returns an array of templates that are allowed to be used here.
+	 * Like the original function at ProcessPageAdd.module, but skips the template based access checks.
+	 *
+	 */
+	public function allowedTemplates($event) {
+		$event->replace = true;
+		$templates = array();
+
+		if (isset($_POST['parent_id'])) {
+			$parent_id = (int) $_POST['parent_id'];
+		} else {
+			$parent_id = isset($_GET['parent_id']) ? (int) $_GET['parent_id'] : 1;
+		}
+		$parent = $this->pages->get($parent_id);
+#		$this->log->message("allowedTemplates() for $parent->path (t: $parent->template)");
+
+		foreach ($this->templates as $t) {
+
+			// creating new pages with this template must be allowed
+			if ($t->noParents) continue;
+
+			// existing child template restrictions under current parent must be met
+			if (count($parent->template->childTemplates)) {
+				if ( ! in_array($t->id, $parent->template->childTemplates)) continue;
+			}
+
+			// existing parent template restrictions for this template must be met
+			if (count($t->parentTemplates)) {
+				if ( ! in_array($parent->template->id, $t->parentTemplates)) continue;
+			}
+
+			// creating user groups is allowed via UserGroups module only
+			if ($t->name == 'user-group') continue;
+
+			// extra checks to keep users, roles and permissions in their own little containers no matter what
+			if ($t->flags & Template::flagSystem) {
+				if ($t->name == 'user' && $parent->id != $this->config->usersPageID) continue;
+				if ($t->name == 'role' && $parent->id != $this->config->rolesPageID) continue;
+				if ($t->name == 'permission' && $parent->id != $this->config->permissionsPageID) continue;
+			}
+
+			$templates[$t->id] = $t;
+#			$this->log->message("Allowed template: $t");
+		}
+
+#		if(count($templates) == 0) $this->log->message("No templates allowed");
+		$event->return = $templates;
+	}
+
+	public function find($event) {
+
+		$user = wire('user');
+		$page = wire('page');
+
+#		$this->log->message("find()");
+#		$this->log->message("** original selector: " . $event->arguments[0]);
+
+		// this is basically an access check --> no need if user is a superuser
+		if ($user->isSuperuser()) return;
+
+		if ( ! isset($page)) return;
+
+		if ($page->template->name == "admin") return;
+
+		$options = $event->arguments(1);
+
+		if (isset($options['findOne'])) {
+			if ($options['findOne']) return;
+		}
+
+		$selector = $event->arguments[0];
+
+		// get by id, skip always
+		if (is_numeric($selector)) return;
+
+		// access checking should be disabled when (see wire/core/PageFinder.php for details):
+		// - "check_access=0" is given
+		// - "include=all" is given
+		// - option "findAll" has a truish value (for example PagesType derived classes have this set for all find() calls)
+		if (preg_match("/\bcheck_access=0\b/", $selector)) return;
+		if (preg_match("/\binclude=all\b/", $selector)) return;
+		if (isset($options['findAll']) && $options['findAll']) return;
+
+		$userGroups = $this->getUserGroupsSelectorValue($user);
+		$selector = $selector . ", view_groups|inherit_access.view_groups=$userGroups";
+		$event->arguments(0, $selector);
+#		$this->log->message("** changed selector to: " . $selector);
+	}
+
+	/**
+	 * Get the Page defining access to the given page.
+	 *
+	 * If page manages access definitions itself, return the same page.
+	 * If page inherits access definitions, return the defining page.
+	 *
+	 * @param Page $page
+	 *
+	 * @return Page|false Page defining access or false if this page follows template based rules
+	*/
+	public function getAccessPage($page) {
+		if ( ! isset($page) ) return false;
+		if ( ! $page->id ) return false;
+
+		// If page doesn't have manage_access field at all, no need to continue
+		if ( ! $page->template->hasField($this->fieldManageAccess)) return false;
+
+		if ($page->manage_access) return $page;
+		return $page->inherit_access;
+	}
+
+	/**
+	 * Get selector value for matching users groups.
+	 *
+	 * Special groups are not added to user_groups to avoid errors when saving data for current user.
+	 * Selector value is evaluated on each call to support runtime changes (login or groups forced by other modules).
+	 *
+	 * @param User $user User whose groups to list. Optional, defaults to current user.
+	 *
+	 * @return string Selector value for this users groups.
+	 *
+	*/
+	protected function getUserGroupsSelectorValue($user = null) {
+		if ( ! $user ) $user = wire('user');
+		// user is always a member of "Everyone"
+		$value = "{$this->groupEveryone}";
+		if (count($user->user_groups)) $value .= '|' . $user->user_groups;
+		if ($user->isLoggedIn()) $value .= '|' . $this->groupLoggedIn;
+
+		return $value;
+	}
+
+	/**
+	 * Add Access tab to page edit form.
+	 *
+	 */
+	public function accessTab(HookEvent $event) {
+
+		$page = $this->pages->get($this->input->get->id);
+        if (!$page->id) return;
+
+		// don't mind trashed pages here
+		if ($page->isTrash()) return;
+
+		// If page doesn't have manage_access field at all, no need to continue
+		if ( ! $page->template->hasField($this->fieldManageAccess)) return;
+
+		// add js & css to list for admin theme to load
+		$this->config->scripts->add("//ajax.googleapis.com/ajax/libs/angularjs/1.2.10/angular.min.js");
+		$class = $this->className();
+		$info = $this->getModuleInfo();
+		$version = (int)$info['version'];
+		$this->config->scripts->add($this->config->urls->$class . "$class.js?v=$version");
+		$this->config->styles->add($this->config->urls->$class . "$class.css?v=$version");
+
+		$accessPage  = $this->getAccessPage($page);
+		// prepare some data for js
+		$jsData = array(
+			'viewGroups' => array(),
+			'editGroups' => array(),
+			'inheritedViewGroups' => array(),
+			'inheritedEditGroups' => array(),
+			'editDisabledFor' => array(
+				$this->groupEveryone->id => true,
+				$this->groupLoggedIn->id => true
+				),
+			'groupInfo' => array(),
+			'manageAccess' => $page->manage_access,
+			'i18n' => array(
+				'headingUserGroup'   => $this->_("User group"),
+				'headingDescription' => $this->_("Description"),
+				'headingViewPages'   => $this->_("View pages"),
+				'headingEditPages'   => $this->_("Edit pages"),
+				'headingTable'       => $this->_("Which groups can access this page (and its children)?"),
+				'labelManageHere'    => $this->_("Manage access here"),
+				'labelInheritAccess' => $this->_("Inherit access from"),
+				'labelNoInherit'     => $this->_("Inheritance not available - front page must define access"),
+				'labelChooseGroup'   => $this->_('Choose a group...')
+			)
+		);
+		foreach($accessPage->view_groups as $vg) $jsData['viewGroups'][$vg->id] = true;
+		foreach($accessPage->edit_groups as $eg) $jsData['editGroups'][$eg->id] = true;
+		foreach($this->groups->find('') as $g) {
+			$jsData['groupInfo'][$g->id] = (string) $g->title;
+			$jsData['groupDescription'][$g->id] = $g->group_description;
+		}
+
+		// add inherited access data only if there's something to inherit (front page)
+		$inheritPage = $this->getAccessPage($page->parent);
+		if($inheritPage) {
+			$jsData['inheritPage'] = array(
+				'path' => $inheritPage->path,
+				'title' => (string) $inheritPage->title
+				);
+			foreach($inheritPage->view_groups as $ivg) $jsData['inheritedViewGroups'][$ivg->id] = true;
+			foreach($inheritPage->edit_groups as $ieg) $jsData['inheritedEditGroups'][$ieg->id] = true;			
+		}
+		// inject into config.AccessData for js to consume
+		$this->config->js('AccessData', $jsData);
+
+		// get the InputFieldForm object from the event (return value of buildForm())
+		$form = $event->return;
+
+		// create the tab
+		$accessTab = new InputfieldWrapper();
+		$accessTab->attr('id', $this->className() . 'Access');
+		$accessTab->attr('title', $this->_('Access'));
+
+		$markupField = $this->modules->get("InputfieldMarkup");
+		$markupField->label = $this->_("Do you want to manage access here?");
+
+		// view markup in a separate file, just to keep things nice and clean
+		$ngView = new TemplateFile($this->config->paths->{$this->className} . "ng-access.php");
+		// it's actually ng-html, no php --> could've just read the file as is
+		// but this way it's easier to extend should we ever need to
+		$markupField->value = $ngView->render();
+
+		$accessTab->append($markupField);
+
+		// insert Access tab after Settings
+		// - if Settings tab does not exist, insert after Children
+		// - fall back to appending to the end
+		$target = $form->find("id=ProcessPageEditSettings")->first();
+		if ( ! $target ) $target = $form->find("id=ProcessPageEditChildren")->first();
+		if ($target) $form->insertAfter($accessTab, $target);
+		else $form->append($accessTab);
+
+	}
+
+	/**
+	 * Deal with access tab input on page save.
+	 * Without this data isn't processed automatically as the regular fields are set hidden.
+	 *
+	 */
+	public function accessTabInput($event) {
+
+		// execute only on first iteration (level not given as second parameter)
+		if (count($event->arguments) > 1) return;
+
+		// form is the first argument to processInput()
+		$form = $event->arguments[0];
+
+		// fetch the page being edited ($this->page in hooked class)
+		if($this->input->post->id) $id = (int) $this->input->post->id;
+		else if($this->input->get->id) $id = (int) $this->input->get->id;
+
+		$page = $this->pages->get($id);
+
+		// If page doesn't have manage_access field at all, no need to continue
+		if ( ! $page->template->hasField($this->fieldManageAccess)) return;
+
+		// process our fields with extra care
+		// manage_access has to be the very last - otherwise checking for edit permission will
+		// fail if page is to inherit access from a page where this user does not have edit access
+		foreach(array('view_groups', 'edit_groups', 'manage_access') as $name) {
+			$inputfield = $form->get($name);
+			if ( $inputfield instanceof Inputfield ) {
+				$inputfield->processInput($this->input->post);
+
+				if( $inputfield->isChanged() ) {
+					$page->set($name, $inputfield->value);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * No need for separate view for access information as we've got Access tab.
+	 * Don't mess with templates not having our fields though.
+	 *
+	 */
+	public function whoCanAccessInfo($event) {
+
+		if (isset($_POST['id'])) $id = (int) $_POST['id'];
+		else if (isset($_GET['id'])) $id = (int) $_GET['id'];
+
+		$page = wire('pages')->get($id);
+
+		if ( ! $page->id) return;
+
+		// If page doesn't have manage_access field at all, no need to continue
+		if ( ! $page->template->hasField($this->fieldManageAccess)) return;
+
+		// Page based access control it is
+		// --> empty InputField only
+		$event->return = $this->modules->get("InputfieldMarkup");
+		return;
+
+	}
+
+	public function install() {
+		$this->rebuild();
+	}
+
+}

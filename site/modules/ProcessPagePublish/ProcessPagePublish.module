@@ -1,0 +1,166 @@
+<?php
+
+/**
+ * ProcessWire Page Publish Process
+ *
+ * By Jens Geiling
+ *
+ */
+
+class ProcessPagePublish extends Process {
+	
+
+
+	public static function getModuleInfo() {
+		
+		return array(
+			'title' => __('Page Publish/Unpublish', __FILE__),
+			'summary' => __('Adds a "publish" link to the page list.', __FILE__),
+			'version' => '101',
+			'permanent' => false,
+			'permission' => 'page-publish',
+			'autoload' => true);
+
+	}
+
+
+
+	protected $permissionNames = array('page-publish' => 'Publish/Unpublish a page');
+	
+	protected $adminUrl = '';
+	
+
+
+	public function init() {
+		
+		parent::init();
+	
+	}
+
+
+
+	public function ready() {
+		
+		$process = wire('page')->process; 
+		
+		if ($process == 'ProcessPageList') { 
+			$this->adminUrl = wire('config')->urls->admin;
+			$this->addHookAfter("ProcessPageListRender::getPageActions", $this, 'hookPageListActions'); 
+		}
+
+	}
+
+
+
+	public function hookPageListActions(HookEvent $event) {
+		
+		$page = $event->arguments[0]; 	
+		$actions = $event->return;
+
+		if (!$page->is(Page::statusUnpublished)) {
+			$this->pageListActionLabel = $this->_('unpublish');
+		} else {
+			$this->pageListActionLabel = $this->_('publish');
+		}
+
+		if ($this->hasPermission($page)) $actions[] = array(
+			'cn' => 'Publish',
+			'name' => $this->pageListActionLabel,
+			'url' => "{$this->adminUrl}page/publish/?id={$page->id}");
+
+		$event->return = $actions;
+
+	}
+
+
+	
+	public function ___execute() {
+		
+		$page = $this->pages->get((int) $this->input->get->id);
+		
+		if (!$this->hasPermission($page)) throw new WirePermissionException("You are unable to publish/unpublish this page!");
+		
+		if (!$page->is(Page::statusUnpublished)) {
+			$page->addStatus(Page::statusUnpublished);
+		} else {
+			$page->removeStatus(Page::statusUnpublished);
+		}
+
+		$page->save();
+
+    	$this->session->redirect("../?open={$page}");
+
+    }
+
+
+
+	public function hasPermission(Page $page) {
+		
+		$user = $this->user; 
+
+		if ($page->is(Page::statusSystem) || $page->is(Page::statusSystemID)) return false; 
+		
+		if ($user->isSuperuser()) return true;
+		if ($user->hasPermission('page-publish', $page)) return true;
+
+		return false;
+
+	}
+
+
+
+	public function ___install() {
+		
+		$sort = 0;
+		
+		foreach ($this->permissions as $permission) {
+			$permission->sort = $sort; 
+			$permission->save();
+			$sort++; 
+		}
+
+		foreach ($this->permissionNames as $name => $title) {		
+			$p = $this->permissions->add($name); 
+			if(!$p->id) continue; 
+			$p->title = $title;
+			$p->save();
+			$this->message("Added new permission: $name"); 
+		}
+
+		$parent = $this->pages->get($this->config->adminRootPageID)->child('name=page');
+		
+		if (!$parent->id || count($parent->children('name=publish'))) throw new WireException("Unable to add new page to admin"); 
+
+		$page = new Page(); 
+		$page->template = 'admin';
+		$page->parent = $parent; 
+		$page->name = 'publish';
+		$page->process = $this; 
+		$page->save();
+		$this->message("Added new page: {$page->path}"); 
+
+	}
+
+
+
+	public function ___uninstall() {
+		
+		foreach ($this->permissionNames as $name => $title) {
+			$p = $this->permissions->get($name); 
+			if(!$p->id) continue; 
+			$this->permissions->delete($p); 
+			$this->message("Removed permission: $name"); 
+		}
+
+		$page = $this->pages->get($this->config->adminRootPageID)->child("name=page")->child("name=publish"); 
+		
+		if ($page->id) {
+			$this->message("Removed page: {$page->path}"); 
+			$this->pages->delete($page); 
+		}
+
+	}
+
+
+
+}

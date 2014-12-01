@@ -1,0 +1,356 @@
+<?php
+
+/**
+ * Trashman
+ *
+ * Adds custom trash view that can be also accessed by defined roles
+ * Pages in trash can be searched, sorted and restored.
+ *
+ *
+ * Copyright 2013 by Antti Peisa
+ *
+ *
+ * ProcessWire 2.x
+ * Copyright (C) 2012 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://processwire.com
+ *
+ */
+class ProcessTrashman extends Process implements ConfigurableModule {
+
+	/**
+	 * Return information about this module (required)
+	 *
+	 */
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Trashman',
+			'summary' => 'Custom trash view for clients also.',
+			'version' => 100,
+			'author' => 'Antti Peisa',
+			'href' => 'http://modules.processwire.com/',
+			'permission' => 'trashman',
+			'installs' => 'TrashmanWatchdog'
+		);
+	}
+
+	private $dateFormat;
+
+	const pageName = 'trashman';
+
+	static public function getDefaultData() {
+		return array(
+			'dateInputFormat' => 'Y-m-d',
+			'timeInputFormat' => 'H:i:s',
+		);
+	}
+
+	public function init() {
+		// we use date and time format combined when
+		$this->dateFormat = $this->dateInputFormat . " " . $this->timeInputFormat;
+	}
+
+	public function __construct() {
+		foreach (self::getDefaultData() as $key => $value) {
+			$this->$key = $value;
+		}
+	}
+
+	public function ___execute() {
+
+		$out = '';
+
+		// Grab end value
+		$end = ($this->input->get->end) ? strtotime($this->input->get->end) : strtotime("tomorrow -1second");
+
+		// If timeInputFormat is empty, then we need to add 23:59 to end value
+		if ($this->timeInputFormat == "" && $this->input->get->end)
+			$end = $end + 60 * 60 * 24 - 1;
+
+		$start = ($this->input->get->start) ? strtotime($this->input->get->start) : $end - 60 * 60 * 24 * 32 + 1;
+
+		// Mysql date formats for those
+		$startDB = date('Y-m-d H:i:s', $start);
+		$endDB = date('Y-m-d H:i:s', $end);
+
+		// And nice readable formats
+		$startNice = date($this->dateFormat, $start);
+		$endNice = date($this->dateFormat, $end);
+
+		if ($this->input->get->start) {
+			$out .= "<h2>" . sprintf($this->_('Showing pages that were removed between %1$s and %2$s'), $startNice, $endNice) . "</h2>";
+		} else {
+			$out .= "<h2>" . $this->_('Showing pages that were removed in last 30 days') . "</h2>";
+		}
+
+		$form = $this->modules->get("InputfieldForm");
+		$form->method = "get";
+
+		$wrapper = $this->modules->get("InputfieldFieldset");
+		$wrapper->label = $this->_("Filters");
+		$wrapper->collapsed = Inputfield::collapsedYes;
+
+		$startDate = $this->modules->get("InputfieldDatetime");
+		$startDate->name = "start";
+		$startDate->label = $this->_("Startdate");
+		$startDate->value = $start;
+		$startDate->columnWidth = 50;
+		$startDate->dateInputFormat = $this->dateInputFormat;
+		$startDate->timeInputFormat = $this->timeInputFormat;
+
+		$endDate = $this->modules->get("InputfieldDatetime");
+		$endDate->name = "end";
+		$endDate->label = $this->_("Enddate");
+		$endDate->value = $end;
+		$endDate->columnWidth = 50;
+		$endDate->dateInputFormat = $this->dateInputFormat;
+		$endDate->timeInputFormat = $this->timeInputFormat;
+
+		$submit = $this->modules->get("InputfieldSubmit");
+
+		// Build the form
+		$wrapper->add($startDate);
+		$wrapper->add($endDate);
+		$wrapper->add($submit);
+		$form->add($wrapper);
+
+		// Find pages in trash that were removed between wanted dates
+		$sql = "SELECT page_id, parent_id, trashed FROM {$this->className} WHERE trashed >= '$startDB' AND trashed <= '$endDB';";
+		$result = $this->db->query($sql);
+
+		$pagesInTrash = new PageArray();
+		while ($row = $result->fetch_assoc()) {
+			$p = $this->pages->get($row['page_id']);
+
+			// If there is no page anymore, let's continue TODO: remove this from db also
+			if (!$p->id)
+				continue;
+
+			// Add parent page and trashed date
+			$p->oldParent = $this->pages->get($row['parent_id']);
+			$p->trashed = $row['trashed'];
+			$pagesInTrash->add($p);
+		}
+
+
+		// Render the form
+		$out .= $form->render();
+
+		// Render results
+		if ($pagesInTrash->count() == 0) {
+			$out .= $this->_("Pages not found");
+		} else {
+			$table = $this->modules->get("MarkupAdminDataTable");
+			$table->setEncodeEntities(false);
+			$table->headerRow(array(
+				$this->_("Page title"),
+				$this->_("Number of children"),
+				$this->_("Old parent"),
+				$this->_("Date removed"),
+				$this->_("Restore")
+			));
+
+			foreach ($pagesInTrash as $p) {
+
+				if (!$p->oldParent->id || $p->oldParent->isTrash()) {
+					$parentPath = $this->_("unknown");
+					$p->oldParent->id = 0;
+				}
+				else
+					$parentPath = $p->oldParent->path;
+
+				$table->row(array(
+					$p->get("title|name"),
+					$p->children("include=all")->count(),
+					$parentPath,
+					$p->trashed,
+					"<a href='./restore/?page_id={$p->id}&parent_id={$p->oldParent->id}'>" . $this->_("restore") . "</a>"
+				));
+			}
+
+			$out .= $table->render();
+		}
+
+		return $out;
+	}
+
+	public function ___executeRestore() {
+
+		if ($this->input->post->restore_page)
+			return $this->processInput();
+
+		$p = $this->pages->get($this->input->get->page_id);
+		$out = '';
+
+		if (!$p->id) {
+			$this->error($this->_("Page not found"));
+			$this->session->redirect("../");
+		}
+
+		if (!$p->isTrash()) {
+			$this->error($this->_("Page is not in trash"));
+			$this->session->redirect("../");
+		}
+
+		// set a new headline, replacing the one used by our page (optional)
+		Wire::setFuel('processHeadline', $this->_("Restore page"));
+
+		$out .= "<h2>$p->title</h2>";
+
+		$form = $this->modules->get("InputfieldForm");
+		$form->action = "./";
+		$form->method = "post";
+
+		$field = $this->modules->get("InputfieldPageListSelect");
+		$field->parent_id = 0;
+		$field->value = (int) $this->input->get->parent_id;
+		$field->required = true;
+		$field->label = $this->_("Parent page for the restored page");
+		$field->description = sprintf($this->_("'%s' will be restored under selected page. Please note that the restored page will be unpublished, so you can edit it before publishing."), $p->get("title|name"));
+		$field->name = "parent_id";
+		$form->add($field);
+
+		$field = $this->modules->get("InputfieldHidden");
+		$field->name = "page_id";
+		$field->value = $p->id;
+		$form->add($field);
+
+		$submit = $this->modules->get("InputfieldSubmit");
+		$submit->name = "restore_page";
+		$form->add($submit);
+
+		$out .= $form->render();
+		$out .= "<p><a href='../'>" . $this->_("Go Back") . "</a></p>";
+
+		// add a breadcrumb that returns to our main page
+		$this->breadcrumbs->add(new Breadcrumb('../', $this->page->title));
+
+		return $out;
+	}
+
+	public function processInput() {
+		if (!$this->input->post->parent_id || !$this->input->post->page_id) {
+			$this->error($this->_("Error while trying to restore the page"));
+			return "<a href='../'>" . $this->_("Go back") . "</a>";
+		}
+
+		$page = $this->pages->get($this->input->post->page_id);
+		$page->parent = $this->pages->get($this->input->post->parent_id);
+		$page->addStatus(Page::statusUnpublished);
+
+		$this->pages->restore($page);
+		$this->message($this->_("Page restored, but kept unpublished"));
+
+		$admin = $this->pages->get($this->config->adminRootPageID);
+		$this->session->redirect($admin->url . "page/edit/?id=$page->id");
+	}
+
+	/**
+	 * Module configuration
+	 *
+	 * @param array $data
+	 * @return InputfieldWrapper
+	 */
+	static public function getModuleConfigInputfields(array $data) {
+
+		// this is a container for fields, basically like a fieldset
+		$fields = new InputfieldWrapper();
+
+		// since this is a static function, we can't use $this->modules, so get them from the global wire() function
+		$modules = wire('modules');
+
+		// merge default config settings (custom values overwrite defaults)
+		$defaults = self::getDefaultData();
+		$data = array_merge($defaults, $data);
+
+		// date format used
+		$field = $modules->get("InputfieldText");
+		$field->name = "dateInputFormat";
+		$field->label = "Date Format";
+		$field->notes = "See the [PHP date](http://www.php.net/manual/en/function.date.php) function reference for more information on how to customize this format.";
+		$field->value = $data['dateInputFormat'];
+		$field->size = 70;
+		$fields->add($field);
+
+		// time format used
+		$field = $modules->get("InputfieldText");
+		$field->name = "timeInputFormat";
+		$field->label = "Time Format";
+		$field->description = "Leave this empty, if you don't need to filter by time";
+		$field->notes = "See the [PHP date](http://www.php.net/manual/en/function.date.php) function reference for more information on how to customize this format.";
+		$field->value = $data['timeInputFormat'];
+		$field->size = 70;
+		$fields->add($field);
+
+		return $fields;
+	}
+
+	/**
+	 * Called only when your module is installed
+	 *
+	 * This version creates a new page with this Process module assigned.
+	 *
+	 */
+	public function ___install() {
+
+		$permission = $this->permissions->add("trashman");
+		$permission->title = "Can view and restore pages in trash";
+		$permission->save();
+		$this->session->message("Created new permission: trashman");
+
+		$page = new Page();
+		$page->template = 'admin';
+		$page->name = self::pageName;
+		$page->parent = $this->pages->get($this->config->adminRootPageID)->child('name=setup');
+		$page->process = $this;
+		$page->title = "Trashman";
+		$page->save();
+
+		$this->message("Created Page: {$page->path}");
+
+		$sql = <<< _END
+
+CREATE TABLE {$this->className} (
+id int unsigned NOT NULL auto_increment,
+page_id int unsigned DEFAULT 0,
+parent_id int unsigned DEFAULT 0,
+trashed TIMESTAMP,
+PRIMARY KEY(id),
+UNIQUE KEY(page_id)
+) ENGINE = MYISAM;
+
+_END;
+
+		$this->db->query($sql);
+
+		$this->message("Created database table: {$this->className}");
+	}
+
+	/**
+	 * Called only when your module is uninstalled
+	 *
+	 * This should return the site to the same state it was in before the module was installed.
+	 *
+	 */
+	public function ___uninstall() {
+
+		$permission = $this->permissions->get("trashman");
+		$this->permissions->delete($permission);
+
+		// find the page we installed, locating it by the process field (which has the module ID)
+		// it would probably be sufficient just to locate by name, but this is just to be extra sure.
+		$moduleID = $this->modules->getModuleID($this);
+		$page = $this->pages->get("template=admin, process=$moduleID, name=" . self::pageName);
+
+		if ($page->id) {
+			// if we found the page, let the user know and delete it
+			$this->message("Deleting Page: {$page->path}");
+			$page->delete();
+		}
+
+		$this->db->query("DROP TABLE {$this->className}");
+	}
+
+}
+

@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * Trashman Watchdog
+ *
+ * Copyright 2013 by Antti Peisa
+ * 
+ * ProcessWire 2.x 
+ * Copyright (C) 2010 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ *
+ */
+class TrashmanWatchdog extends WireData implements Module {
+
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'Trashman Watchdog',
+			'version' => 100,
+			'summary' => 'Autoload module, that saves the parent_before_trash value before page is trashed',
+			'href' => 'http://modules.processwire.com',
+			'singular' => true,
+			'autoload' => true,
+			'requires' => 'ProcessTrashman'
+		);
+	}
+
+	public function init() {
+		$this->pages->addHookBefore('trash', $this, 'pageTrashed');
+		$this->pages->addHookAfter('restore', $this, 'removePageFromTrash');
+		$this->pages->addHookAfter('delete', $this, 'removePageFromTrash');
+	}
+
+	/**
+	 * When page is trashed, we save a row for it on ProcessTrashman table
+	 *
+	 */
+	public function pageTrashed($event) {
+		$page = $event->arguments[0];
+		if ($page->parent->id != $this->config->trashPageID) {
+			$sql = "INSERT INTO ProcessTrashman SET page_id = {$page->id}, parent_id = {$page->parent->id} ON DUPLICATE KEY UPDATE parent_id = {$page->parent->id};";
+			$this->db->query($sql);
+		}
+	}
+
+	public function removePageFromTrash($event) {
+		$page = $event->arguments[0];
+		$sql = "DELETE FROM ProcessTrashman WHERE page_id = {$page->id};";
+		$this->db->query($sql);
+	}
+
+}

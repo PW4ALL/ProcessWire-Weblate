@@ -1,0 +1,48 @@
+<?php
+
+require_once(dirname(__FILE__) . "/PagePDF.php");
+require_once(dirname(__FILE__) . "/PagePDFs.php");
+
+class FieldtypePDF extends FieldtypeFile {
+
+	public static function getModuleInfo() {
+		return array(
+			'version' => 101,
+			'title' => __('PDF with thumbnail', __FILE__),
+			'summary' => __('Field that stores one or more pdf files allowing thumbnail creation.', __FILE__),
+            'href' => 'http://modules.processwire.com/modules/fieldtype-pdf',
+            'author' => 'Richard Jedlička',
+            'installs' => 'InputfieldPDF'
+			);
+	}
+
+    public function ___install() {
+        if(! class_exists('Imagick')) {
+            throw new WireException(__("FieldtypePDF module requires the ImageMagick PHP extension."));
+        }
+    }
+
+	public function getBlankValue(Page $page, Field $field) {
+		$pagePDFs = new PagePDFs($page);
+		$pagePDFs->setField($field); 
+		$pagePDFs->setTrackChanges(true); 
+		return $pagePDFs; 
+	}
+
+	protected function getBlankPagefile(Pagefiles $pagefiles, $filename) {
+		return new PagePDF($pagefiles, $filename); 
+	}
+
+	protected function getDefaultFileExtensions() {
+		return "pdf";
+	}
+
+	public function ___getConfigInputfields(Field $field) {
+		$inputfields = parent::___getConfigInputfields($field);
+
+        $inputfields->remove($inputfields->get('extensions'));
+
+        return $inputfields;
+    }
+}
+

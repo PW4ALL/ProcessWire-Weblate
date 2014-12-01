@@ -1,0 +1,1322 @@
+<?php
+
+/**
+ * Version Control
+ *
+ * This module uses hooks provided by ProcessWire to catch page edits and stores
+ * history data in series of custom database tables so that it can later be used
+ * again.
+ *
+ * @copyright Copyright (c) 2013-2014, Teppo Koivula
+ * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
+ *
+ * ProcessWire 2.x 
+ * Copyright (C) 2013 by Ryan Cramer 
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://processwire.com
+ *
+ * @todo regenerate data when new fields are added to template
+ */
+class VersionControl extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * Return information about this module (required)
+     *
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Version Control',
+            'summary' => 'Basic version control features for page content.',
+            'href' => 'http://modules.processwire.com/modules/version-control/',
+            'author' => 'Teppo Koivula',
+            'version' => '0.10.0',
+            'singular' => true,
+            'autoload' => true,
+            'installs' => array(
+                'LazyCron',
+                'PageSnapshot',
+                'ProcessVersionControl',
+            ),
+            'requires' => array(
+                'ProcessWire>=2.4.1',
+            ),
+        ); 
+    }
+
+    /**
+     * Default configuration for this module
+     *
+     * The point of putting this in it's own function is so that you don't have to specify
+     * these defaults more than once.
+     *
+     * @return array
+     */
+    static public function getDefaultData() {
+        return array(
+            'compatible_fieldtypes' => array(
+                'FieldtypeEmail',
+                'FieldtypeDatetime',
+                'FieldtypeText',
+                'FieldtypeTextLanguage',
+                'FieldtypeTextarea',
+                'FieldtypeTextareaLanguage',
+                'FieldtypePageTitle',
+                'FieldtypePageTitleLanguage',
+                'FieldtypeCheckbox',
+                'FieldtypeInteger',
+                'FieldtypeFloat',
+                'FieldtypeURL',
+                'FieldtypePage',
+                'FieldtypeModule',
+                'FieldtypeFile',
+                'FieldtypeImage',
+                'FieldtypeSelector',
+            ),
+            'enabled_templates' => array(),
+        );
+    }
+    
+    /**
+     * Container for field data
+     *
+     */
+    protected $page_data = array();
+
+    /**
+     * Array for storing local variables
+     *
+     */
+    protected $data = array();
+
+    /**
+     * Container for hash format filenames within image inputfields
+     *
+     */
+    protected $hash_map = array();
+
+    /**
+     * Names of database tables used by this module
+     *
+     * Revisions table handles system-wide revision numbers and stores dates,
+     * user and page id's etc. (metadata) while data table stores actual data
+     * (content).
+     * 
+     * Files table stores data for individual files and data files junction
+     * table connects files with data. Separate file tables make tasks such
+     * as mime type checking, fetching file sizes and hashes etc. fast and
+     * also make it easier and more efficient to clean up orphaned files.
+     * 
+     */
+    const TABLE_REVISIONS = 'version_control__revisions';
+    const TABLE_DATA = 'version_control__data';
+    const TABLE_FILES = 'version_control__files';
+    const TABLE_DATA_FILES = 'version_control__data_files';
+
+    /**
+     * Populate the default config data
+     *
+     * ProcessWire will automatically overwrite it with anything the user has specifically configured.
+     * This is done in construct() rather than init() because ProcessWire populates config data after
+     * construct(), but before init().
+     *
+     */
+    public function __construct() {
+        foreach(self::getDefaultData() as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+
+    /**
+     * Module configuration
+     *
+     * @param array $data
+     * @return InputfieldWrapper
+     */
+    static public function getModuleConfigInputfields(array $data) {
+
+        // this is a container for fields, basically like a fieldset
+        $fields = new InputfieldWrapper();
+
+        // since this is a static function, we can't use $this->modules, so get them from the global wire() function
+        $modules = wire('modules');
+
+        // merge default config settings (custom values overwrite defaults)
+        $defaults = self::getDefaultData();
+        $data = array_merge($defaults, $data);
+
+        // define fieldtypes considered compatible with this module
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "compatible_fieldtypes";
+        $field->label = __("Compatible fieldtypes");
+        $field->description = __("Fieldtypes considered compatible with this module.");
+        $field->collapsed = Inputfield::collapsedYes;
+        $field->icon = 'list-alt';
+        $selectable_fieldtypes = $modules->find('className^=Fieldtype');
+        foreach ($selectable_fieldtypes as $key => $fieldtype) {
+            // remove native fieldtypes known to be incompatible
+            if ($fieldtype == "FieldtypePassword" || strpos($fieldtype->name, "FieldtypeFieldset") === 0) {
+                unset($selectable_fieldtypes[$key]);
+            }
+        }
+        $field->addOptions($selectable_fieldtypes->getArray());
+        $field->notes = __("Please note that selecting any fieldtypes not selected by default may result in various problems.");
+        if (isset($data['compatible_fieldtypes'])) $field->value = $data['compatible_fieldtypes'];
+        $fields->add($field);
+        
+        // for which templates should we track values?
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "enabled_templates";
+        $field->label = __("Enable history for these templates");
+        $field->notes = __("Only non-system templates can be selected.");
+        $field->icon = "file-o";
+        $field->columnWidth = 50;
+        foreach (wire('templates')->getAll() as $key => $template) {
+            // include only non-system templates
+            if (~ $template->flags & Template::flagSystem) {
+                $field->addOption($key, $template);
+            }
+        }
+        if (isset($data['enabled_templates'])) $field->value = $data['enabled_templates'];
+        $fields->add($field);
+        
+        // for which fields should we track values?
+        $field = $modules->get("InputfieldAsmSelect");
+        $field->name = "enabled_fields";
+        $field->label = __("Enable history for these fields");
+        $field->notes = __("Only fields of compatible fieldtypes can be selected. If no fields are selected, all fields of compatible fieldtypes are considered enabled.");
+        $field->icon = "file-text-o";
+        $field->columnWidth = 50;
+        $types = implode($data['compatible_fieldtypes'], "|");
+        $field->addOptions(wire('fields')->find("type=$types")->getArray());
+        if (isset($data['enabled_fields'])) $field->value = $data['enabled_fields'];
+        $fields->add($field);
+
+        // for how long should collected data be retained?
+        if ($modules->isInstalled("LazyCron")) {
+            $field = $modules->get("InputfieldSelect");
+            $field->addOption('1 WEEK', __('1 week'));
+            $field->addOption('2 WEEK', __('2 weeks'));
+            $field->addOption('1 MONTH', __('1 month'));
+            $field->addOption('2 MONTH', __('2 months'));
+            $field->addOption('3 MONTH', __('3 months'));
+            $field->addOption('6 MONTH', __('6 months'));
+            $field->addOption('1 YEAR', __('1 year'));
+            $field->notes = __("Leave empty to disable automatic cleanup.");
+            if (isset($data['data_max_age'])) $field->value = $data['data_max_age'];
+        } else {
+            $field = $modules->get("InputfieldMarkup");
+            $field->description = __("Automatic cleanup requires Lazy Cron module.");
+        }
+        $field->label = __("For how long should we retain collected data?");
+        $field->name = "data_max_age";
+        $field->icon = "clock-o";
+        $field->columnWidth = 50;
+        $fields->add($field);
+
+        // should we limit the amount of revisions saved for each field + page combination?
+        $field = $modules->get("InputfieldSelect");
+        $field->name = "data_row_limit";
+        $field->label = __("Revisions retained for each field + page combination");
+        $field->addOptions(array(10 => '10', 20 => '20', 50 => '50', 100 => '100'));
+        $field->notes = __("Leave empty to not limit stored revisions at all.");
+        $field->icon = "random";
+        $field->columnWidth = 50;
+        if (isset($data['data_row_limit'])) $field->value = $data['data_row_limit'];
+        $fields->add($field);
+
+        // notice about additional config options
+        $field = $modules->get("InputfieldMarkup");
+        $field->label = __("Additional config options");
+        $field->icon = "gear";
+        $link_module = "ProcessVersionControl";
+        $link_markup = "<a href='".wire('page')->url."edit?name=$link_module'>$link_module</a>";
+        $field->set('markupText', sprintf(__("You can find additional config options related to this module at %s"), $link_markup));
+        $fields->add($field);
+
+        return $fields;
+
+    }
+
+    /**
+     * Initialization function
+     *
+     * @todo storing files on delete (requires core changes)
+     */
+    public function init() {
+
+        // remove expired data rows daily
+        $this->addHook("LazyCron::everyDay", $this, 'cleanup');
+
+        // regenerate base data when enabled templates change
+        $this->addHookAfter('Modules::saveModuleConfigData', $this, 'regenerateData');
+
+        if (count($this->enabled_templates)) {
+            // add hooks that gather and store data
+            $this->addHookBefore('Pages::saveReady', $this, 'restoreFiles');
+            $this->addHook('Pages::saveReady', $this, 'gather'); 
+            $this->addHookBefore('Pages::saveField', $this, 'gather');
+            $this->addHookAfter('Pages::save', $this, 'insert');
+            $this->addHookAfter('Pages::saveField', $this, 'insert');
+            // add hooks that clear obsolete or orphaned data
+            $this->addHookAfter('Pages::deleted', $this, 'cleanupDeletedPage');
+            $this->addHookBefore('Fieldgroups::save', $this, 'cleanupDeletedField');
+            $this->addHook('Pages::templateChanged', $this, 'cleanupChangedTemplate');
+            // add hooks that add additional scripts, styles and markup
+            $this->addHookAfter('ProcessPageEdit::execute', $this, 'inject');
+            $this->addhookAfter('ProcessPageEdit::buildForm', $this, 'buildFormHistory');
+            // add hooks that alter image and file inputfield output on the fly
+            $this->addHookBefore('InputfieldImage::renderItem', $this, 'captureHash');
+            $this->addHookBefore('InputfieldFile::renderItem', $this, 'captureHash');
+            $this->addHookAfter('InputfieldFile::renderList', $this, 'replaceHashes');
+            // add hook that removes hashes within text content of rendered page
+            $this->addHookAfter('Page::render', $this, 'replaceTextHashes');
+            // add new property versionControlFields to Template object
+            $this->addHookProperty('Template::versionControlFields', $this, 'versionControlFields');
+            // add new property versionControlRevision to Page object
+            $this->addHookProperty('Page::versionControlRevision', $this, 'versionControlRevision');
+            // add new method versionControlRevisions to Page object
+            $this->addHook('Page::versionControlRevisions', $this, 'versionControlRevisions');
+        }
+
+    }
+
+    /**
+     * Delete data older than max age defined in module settings
+     *
+     */
+    protected function cleanup() {
+
+        if (!$this->data_max_age) return;
+
+        // prepare params
+        $t1 = self::TABLE_REVISIONS;
+        $t2 = self::TABLE_DATA;
+        $interval = $this->database->escapeStr($this->data_max_age);
+
+        // prepare and execute statement
+        $stmt = $this->database->prepare("DELETE $t1, $t2 FROM $t1, $t2 WHERE $t1.timestamp < DATE_SUB(NOW(), INTERVAL $interval) AND $t2.revisions_id = $t1.id");
+        $stmt->execute();
+
+        // request cleanup for files
+        $this->cleanupFiles();
+
+    }
+
+    /**
+     * Delete files no longer referenced in any data rows
+     *
+     */
+    protected function cleanupFiles() {
+
+        // first clean up data files junction table
+        $this->database->query("DELETE FROM " . self::TABLE_DATA_FILES . " WHERE data_id NOT IN (SELECT DISTINCT id FROM " . self::TABLE_DATA . ")");
+
+        // find files without connections to stored data rows
+        $stmt = $this->database->prepare("SELECT * FROM " . self::TABLE_FILES . " WHERE id NOT IN (SELECT DISTINCT files_id from " . self::TABLE_DATA_FILES . ")");
+        $stmt->execute();
+        $stmt_del = null;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            // remove file
+            $dir = $this->path . substr($row['filename'], 0, 2) . "/";
+            $file = $dir . $row['filename'];
+            if (is_file($file)) unlink($file);
+            // remove file variations (thumbs)
+            $path_parts = pathinfo($file);
+            $variations = scandir($dir . "variations");
+            foreach ($variations as $variation) {
+                if (strpos($variation, $path_parts['filename']) === 0) {
+                    unlink($dir . "variations/" . $variation);
+                }
+            }
+            // if containing directory is now empty, remove that too
+            if (count(scandir($dir)) == 1) wireRmdir($dir, true);
+            // delete related row from files database table
+            if (!$stmt_del) $stmt_del = $this->database->prepare("DELETE FROM " . self::TABLE_FILES . " WHERE id = :id");
+            $stmt_del->bindValue(':id', (int) $row['id'], PDO::PARAM_INT);
+            $stmt_del->execute();
+        }
+
+    }
+
+    /**
+     * Delete data that exceeds row limit defined in module settings
+     *
+     * Row limit applies to each unique page + field combination.
+     *
+     * @param int $pages_id
+     * @param int $fields_id
+     */
+    protected function cleanupExcessRows($pages_id, $fields_id) {
+
+        if (!$this->data_row_limit) return;
+
+        $ids = "";
+        $t1 = self::TABLE_REVISIONS;
+        $t2 = self::TABLE_DATA;
+        $stmt = $this->database->prepare("SELECT COUNT(*) AS count FROM $t1, $t2 WHERE $t1.pages_id = :pages_id AND $t2.fields_id = :fields_id AND $t2.revisions_id = $t1.id");
+        $stmt->bindValue(':pages_id', (int) $pages_id, PDO::PARAM_INT);
+        $stmt->bindValue(':fields_id', (int) $fields_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row['count'] > $this->data_row_limit) {
+            $stmt = $this->database->prepare("SELECT id FROM $t1 ORDER BY timestamp LIMIT :limit");
+            $stmt->bindValue(':limit', (int) ($row['count']-$this->data_row_limit), PDO::PARAM_INT);
+            $stmt->execute();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $ids .= ($ids) ? ", " . $row['id'] : $row['id'];
+            }
+            $this->database->query("DELETE FROM $t1 WHERE id IN ($ids)");
+            $this->database->query("DELETE FROM $t2 WHERE revisions_id IN ($ids)");
+            $this->cleanupFiles();
+        }
+
+    }
+
+    /**
+     * Remove previously stored data for deleted page
+     *
+     * @param HookEvent $event
+     */
+    protected function cleanupDeletedPage(HookEvent $event) {
+        $page = $event->arguments[0];
+        $t1 = self::TABLE_REVISIONS;
+        $t2 = self::TABLE_DATA;
+        $stmt = $this->database->prepare("DELETE $t1, $t2 FROM $t1, $t2 WHERE $t1.pages_id = :pages_id AND $t2.revisions_id = $t1.id");
+        $stmt->bindValue(':pages_id', (int) $page->id, PDO::PARAM_INT);
+        $stmt->execute();
+        $this->cleanupFiles();
+    }
+
+    /**
+     * Remove previously stored data for deleted/removed field
+     *
+     * Note that revisions related to changes for these fields are not deleted.
+     * This is intentional; those changes happened whether or any data remains.
+     * 
+     * @param HookEvent $event
+     */
+    protected function cleanupDeletedField(HookEvent $event) {
+
+        // find out if fields are actually going to be removed (permanent/global
+        // flags can result in WireExceptions, terminating removal entirely) and
+        // which of those (if any) can have rows in version control data table
+        $removed_fields = array();
+        $item = $event->arguments[0];
+        if ($item->id && $item->removedFields) {
+            $removed_fields = $item->removedFields->getArray();
+            $enabled_templates = implode("|", $this->enabled_templates);
+            foreach ($this->templates->find("id={$enabled_templates}, fieldgroups_id={$item->id}") as $template) {
+                foreach ($removed_fields as $id => $field) {
+                    if (($field->flags & Field::flagGlobal) && !$template->noGlobal) return;
+                    if ($field->flags & Field::flagPermanent) return;
+                    if (!in_array($field->type, $this->compatible_fieldtypes)) unset($removed_fields[$id]);
+                    if (count($this->enabled_fields) && !in_array($id, $this->enabled_fields)) unset($removed_fields[$id]);
+                }
+                if (!count($removed_fields)) return;
+            }
+        }
+
+        // if we got this far and removed fields were found, delete data rows
+        if (count($removed_fields)) {
+            $fields = implode(",", array_keys($removed_fields));
+            $stmt = $this->database->prepare("DELETE FROM " . self::TABLE_DATA . " WHERE fields_id IN ($fields)");
+            $stmt->execute();
+            $this->cleanupFiles();
+        }
+
+    }
+
+    /**
+     * Remove obsoleted data after template change
+     * 
+     * @param HookEvent $event
+     */
+    protected function cleanupChangedTemplate(HookEvent $event) {
+        $page = $event->arguments[0];
+        $fields = implode(",", array_keys($page->template->fields->getArray()));
+        $stmt = $this->database->prepare("DELETE FROM " . self::TABLE_DATA . " WHERE revisions_id IN (SELECT id FROM " . self::TABLE_REVISIONS . " WHERE pages_id = :pages_id) AND fields_id NOT IN ($fields)");
+        $stmt->bindValue(':pages_id', (int) $page->id, PDO::PARAM_INT);
+        $stmt->execute();
+        $this->cleanupFiles();
+    }
+
+    /**
+     * Capture hash format filenames from an image inputfield
+     * 
+     * @param HookEvent $event
+     */
+    protected function captureHash(HookEvent $event) {
+        $item = $event->arguments[0];
+        if ($item->_version_control_basename) {
+            if (!isset($this->hash_map[">$item->basename<"])) {
+                $this->hash_map[">$item->basename<"] = ">$item->_version_control_basename<";
+            }
+        }
+    }
+
+    /**
+     * Replace previously captured hash filenames with clean basenames
+     *
+     * @param HookEvent $event
+     */
+    protected function replaceHashes(HookEvent $event) {
+        if (count($this->hash_map)) {
+            $event->return = str_replace(
+                array_keys($this->hash_map), 
+                array_values($this->hash_map), 
+                $event->return
+            );
+        }
+    }
+
+    /**
+     * Attempt to replace hashes within text content of rendered page output
+     * 
+     * This only applies to preview mode, i.e. checking out the content of a
+     * specific page in given revision.
+     *
+     * @param HookEvent $event
+     */
+    protected function replaceTextHashes(HookEvent $event) {
+        if ($this->input->get->revision) {
+            $event->return = preg_replace("#[a-z0-9]{40}\.(?![a-z0-9\._-]*(\"|'))#i", "", $event->return);
+        }
+    }
+
+    /**
+     * Update file fields if Page has variable _version_control_filedata set
+     * or if special POST variable 'version_control_filedata' was received.
+     * 
+     * Note: Page variable is set by PageSnapshot during API usage, while
+     * POST variable is added by ProcessVersionControl during page edit.
+     *
+     * @param HookEvent $event
+     */
+    protected function restoreFiles(HookEvent $event) {
+        $page = $event->arguments[0];
+        if (!$page->_version_control_filedata) {
+            $page->_version_control_filedata = $this->input->post->version_control_filedata;
+        }
+        if ($page->_version_control_filedata) {
+            $page_current = clone($page);
+            $page_current->uncache();
+            // remove hooks PageSnapshot uses to prevent installing pagefiles
+            $this->modules->PageSnapshot->removePagefileHooks();
+            foreach ($page->_version_control_filedata as $filedata) {
+                $filedata = json_decode($filedata, true);
+                foreach ($filedata as $field => $items) {
+                    // remove old files from disk and then from field itself
+                    foreach ($page_current->$field as $file) $file->unlink();
+                    $page->$field->deleteAll();
+                    // insert new files into field (field copies files to correct
+                    // location itself, but we'll have to rename them to original
+                    // filename by removing hash prefixes added for storage)
+                    if (is_array($items)) {
+                        foreach ($items as $item) {
+                            $page->$field = $item['filename'];
+                            $page->$field->last()->rename(substr($item['filename'], strpos($item['filename'], ".")+1));
+                            $page->$field->last()->description = $item['description'];
+                            $page->$field->last()->modified = $item['modified'];
+                            $page->$field->last()->created = $item['created'];
+                            if (isset($item['tags'])) $page->$field->last()->tags = $item['tags'];
+                        }
+                    }
+                    // remove hook responsible for native unlink behaviour
+                    foreach ($page->filesManager->getHooks() as $hook) {
+                        if (isset($hook['toObject']) && $hook['toObject'] instanceof Pagefiles && $hook['toObject']->field->name == $field) {
+                            $page->filesManager->removeHook($hook['id']);
+                        }
+                    }
+                }
+            }
+            unset($page->_version_control_filedata);
+        }
+    }
+
+    /**
+     * After page has been edited track changed fields and trigger insert method
+     * to save their values to database or any other applicable storage medium.
+     *
+     * @param HookEvent|Page $object
+     */
+    protected function gather($object) {
+
+        if ($object instanceof HookEvent) $page = $object->arguments[0];
+        else if ($object instanceof Page) $page = $object;
+        else throw new WireException("Wrong param type: expecting HookEvent or Page");
+
+        // if page has no id, it's currently being added
+        $page_id = $page->id ? $page->id : 0;
+
+        // check if tracking values has been enabled for template of current
+        // page or (in case of repeater pages) template of containing page
+        $template_id = $page->template->id;
+        if ($page instanceof RepeaterPage) $template_id = $page->getForPage()->template->id;
+        if (!$object instanceof Page && !in_array($template_id, $this->enabled_templates)) return;
+
+        if ($object instanceof Page || $page->isChanged()) {
+            foreach ($page->template->fields as $field) {
+                if (!$object instanceof Page && !$page->isChanged($field->name)) continue;
+                if (!$page->id && $field->type instanceof FieldtypeFile) continue;
+                if (!in_array($field->type, $this->compatible_fieldtypes)) continue;
+                if (count($this->enabled_fields) && !in_array($field->id, $this->enabled_fields)) continue;
+                $data = $page->get($field->name);
+                // continue only if either the page in question exists (i.e.
+                // old field was cleared) or page is new and field has value
+                if ($page->id || !is_null($data) && $data != "") {
+                    if (!isset($this->page_data[$page_id])) $this->page_data[$page_id] = array();
+                    $data_array = array();
+                    if ($data instanceof Pagefiles) {
+                        // note: originally 'sort' value of each item was
+                        // used instead of custom counter, but that's not
+                        // always available (when working over API).
+                        $count = 0;
+                        foreach ($data as $item) {
+                            $data_item = array(
+                                'original_filename' => $item->filename, 
+                                'filename' => hash_file('sha1', $item->filename) . "." . $item->basename,
+                                'description' => $item->description,
+                                'modified' => $item->modified,
+                                'created' => $item->created,
+                            );
+                            if ($field->useTags) $data_item['tags'] = $item->tags;
+                            $data_array[$count.'.data'] = json_encode($data_item);
+                            ++$count;
+                        }
+                        if (!count($data_array)) $data_array['0.data'] = null;
+                    } else if ($data instanceof LanguagesPageFieldValue) {
+                        foreach ($data->getChanges() as $key) {
+                            if ($key == 'data') continue;
+                            $data_array[$key] = $data->getLanguageValue(str_replace('data', '', $key));
+                        }
+                    } else {
+                        $data_array = array('data' => $data);
+                    }
+                    $this->page_data[$page_id][$field->id] = $data_array;
+                }
+            }
+        }
+        
+    }
+
+    /**
+     * Store new data in database (and disk, if files or images are involved)
+     * 
+     * @param HookEvent|Page $object
+     * @todo consider adding support for automatically compressing file data
+     * @todo consider alternative storage methods for data (files on disk etc.)
+     */
+    protected function insert($object) {
+
+        if ($object instanceof HookEvent) $page = $object->arguments[0];
+        else if ($object instanceof Page) $page = $object;
+        else throw new WireException("Wrong param type: expecting HookEvent or Page");
+
+        // return if current page is repeater parent (for-page-n or for-field-n)
+        if ($page->template == "admin" && strpos($page->name, "for-") === 0) return;
+
+        $parent = $page->_version_control_parent;
+        $users_id = $this->user->id;
+        $username = $this->user->name;
+        if (!isset($this->page_data[$page->id]) && isset($this->page_data[0])) {
+            // handle new pages; '0' is a placeholder required if we want to
+            // store even the initial values of fields under version control
+            $this->page_data[$page->id] = $this->page_data[0];
+            unset($this->page_data[0]);
+        }
+        $page_data = isset($this->page_data[$page->id]) ? $this->page_data[$page->id] : null;
+
+        // return if no data exists
+        if (!$page_data) return;
+
+        // revision ID placeholder
+        $revisions_id = 0;
+
+        foreach ($page_data as $fields_id => $field_data) {
+
+            // if revision isn't assigned yet, get next available revision ID
+            if (!$revisions_id) {
+                $stmt = $this->database->prepare("INSERT INTO " . self::TABLE_REVISIONS . " (parent, pages_id, users_id, username) VALUES (:parent, :pages_id, :users_id, :username)");
+                $stmt->bindValue(':parent', $parent ? $parent : null, PDO::PARAM_INT);
+                $stmt->bindValue(':pages_id', $page->id, PDO::PARAM_INT);
+                $stmt->bindValue(':users_id', $users_id, PDO::PARAM_INT);
+                $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+                $stmt->execute();
+                $revisions_id = $this->database->lastInsertId();
+                $page->_version_control_revision = $revisions_id;
+                // if parent isn't assigned yet, use ID of previous revision
+                if (!$parent) {
+                    $stmt = $this->database->prepare("SELECT id FROM " . self::TABLE_REVISIONS . " WHERE pages_id = :pages_id AND id < :revisions_id ORDER BY id DESC LIMIT 1");
+                    $stmt->bindValue(':pages_id', $page->id, PDO::PARAM_INT);
+                    $stmt->bindValue(':revisions_id', $revisions_id, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($result) {
+                        $stmt = $this->database->prepare("UPDATE " . self::TABLE_REVISIONS . " SET parent = :parent WHERE id = :revisions_id");
+                        $stmt->bindValue(':parent', (int) $result['id'], PDO::PARAM_INT);
+                        $stmt->bindValue(':revisions_id', $revisions_id, PDO::PARAM_INT);
+                        $stmt->execute();
+                    }
+                }
+            }
+
+            // insert field data to another table
+            $sql_fields = "revisions_id, fields_id, property, data";
+            foreach ($field_data as $property => $data) {
+                $file_id = null;
+                // dot means that this is multipart property (n.data), which
+                // can *at the moment* be used to identify file/image fields
+                if (strpos($property, ".") && !is_null($data)) {
+                    // decode JSON data to get proper file information; copy
+                    // original file to storage unless it's already there
+                    $data = json_decode($data, true);
+                    $dir = $this->path . substr($data['filename'], 0, 2) . "/";
+                    $file = $dir . $data['filename'];
+                    // if this is a new file, store and add row to files table;
+                    // if not, fetch file ID from files table for later use
+                    if (!is_file($file)) {
+                        if (!is_dir($dir)) wireMkdir($dir . "variations", true);
+                        copy($data['original_filename'], $file);
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mime_type = finfo_file($finfo, $file);
+                        finfo_close($finfo);
+                        $size = filesize($file);
+                        if (!$size) $size = 0;
+                        $stmt = $this->database->prepare("INSERT INTO " . self::TABLE_FILES . " (filename, mime_type, size) VALUES (:filename, :mime_type, :size)");
+                        $stmt->bindValue(':filename', $data['filename'], PDO::PARAM_STR);
+                        $stmt->bindValue(':mime_type', $mime_type, PDO::PARAM_STR);
+                        $stmt->bindValue(':size', $size, PDO::PARAM_INT);
+                        $stmt->execute();
+                        $file_id = $this->database->lastInsertId();
+                    } else {
+                        $stmt = $this->database->prepare("SELECT id FROM " . self::TABLE_FILES . " WHERE filename = :filename");
+                        $stmt->bindValue(':filename', $data['filename'], PDO::PARAM_STR);
+                        $stmt->execute();
+                        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $file_id = $result['id'];
+                    }
+                    unset($data['original_filename']);
+                    // re-encode JSON data
+                    $data = json_encode($data);
+                }
+                $stmt = $this->database->prepare("INSERT INTO " . self::TABLE_DATA . " (revisions_id, fields_id, property, data) VALUES (:revisions_id, :fields_id, :property, :data)");
+                $stmt->bindValue(':revisions_id', $revisions_id, PDO::PARAM_INT);
+                $stmt->bindValue(':fields_id', $fields_id, PDO::PARAM_INT);
+                $stmt->bindValue(':property', $property, PDO::PARAM_STR);
+                $stmt->bindValue(':data', $data, PDO::PARAM_STR);
+                $stmt->execute();
+                if ($file_id) {
+                    // if data row is related to file, add row to junction table
+                    $data_id = $this->database->lastInsertId();
+                    $stmt = $this->database->prepare("INSERT INTO " . self::TABLE_DATA_FILES . " (data_id, files_id) VALUES (:data_id, :file_id)");
+                    $stmt->bindValue(':data_id', $data_id, PDO::PARAM_INT);
+                    $stmt->bindValue(':file_id', $file_id, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+            }
+
+            // clear page data and enforce row limit setting
+            unset($this->page_data[$page->id]);
+            $this->cleanupExcessRows($page->id, $fields_id);
+
+        }
+        
+    }
+    
+    /**
+     * This function is executed before page markup has been created
+     *
+     * Used for injecting custom scripts, styles and/or markup to admin
+     * page. Purpose of these is to allow viewing and possibly managing
+     * version history.
+     *
+     * @param HookEvent $event
+     */
+    protected function inject(HookEvent $event) {
+
+        // this only applies to GET requests
+        if ($_SERVER['REQUEST_METHOD'] !== "GET") return;
+
+        // make sure that current user has version-control permission
+        if (!$this->user->hasPermission('version-control')) return;
+
+        // make sure that value tracking is enabled for template of
+        // the page currently being edited
+        if ($this->input->get->id) $page = $this->pages->get((int) $this->input->get->id);
+        if (!$page || !$page->id || !in_array($page->template->id, $this->enabled_templates)) return;
+
+        // inject scripts and styles
+        $class = $this->className();
+        $info = $this->getModuleInfo();
+        $version = (int) $info['version']; 
+        if (is_file($this->config->paths->$class . "$class.css")) $this->config->styles->add($this->config->urls->$class . "$class.css?v=$version"); 
+        if (is_file($this->config->paths->$class . "$class.js")) $this->config->scripts->add($this->config->urls->$class . "$class.js?v=$version"); 
+
+        // inject settings and translations
+        $process = $this->modules->getModuleID("ProcessVersionControl");
+        $processPage = $this->pages->get("process=$process");
+        $this->config->js($class, array(
+            'i18n' => array(
+                'compareWithCurrent' => __("Compare with current"),
+                'editDisabled' => __("Editing this data is currently disabled. Restore it by saving the page or switch to current version first."),
+                'commentPrompt' => __("Type in comment text for this revision (max 255 characters)"),
+                'closePreview' => __("This is the page as it appeared on %s. Click here to close the preview."),
+                'confirmRestore' => __("Are you sure that you want to revert this page to an earlier revision?"),
+            ),
+            'pageID' => $page->id,
+            'processPage' => $processPage->url(),
+        ));
+
+    }
+
+    /**
+     * Build the 'history' tab on the Page Edit form
+     *
+     * @param HookEvent $event
+     */
+    protected function buildFormHistory(HookEvent $event) {
+
+        // make sure that current user has version-control permission
+        if (!$this->user->hasPermission('version-control')) return;
+
+        $form = $event->return;
+        $page = $this->pages->get($form->id->value);
+        if (!in_array($page->template->id, $this->enabled_templates)) return;
+
+        // should date formatting occur?
+        $defaults = ProcessVersionControl::getDefaultData();
+        $processModule = $this->modules->get('ProcessVersionControl');
+        $date_format = $processModule->date_format != $defaults['date_format'] ? $processModule->date_format : null;
+
+        // cache usernames for later use
+        $stmt = $this->database->prepare("SELECT DISTINCT users_id FROM " . self::TABLE_REVISIONS . " WHERE pages_id = :pages_id");
+        $stmt->bindValue(':pages_id', $page->id, PDO::PARAM_INT);
+        $stmt->execute();
+        $users = array();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $user = wire('users')->get($row['users_id']);
+            if ($user->id) {
+                $users[$user->name] = $user->id;
+            } else {
+                $stmt = $this->database->prepare("SELECT username FROM " . self::TABLE_REVISIONS . " WHERE users_id = :users_id LIMIT 1");
+                $stmt->bindValue(':users_id', $row['users_id'], PDO::PARAM_INT);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                $users[$user['username']] = $row['users_id'];
+            }
+        }
+        ksort($users);
+        $users = array_flip($users);
+
+        // wrapper element (history tab)
+        $wrapper = new InputfieldWrapper;
+        $wrapper->attr('id', $this->className() . 'History');
+        $wrapper->attr('title', __('History')); // Tab Label: History
+        if (isset($this->input->get->users_id) || isset($this->input->get->page)) {
+            $wrapper->attr('data-active', true);
+        }
+
+        // gather WHERE rules (page, filters)
+        $where = array();
+        $where['pages_id = :pages_id'] = array(':pages_id', $page->id, PDO::PARAM_INT);
+        if ($users_id = (int) $this->input->get->users_id) {
+            $where['users_id = :users_id'] = array(':users_id', $users_id, PDO::PARAM_INT);
+        }
+        $where_str = "WHERE " . implode(" AND ", array_keys($where));
+
+        // total count of rows in database table
+        $stmt = $this->database->prepare("SELECT COUNT(*) AS total FROM " . self::TABLE_REVISIONS . " $where_str");
+        foreach ($where as $value) $stmt->bindValue($value[0], $value[1], $value[2]);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $total = $result['total'];
+
+        // put together LIMIT clause
+        $start = 0;
+        $limit = 25;
+        if ($total > $limit) {
+            if ($this->input->get->page) $start = ($this->input->get->page-1)*$limit;
+            if ($start > $total) $start = $total-$limit;
+        }
+
+        // pager markup
+        $pager = "";
+        if ($total > $limit) {
+            $pager_links = 20;
+            $pager_page = (int) $start/$limit+1;
+            $pager_pages = ceil($total/$limit);
+            $pager = $this->renderPager($pager_links, $pager_page, $pager_pages);
+        }
+
+        // fetch and parse history rows
+        $stmt = $this->database->prepare("
+        SELECT id, users_id, username, timestamp, comment
+        FROM " . self::TABLE_REVISIONS . "
+        $where_str
+        ORDER BY timestamp DESC, id DESC
+        LIMIT :start, :limit
+        ");
+        foreach ($where as $value) $stmt->bindValue($value[0], $value[1], $value[2]);
+        $stmt->bindValue(':start', $start, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = array();
+        $process_id = wire('modules')->getModuleID("ProcessVersionControl");
+        $process_page = wire('pages')->get("template=admin, process={$process_id}")->url;
+        $comment = "<a class='edit-comment' data-revision='%d' href='#'><i class='fa fa-edit' title='" . __("Edit comment") . "'></i></a>";
+        $restore = "<a class='restore' href='{$process_page}restore/?pages_id={$page->id}&revision=%d'><i class='fa fa-undo' title='" . __("Restore revision") . "'></i></a>";
+        $preview = "<a class='preview' target='_blank' data-date='%s' href='{$process_page}preview/?pages_id={$page->id}&revision=%d'><i class='fa fa-eye' title='" . __("Preview revision") . "'></i></a>";
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if ($date_format) $row['timestamp'] = date($date_format, strtotime($row['timestamp']));
+            $rows[] = array(
+                $row['id'], 
+                $users[$row['users_id']],
+                $row['timestamp'],
+                $row['comment'],
+                sprintf($comment, $row['id']) . sprintf($preview, $row['timestamp'], $row['id']) . ($start || count($rows) ? sprintf($restore, $row['id']) : '<span></span>'),
+            );
+        }
+
+        // setup datatable and append it to history tab
+        $table = $this->modules->get("MarkupAdminDataTable");
+        $table->setEncodeEntities(false);
+        $table->headerRow(array(
+            __('Revision'),
+            __('Author'),
+            __('Timestamp'),
+            __('Comment'),
+            '', // placeholder
+        ));
+        foreach ($rows as $row) $table->row($row);
+        $field = $this->modules->get("InputfieldMarkup");
+        $field->value = $table->render() . $pager;
+        $field->label = __("History");
+        $wrapper->append($field);
+
+        // filters
+        if (count($rows) > 1) {
+
+            $fieldset = $this->modules->get("InputfieldFieldset");
+            $fieldset->attr('id+name', 'history_filters');
+            $fieldset->label = __("Filters");
+            $fieldset->icon = "filter";
+            if (!$this->input->get->users_id) $fieldset->collapsed = Inputfield::collapsedYes;
+            $wrapper->prepend($fieldset);
+
+            $field = $this->modules->get("InputfieldHidden");
+            $field->name = 'id';
+            $field->value = $page->id;
+            $fieldset->add($field);
+            
+            $field = $this->modules->get("InputfieldSelect");
+            $field->attr('id+name', 'users_id');
+            $field->addOption('', __('All'));
+            $field->addOptions($users);
+            $field->value = $this->input->get->users_id;
+            $field->label = __('Filter by Author');
+            $field->description = __('When selected, only revisions authored by specific user will be shown.');
+            if (!$this->input->get->users_id) $field->collapsed = Inputfield::collapsedYes;
+            $fieldset->add($field);
+
+        }
+
+        // scripts
+        $class = $this->className();
+        $info = $this->getModuleInfo();
+        $version = (int) $info['version']; 
+        $this->config->scripts->add($this->config->urls->$class . "HistoryTab.js?v=$version"); 
+
+        // insert new tab to Page Edit form
+        $view = $form->children('id=ProcessPageEditView');
+        if (count($view)) $form->insertBefore($wrapper, $view->first());
+        else $form->append($wrapper);
+        $event->return = $form;
+
+    }
+
+    /**
+     * Find out which fields belonging to current template have version
+     * control enabled. Added as a new property "versionControlFields"
+     * to Template object.
+     *
+     * @param HookEvent $event
+     */
+    protected function versionControlFields(HookEvent $event) {
+
+        $template = $event->object;
+        if (!count($this->enabled_fields)) return $event->return = $template->fields;
+        $fields = new Fieldgroup();
+        foreach ($this->enabled_fields as $field) {
+            if ($template->hasField($field)) {
+                $fields->add($this->fields->get($field));
+            }
+        }
+
+        $event->return = $fields;
+
+    }
+
+    /**
+     * Find out the revision number of current page. Added as a new property
+     * "versionControlRevision" to Page object.
+     *
+     * @param HookEvent $event
+     */
+    protected function versionControlRevision(HookEvent $event) {
+
+        $page = $event->object;
+        if (!in_array($page->template->id, $this->enabled_templates)) return;
+
+        $revision = (int) $page->_version_control_revision;
+        if (!$revision) {
+            $stmt = $this->database->prepare("SELECT id FROM " . self::TABLE_REVISIONS . " WHERE pages_id = :pages_id ORDER BY id DESC LIMIT 1");
+            $stmt->bindValue(':pages_id', (int) $page->id, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result) {
+                $revision = (int) $result['id'];
+                $page->_version_control_revision = $revision;
+            }
+        }
+        $event->return = $revision ? $revision : null;
+
+    }
+
+    /**
+     * Find existing revisions of current page
+     * 
+     * Adds new versionControlRevisions() method to Pages. This method can take
+     * optional $limit param (int), which defines how many revisions should be
+     * returned. Returns an array with revision IDs as keys and datetimes as
+     * values, current revision always being the first array item:
+     * 
+     * array(
+     *     3 => '2014-01-01 01:15:00', // current revision
+     *     2 => '2014-01-01 01:10:00',
+     *     1 => '2014-01-01 01:00:00',
+     *     // etc.
+     * );
+     * 
+     * @param HookEvent $event
+     */
+    protected function versionControlRevisions(HookEvent $event) {
+
+        $page = $event->object;
+        if (!in_array($page->template->id, $this->enabled_templates)) return;
+
+        // limit argument defines how many revisions can be returned
+        $limit = null;
+        if (isset($event->arguments[0]) && (int) $event->arguments[0] > 0) {
+            $limit = (int) $event->arguments[0];
+        }
+        
+        $revisions = null;
+        // attempt to fetch revisions from cache
+        if (is_array($page->_version_control_revisions)) {
+            $cache = $page->_version_control_revisions;
+            if ($cache['limit'] == $limit) {
+                $revisions = $cache['revisions'];
+            } else if ($limit && $cache['limit'] > $limit) {
+                $revisions = array_slice($cache['revisions'], 0, $limit, true);
+            }
+        }
+
+        if (!is_array($revisions)) {
+            // fetch revision from database (with limit if one is set)
+            $sql = "SELECT id, timestamp FROM " . self::TABLE_REVISIONS . " WHERE pages_id = :pages_id ORDER BY id DESC";
+            if ($limit) $sql .= " LIMIT :limit";
+            $stmt = $this->database->prepare($sql);
+            $stmt->bindValue(':pages_id', (int) $page->id, PDO::PARAM_INT);
+            if ($limit) $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            $revisions = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            $page->_version_control_revisions = array(
+                'limit' => $limit,
+                'revisions' => $revisions,
+            );
+        }
+
+        $event->return = $revisions;
+
+    }
+
+    /**
+     * When module is installed, create database tables for storing data
+     *
+     * @throws WireException if VersionControlForTextFields module is found
+     */
+    public function install() {
+
+        // if Version Control For Text Fields is found, cancel installation to avoid conflict
+        if (is_dir($this->config->paths->siteModules . "VersionControlForTextFields")) {
+            throw new WireException("VersionControlForTextFields has to be removed first");
+        }
+        
+        // revisions table bundles individual data rows into site-wide revisions
+        $this->createTable(self::TABLE_REVISIONS, array(
+            'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
+            'parent INT UNSIGNED DEFAULT NULL',
+            'pages_id INT UNSIGNED NOT NULL',
+            'users_id INT UNSIGNED DEFAULT NULL',
+            'username VARCHAR(255) DEFAULT NULL',
+            'timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            'comment VARCHAR(255) DEFAULT NULL',
+            'KEY pages_id (pages_id)',
+        ));
+
+        // data table, contains actual content for edited fields
+        $this->createTable(self::TABLE_DATA, array(
+            'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
+            'revisions_id INT UNSIGNED NOT NULL',
+            'fields_id INT UNSIGNED NOT NULL',
+            'property VARCHAR(255) NOT NULL',
+            'data MEDIUMTEXT DEFAULT NULL',
+            'KEY revisions_id (revisions_id)',
+            'KEY fields_id (fields_id)',
+        ));
+
+        // files table contains one row for each stored file
+        $this->createTable(self::TABLE_FILES, array(
+            'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY',
+            'filename VARCHAR(255) NOT NULL',
+            'mime_type VARCHAR(255)',
+            'size INT UNSIGNED NOT NULL',
+        ));
+
+        // junction table: connects files to data rows
+        $this->createTable(self::TABLE_DATA_FILES, array(
+            'data_id INT UNSIGNED NOT NULL',
+            'files_id INT UNSIGNED NOT NULL',
+            'PRIMARY KEY (data_id, files_id)',
+        ));
+
+        // attempt to import VersionControlForTextFields data
+        $this->versionControlForTextFieldsImport();
+        
+    }
+
+    /**
+     * When module is uninstalled, drop database tables created during install
+     *
+     */
+    public function uninstall() {
+        $this->dropTable(self::TABLE_REVISIONS);
+        $this->dropTable(self::TABLE_DATA);
+        $this->dropTable(self::TABLE_FILES);
+        $this->dropTable(self::TABLE_DATA_FILES);
+    }
+    
+    /**
+     * Helper method for dropping tables
+     * 
+     * @param string $table Table name
+     */
+    protected function dropTable($table) {
+        $table = $this->database->escapeStr($table);
+        $stmt = $this->database->prepare("SHOW TABLES LIKE '$table'");
+        $stmt->execute();
+        if (count($stmt->fetchAll()) == 1) {
+            $this->database->query("DROP TABLE $table");
+            $this->message("Dropped Table: $table");
+        }
+    }
+
+    /**
+     * Helper method for creating tables
+     *
+     * @param string $table Table name
+     * @param array $schema Table schema
+     * @throws WireDatabaseException if table already exists
+     */
+    protected function createTable($table, $schema) {
+        $table = $this->database->escapeStr($table);
+        $stmt = $this->database->prepare("SHOW TABLES LIKE '$table'");
+        $stmt->execute();
+        if (count($stmt->fetchAll()) == 1) {
+            throw new WireDatabaseException("Table $table already exists");
+        }
+        $sql = "CREATE TABLE $table (";
+        $sql .= implode(', ', $schema);
+        $sql .= ") ENGINE = MYISAM DEFAULT CHARSET=utf8";
+        $this->database->query($sql);
+        $this->message("Created Table: $table");
+    }
+
+    /**
+     * Import data from Version Control For Text Fields
+     * 
+     */
+    protected function versionControlForTextFieldsImport() {
+        $main_table = count($this->database->query("SHOW TABLES LIKE 'version_control_for_text_fields'")->fetchAll()) == 1;
+        $data_table = count($this->database->query("SHOW TABLES LIKE 'version_control_for_text_fields__data'")->fetchAll()) == 1;
+        if ($main_table && $data_table) {
+            $stmt_select_data_row = $this->database->prepare("SELECT property, data FROM version_control_for_text_fields__data WHERE version_control_for_text_fields_id = :id");
+            $stmt_insert_revision = $this->database->prepare("INSERT INTO " . self::TABLE_REVISIONS . " (parent, pages_id, users_id, username, timestamp) VALUES (:parent, :pages_id, :users_id, :username, :timestamp)");
+            $stmt_insert_data_row = $this->database->prepare("INSERT INTO " . self::TABLE_DATA . " (revisions_id, fields_id, property, data) VALUES (:revisions_id, :fields_id, :property, :data)");
+            $result = $this->database->query("SELECT * FROM version_control_for_text_fields");
+            $parent = null;
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                $stmt_insert_revision->bindValue(':parent', $parent, PDO::PARAM_INT);
+                $stmt_insert_revision->bindValue(':pages_id', (int) $row['pages_id'], PDO::PARAM_INT);
+                $stmt_insert_revision->bindValue(':users_id', (int) $row['users_id'], PDO::PARAM_INT);
+                $stmt_insert_revision->bindValue(':username', $row['username'], PDO::PARAM_STR);
+                $stmt_insert_revision->bindValue(':timestamp', $row['timestamp'], PDO::PARAM_STR);
+                $stmt_insert_revision->execute();
+                $revisions_id = $this->database->lastInsertId();
+                $stmt_select_data_row->bindValue(':id', (int) $row['id'], PDO::PARAM_INT);
+                $stmt_select_data_row->execute();
+                while ($data_row = $stmt_select_data_row->fetch(PDO::FETCH_ASSOC)) {
+                    $stmt_insert_data_row->bindValue(':revisions_id', $revisions_id, PDO::PARAM_INT);
+                    $stmt_insert_data_row->bindValue(':fields_id', (int) $row['fields_id'], PDO::PARAM_INT);
+                    $stmt_insert_data_row->bindValue(':property', $data_row['property'], PDO::PARAM_STR);
+                    $stmt_insert_data_row->bindValue(':data', $data_row['data'], PDO::PARAM_STR);
+                    $stmt_insert_data_row->execute();
+                }
+                $parent = $revisions_id;
+            }
+            $this->message("Imported existing Version Control For Text Fields data");
+        }
+    }
+
+    /**
+     * Regenerate data when enabled templates change
+     *
+     * @param HookEvent $event
+     */
+    protected function regenerateData(HookEvent $event) {
+
+        // this only applies to settings of current module
+        if ($event->arguments[0] !== $this->className()) return;
+        $enabled_templates = $event->arguments[1]['enabled_templates'];
+
+        // find out which (if any) templates were added and populate data
+        $new_templates = array_diff($enabled_templates, $this->enabled_templates);
+        if (count($new_templates)) {
+            $cache_items = 0;
+            foreach ($new_templates as $template) {
+                $count = 0;
+                $template = wire('templates')->get($template);
+                foreach ($this->pages->find("template={$template}, include=all") as $page) {
+                    $this->gather($page);
+                    $this->insert($page);
+                    ++$count;
+                    ++$cache_items;
+                    if ($cache_items > 100) {
+                        // avoid consuming too much memory by running in batches
+                        $this->pages->uncacheAll();
+                        $cache_items = 0;
+                    }
+                }
+                if ($count) {
+                    $this->message(sprintf(_n("Populated data for %d page using template %s", "Populated data for %d pages using template %s", $count), $count, $template));
+                }
+            }
+        }
+
+        // find out which (if any) templates were removed and cleanup data
+        $old_templates = array_diff($this->enabled_templates, $enabled_templates);
+        if (count($old_templates)) {
+            $t1 = self::TABLE_REVISIONS;
+            $t2 = self::TABLE_DATA;
+            foreach ($old_templates as $template) {
+                $template = wire('templates')->get($template);
+                $page_ids = array_values($this->pages->find("template={$template}, include=all")->getArray());
+                if ($count = count($page_ids)) {
+                    $page_ids = implode(",", $page_ids);
+                    $stmt = $this->database->prepare("DELETE $t1, $t2 FROM $t1, $t2 WHERE $t1.pages_id IN(" . rtrim(str_repeat('?, ', count($page_ids)), ', ') . ") AND $t2.revisions_id = $t1.id");
+                    $stmt->execute($page_ids);
+                    $this->cleanupFiles();
+                    $this->message(sprintf(_n("Removed stored data for %d page using template %s", "Removed stored data for %d pages using template %s", $count), $count, $template));
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Render markup for pager
+     *
+     * @param int $links Number of pager links visible at once
+     * @param int $page Identifies currently active pager item
+     * @param int $pages Number of total pager items available
+     * @return string
+     */
+    protected function renderPager($links, $page, $pages) {
+
+        if ($pages < 2) return;
+
+        // convert GET params to string
+        $get = "";
+        foreach ($this->input->get as $key => $value) {
+            if ($key != "page" && $value != "") {
+                $get .= "&amp;".urlencode($key)."=".urlencode($value);
+            }
+        }
+
+        // calculate start and end points
+        $start = 1;
+        $end = $pages;
+        if ($end > $links) {
+            $start = (int) $page-$links/2;
+            if ($start < 1) $start=1;
+            $end = $start+($links-1);
+            if ($end > $pages) $end = $pages;
+            if ($end-$page < (int) $links/2-1) { 
+                $start -= ((int) $links/2)-($end-$page);
+                if ($start < 1) $start=1;
+            }
+        }
+
+        // generate markup
+        $out = "<ul class='MarkupPagerNav MarkupPagerNavCustom'>";
+        if ($start > 1) {
+            $out .= "<li><a href='./?page=1$get'><span>1</span></a></li>";
+            if ($start > 2) {
+                $out .= "<li class='MarkupPagerNavSeparator'>&hellip;</li>";
+            }
+        }
+        for ($i = $start; $i<=$pages; ++$i) {
+            $here = ($page == $i) ? " class='MarkupPagerNavOn'" : "";
+            $out .= "<li$here><a href='./?page=$i$get'><span>$i</span></a></li>";
+            if ($pages > $links && $i == $end && $i < $pages) {
+                if ($pages-$i > 1) {
+                    $out .= "<li class='MarkupPagerNavSeparator'>&hellip;</li>";
+                }
+                $i = $pages-1;
+                if ($i < $end) $i = $end+1;
+            }
+        }
+        $out .= "</ul>";
+        
+        return $out;
+
+    }
+
+    /**
+     * Custom getter mainly for path and url variables
+     *
+     * We're using files directory of our process module as file storage; fetch
+     * and cache locally it's path and URL. If directory doesn't exist, create.
+     * If key is unrecognized, pass the request to parent class.
+     * 
+     * @param string $key
+     * @return mixed
+     */
+    public function __get($key) {
+        if ($key == "path" || $key == "url") {
+            if (!array_key_exists($key, $this->data)) {
+                $processModuleID = wire('modules')->getModuleID("ProcessVersionControl");
+                $processPage = wire('pages')->get("template=admin, process=$processModuleID, name=" . ProcessVersionControl::PAGE_NAME); 
+                $pagefilesManager = new PagefilesManager($processPage);
+                $this->data['path'] = $pagefilesManager->path();
+                $this->data['url'] = $pagefilesManager->url();
+                if (!is_dir($this->data['path'])) wireMkdir($this->data['path']);
+            }
+            return $this->data[$key];
+        }
+        return parent::__get($key);
+    }
+    
+}

@@ -1,0 +1,554 @@
+<?php
+
+class ShoppingCart extends WireData implements Module, ConfigurableModule
+{
+
+	public static function getModuleInfo()
+	{
+		return array(
+			'title' => 'Shopping Cart',
+			'version' => 101,
+			'summary' => 'Simple shopping cart for PW',
+			'singular' => true,
+			'autoload' => true
+		);
+	}
+
+	static public function getDefaultData() {
+	   return array(
+		   'allowNegativeStock' => 1,
+		   'currencyBefore' => 0,
+		   'currency' => '&euro;',
+		   'currencyCode' => 'EUR',
+		   'decimals' => 2,
+		   'dec_point' => ',',
+		   'thousands_sep' => ''
+		   );
+	}
+
+	public function __construct() {
+	   foreach(self::getDefaultData() as $key => $value) {
+		   $this->$key = $value;
+	   }
+	}
+
+	public function init() {
+	}
+
+	public function ready() {
+		if ($this->input->post->sc_product_id) {
+			$product_id = (int) $this->input->post->sc_product_id;
+			$qty = (int) $this->input->post->sc_qty;
+			$this->addProductToCart($this->pages->get($product_id), $qty);
+			$this->session->redirect("./");
+		}
+
+		if ($this->input->post->sc_update) {
+			$this->updateCart($this->input->post->items);
+			$this->session->redirect("./");
+		}
+
+		if ($this->input->get->sc_remove) {
+			$product_id = (int) $this->input->get->sc_remove;
+			$product = $this->pages->get($product_id);
+			$this->addProductToCart($product, 0);
+			$this->session->redirect("./");
+		}
+
+		if ($this->input->post->sc_checkout) {
+			$this->updateCart($this->input->post->items);
+			$checkout = $this->pages->get("template=sc-checkout, include=hidden");
+			if ($checkout->url)
+				$this->session->redirect($checkout->url);
+			else
+				$this->session->redirect("./");
+		}
+
+	}
+
+
+	/**
+	 * Returns the default markup for "Add to cart form"
+	 *
+	 * @param Page $product Actual product page (usually just $page on your template)
+	 * @param string $postUrl Url where we post (you can think that as a redirect, since post are handled by this autoload module)
+	 * @return string|false Markup for "Add to cart form" or false if there ain't numeric and over 0 price for the product
+	 *
+	 */
+	public function renderAddToCart(Page $product = NULL, $postUrl = "./")
+	{
+		if (is_null($product))
+			$product = wire('page');
+
+		if (!(is_numeric($product->sc_price)) || $product->sc_price <= 0)
+			return false;
+
+		if(!$this->allowNegativeStock && $product->sc_qty < 1) {
+			return $this->_("Sorry, we are out of stock.");
+		}
+
+
+		$out = "<form method='post' action='$postUrl'>";
+		$out .= "<input type='hidden' value='{$product->id}' name='sc_product_id' />";
+		$out .= "<input type='number' name='sc_qty' value='1'/>";
+		$out .= "<input type='submit' value='" . $this->_("Add to cart") . "' />";
+		$out .= "</form>";
+
+
+
+		return $out;
+	}
+
+	/**
+	 * Returns true|false depending if product was added succesfully to the cart
+	 *
+	 * @param Page $product Actual product page
+	 * @param int $qty How many items added, use 0 if you want to remove the item
+	 * @return true|false
+	 *
+	 */
+	public function ___addProductToCart(Page $product, $qty = 1)
+	{
+		$qty   = (int) $qty;
+
+		if ($qty < 0)
+			return false;
+
+		if (!$this->checkStock($product, $qty)) {
+			$errormsg = sprintf($this->_n("Sorry, we have only %d item left. Try again, please.", "Sorry, we have only %d items left. Try again, please.", $product->sc_qty), $product->sc_qty);
+			$this->session->error($errormsg);
+			return false;
+		}
+
+		$items = $this->getCurrentCart();
+
+		// There is not a single product available
+		if (count($items) == 0) {
+			if ($qty > 0)
+				$items[] = $this->_newItem($product->id, $qty);
+		} else {
+			$product_found = false;
+			foreach ($items as $key => $item) {
+
+				// There is already this product on cart
+				if ($item->product_id === $product->id) {
+
+					// We'll check if we have enough stock for this new quantity
+					$newQty = $item->qty + $qty;
+					$newQty = $this->checkStockAndReturnMaxQty($product, $newQty);
+					$item->qty = $newQty;
+
+					// If zero qty added, remove from basket
+					if ($qty === 0) {
+						unset($items[$key]);
+						$items = array_values($items);
+					}
+
+					$product_found = true;
+					break;
+				}
+			}
+
+			if (!$product_found) {
+				if ($qty > 0)
+					$items[] = $this->_newItem($product->id, $qty);
+			}
+		}
+
+		$total_sum = $this->getTotalSumFromItems($items);
+		$items     = json_encode($items);
+
+		// Update cart to db or insert new row if there isn't
+		$update = $this->db->query("INSERT INTO {$this->className} SET items = '$items', total_sum = $total_sum, session_id = '" . $this->getSession() . "' ON DUPLICATE KEY UPDATE items = '$items', total_sum = $total_sum");
+
+		return true;
+	}
+
+	/*
+	 * Returns true if it is ok to add product to basket
+	 *
+	 * @param Page $product
+	 * @param Integer $qty
+	 *
+	 */
+	public function checkStock(Page $product, $qty) {
+		$qty = (int) $qty;
+		// If product have stock quantity, then we might be interested in that
+		if ($product->sc_qty != '') {
+			// Let's see if we don't allow negative stock and we are trying to
+			// add more products than we have in stock
+			if(!$this->allowNegativeStock && $qty > $product->sc_qty) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns markup for actual cart, where is possibilities to edit and remove products and qty
+	 *
+	 * @return string markup for cart
+	 *
+	 */
+	public function renderCart($viewOnly = false, ShippingAbstract $shippingModule = NULL)
+	{
+		$out = '';
+
+		$items = $this->getCurrentCart();
+
+		if (count($items) == 0) {
+			return $this->_("No items in cart");
+		}
+
+		$total_sum = $this->getTotalSumFromItems($items, $shippingModule);
+
+		if (!$viewOnly) $out .= "<form method='post' action='./'>";
+		$out .= "<table>";
+		$out .= "<tr><th>" . $this->_('Product') . "</th>";
+		$out .= "<th>" . $this->_('Quantity') . "</th>";
+		$out .= "<th>" . $this->_('Subtotal') . "</th>";
+		if (!$viewOnly) $out .= "<th>" . $this->_('Remove?') . "</th>";
+		$out .= "</tr>";
+
+		foreach ($items as $item) {
+
+			$total_price = $this->getProductPriceTotal($item);
+
+			$product = $this->pages->get((int) $item->product_id);
+
+			// If the product is repeater, let's prepend the product title before variation
+			if (strpos($product->template->name, "repeater_") === 0) {
+				$parentProduct = $product->getForPage();
+				$title = $parentProduct->title . ": " . $product->title;
+			} else {
+				$title = $product->title;
+			}
+
+			$out .= "<tr>";
+			$out .= "<td>{$title}</td>";
+			if (!$viewOnly)	{
+				$out .= "<td><input data-price='" . $product->sc_price . "' name='items[{$product->id}]' type='number' size='2' value='" . (int) $item->qty . "'/></td>";
+			} else {
+				$out .= "<td class='sc_number'>" . (int) $item->qty . "</td>";
+			}
+
+			$out .= "<td class='sc_number'>" . $this->renderPrice($total_price) . "</td>";
+			if (!$viewOnly) $out .= "<td><a class='remove' href='./?sc_remove=" . $product->id . "'>" . $this->_("Remove") . "</a></td>";
+			$out .= "</tr>";
+		}
+
+		if ($shippingModule) {
+			$shippingCost = $shippingModule->calculateShippingCost();
+			$shippingCost = $this->renderPrice($shippingCost);
+			$out .= "<tr class='shippingRow'><td colspan='2'>". $this->_("Shipping costs") ."</td><td class='sc_number'>$shippingCost</td>";
+			if (!$viewOnly) $out .= "<td>&nbsp;</td>";
+			$out .= "</tr>";
+		}
+
+		$out .= "<tr class='final'><td colspan='2'>" . $this->_("Total:") . "</td><td id='total_sum'  class='sc_number'>". $this->renderPrice($total_sum) ."</td>";
+		if (!$viewOnly) $out .= "<td>&nbsp;</td>";
+		$out .= "</tr>";
+
+		$out .= "</table>";
+
+		if (!$viewOnly) {
+			$out .= "<input type='submit' class='sc_update submit' name='sc_update' value=' " . $this->_("Update Cart") . "' />";
+			if ($this->modules->isInstalled('ShoppingCheckout')) $out .= "<input type='submit' class='sc_checkout submit' name='sc_checkout' value=' " . $this->_("Continue to checkout") . "' />";
+		}
+		if (!$viewOnly) $out .= "</form>";
+
+		return $out;
+	}
+
+	/**
+	 * Returns true
+	 *
+	 * Removes product from cart
+	 *
+	 * @param Page $product Actual product that you want to remove
+	 * @return true
+	 *
+	 */
+	public function removeProductFromCart($product)
+	{
+		$this->addProductToCart($product, 0);
+		return true;
+	}
+
+	public function renderPrice($price) {
+		settype($price, "float");
+		$price = number_format($price, $this->decimals, $this->dec_point, $this->thousands_sep);
+		$space = ($this->spaceOnCurrency) ? " " : "";
+		if ($this->currencyBefore == 1)
+			return $this->currency . $space . $price;
+		else
+			return $price . $space . $this->currency;
+	}
+
+	public function checkStockAndReturnMaxQty($product, $qty) {
+
+		if (!$this->checkStock($product, $qty)) {
+			// If stock level fails, we add all there is and add notification about it
+			$oldItems = $this->getCurrentCart();
+			$qty = 0;
+			foreach($oldItems as $p) {		// TODO: Probably better ways to do this than loop all?
+				if ($product->id == $p->product_id && $product->sc_qty > 0) {
+					$qty = $product->sc_qty;
+				}
+			}
+
+			// Little bit different error message if it is totally over or just partly
+			if ($qty > 0) $errormsg = sprintf(__("Sorry, but we don't have that many %s in stock. Added all we have in your cart."), $product->title);
+			else $errormsg = sprintf(__("Sorry, but we don't have any %s in stock."), $product->title);
+
+			$this->session->error($errormsg);
+
+		}
+		return $qty;
+	}
+
+	/**
+	 * Returns cart items as JSON
+	 *
+	 * Updates the current cart
+	 *
+	 * @param array $products Simple array that has product_id:s as keys and qty as value array(123 => 4, 124 => 2)
+	 * @return string with current items as JSON string
+	 *
+	 */
+	public function updateCart(array $products)
+	{
+		$items = array();
+
+		foreach ($products as $product_id => $qty) {
+			// First we check if stock level for that product is good enough
+			$product = $this->pages->get($product_id);
+			$qty = $this->checkStockAndReturnMaxQty($product, $qty);
+
+			if ($qty > 0)
+				$items[] = $this->_newItem((int) $product_id, (int) $qty);
+		}
+
+		$total_sum = $this->getTotalSumFromItems($items);
+		$items     = json_encode($items);
+
+		$update = $this->db->query("UPDATE {$this->className} SET items = '$items', total_sum = $total_sum WHERE session_id = '" . $this->getSession() . "'");
+
+		return $items;
+
+	}
+
+	public function getTotalSumFromItems($items, ShippingAbstract $shippingOption = NULL)
+	{
+		$total_sum = 0;
+		if (count($items) < 1)
+			return $total_sum;
+
+		foreach ($items as $item) {
+			$total_price = $this->getProductPriceTotal($item);
+			$total_sum   = $total_sum + $total_price;
+		}
+
+		if ($shippingOption) {
+			$total_sum = $total_sum + $shippingOption->calculateShippingCost();
+		}
+
+		return $total_sum;
+	}
+
+	public function ___getProductPriceTotal($item)
+	{
+		$price = $this->getProductPrice($item);
+		$total_price = $item->qty * $price;
+		return $total_price;
+	}
+
+	public function ___getProductPrice($item)
+	{
+
+		$product = $this->pages->get($item->product_id);
+
+		// If the product is repeater, we assume it is a product variation. Se let's prepend the product title before variation
+		if (strpos($product->template->name, "repeater_") === 0) {
+
+			$parentProduct = $product->getForPage();
+			if ($parentProduct->id) {
+				// get product price from repeater page or if not set we get it from parent product
+				if($product->sc_price && $product->sc_price > 0){
+					$price = $product->sc_price;
+				} else if($parentProduct->sc_price && $parentProduct->sc_price > 0) {
+					$price = $parentProduct->sc_price;
+				}
+			}
+			$price;
+		} else {
+			// get product price from actual product page
+			$price = $product->sc_price;
+		}
+
+		return $price;
+
+	}
+
+
+	public function getCurrentCart()
+	{
+		$sid    = $this->getSession();
+		$result = $this->db->query("SELECT items FROM {$this->className} WHERE session_id = '$sid' ORDER BY last_modified LIMIT 1");
+		if ($result->num_rows === 0) {
+			return array();
+		} else {
+			list($items) = $result->fetch_array();
+			return json_decode($items);
+		}
+	}
+
+	public function getTotalSumFromCart()
+	{
+		$items = $this->getCurrentCart();
+		return $this->getTotalSumFromItems($items);
+	}
+
+	public function getNumberOfItems($uniqueItems = true)
+	{
+		if ($uniqueItems) {
+			return count($this->getCurrentCart());
+		} else {
+			$qty = 0;
+			foreach($this->getCurrentCart() as $item) {
+				$qty += $item->qty;
+			}
+			return $qty;
+		}
+	}
+
+	public function getSession() {
+		if(isset($_COOKIE['pwshopSession']))
+			return sha1($_COOKIE['pwshopSession']);
+
+		setcookie("pwshopSession", session_id(), time()+60*60*24*7, "/"); // 7 days cookie
+		return sha1(session_id());
+	}
+
+	private function _newItem($product_id, $qty)
+	{
+		$new_item             = new stdClass;
+		$new_item->product_id = $product_id;
+		$new_item->qty        = $qty;
+
+		return $new_item;
+	}
+
+	static public function getModuleConfigInputfields(Array $data) {
+		// this is a container for fields, basically like a fieldset
+		$fields = new InputfieldWrapper();
+
+		// since this is a static function, we can't use $this->modules, so get them from the global wire() function
+		$modules = wire('modules');
+
+		$data = array_merge(self::getDefaultData(), $data);
+
+		$fields = new InputfieldWrapper();
+
+		// since this is a static function, we can't use $this->modules, so get them from the global wire() function
+		$modules = wire('modules');
+
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', 'currencyCode');
+		$f->attr('value', $data['currencyCode']);
+		$f->label = "Currency Code";
+		$f->description = "Put official ISO currency code here: http://en.wikipedia.org/wiki/Currency_codes";
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', 'currency');
+		$f->attr('value', $data['currency']);
+		$f->label = "Currency output";
+		$f->description = "How currency will be outputted in html markup? Ie. &amp;euro;";
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', 'dec_point');
+		$f->attr('value', $data['dec_point']);
+		$f->label = "Decimal point on prices";
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldText");
+		$f->attr('name', 'thousands_sep');
+		$f->attr('value', $data['thousands_sep']);
+		$f->label = "Thousands separator on prices";
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldInteger");
+		$f->attr('name', 'decimals');
+		$f->attr('value', $data['decimals']);
+		$f->label = "Number of decimals on prices";
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldCheckbox");
+		$f->name = 'currencyBefore';
+		$f->label = "Show currency before price?";
+		$f->value = 1;
+		$f->attr('checked', empty($data['currencyBefore']) ? '' : 'checked');
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldCheckbox");
+		$f->name = 'spaceOnCurrency';
+		$f->label = "Show space between price and currency?";
+		$f->value = 1;
+		$f->attr('checked', empty($data['spaceOnCurrency']) ? '' : 'checked');
+		$fields->add($f);
+
+		$f = $modules->get("InputfieldCheckbox");
+		$f->name = 'allowNegativeStock';
+		$f->label = "Allow negative stock?";
+		$f->description = "If you choose this, customers are able to buy products that you don't have enough in stock";
+		$f->value = 1;
+		$f->attr('checked', empty($data['allowNegativeStock']) ? '' : 'checked');
+		$fields->add($f);
+
+
+		return $fields;
+	}
+
+	public function install()
+	{
+		if (!$this->fields->get('sc_price')) {
+			$f            = new Field();
+			$f->type      = $this->modules->get("FieldtypeFloat");
+			$f->name      = 'sc_price';
+			$f->precision = 2;
+			$f->label     = 'Price of the product';
+			$f->save();
+		}
+
+		if (!$this->fields->get('sc_qty')) {
+			$f = new Field();
+			$f->type = $this->modules->get("FieldtypeInteger");
+			$f->name = 'sc_qty';
+			$f->label = 'Quantity';
+			$f->save();
+		}
+
+		$sql = <<< _END
+
+		CREATE TABLE {$this->className} (
+			session_id VARCHAR(255) NULL,
+			last_modified TIMESTAMP NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+			items TEXT NULL,
+			total_sum FLOAT(10,2) NULL,
+			user_id INT NULL,
+			PRIMARY KEY (`session_id`) )
+		  ENGINE = MyISAM DEFAULT CHARSET=utf8;
+
+_END;
+
+		$this->db->query($sql);
+	}
+
+	public function uninstall()
+	{
+		$this->db->query("DROP TABLE {$this->className}");
+	}
+}

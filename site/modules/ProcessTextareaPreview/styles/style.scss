@@ -1,0 +1,111 @@
+
+@mixin transition($value) {
+	-webkit-transition: $value;
+	-moz-transition: $value;
+	-ms-transition: $value;
+	-o-transition: $value;
+	transition: $value;
+}
+
+$zindex: 201;
+
+.TAP-icon,
+.TAP-wrapper,
+.TAP-preview,
+.TAP-field,
+.TAP-wrapper {
+	@include transition(all 0.5s);
+}
+
+.TAP-wrapper {
+	position: relative;
+	&.is-preview {
+		.TAP-preview,
+		.TAP-field {
+			width: 50%;
+		}
+
+		.TAP-preview {
+			opacity: 1;
+		}
+	}
+
+	&.is-zoom {
+		background: white;
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		z-index: $zindex;
+
+		.TAP-preview,
+		.TAP-field {
+			padding: 1em;
+		}
+		.TAP-preview {
+			padding-right: 1em;
+		}
+
+	}
+}
+
+
+.TAP-field {
+	width: 100%;
+	textarea {
+		display: block;
+		min-height: 100%;
+		.TAP-wrapper.is-zoom & {
+			&:focus {
+				outline: none;
+
+			}
+			border: 1px solid #ccc;
+			padding: 0.6em;
+		}
+	}
+}
+
+.TAP-preview {
+	// background: #eee;
+	background: white;
+	height: 100%;
+	opacity: 0;
+	overflow: auto;
+	// padding-left: 1em;
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 0;
+	overflow: hidden;
+	padding-left: 1em;
+	z-index: $zindex;
+}
+
+.TAP-previewContent {
+	width: 100%;
+	border: none;
+	height: 100%;
+	// & > *:last-child {
+	//    margin-bottom: 1em; }
+}
+
+.TAP-icon {
+	line-height: 1.4em !important;
+	opacity: 0.3;
+	padding: 0.1em;
+	float: right;
+	.InputfieldStateCollapsed & {
+		opacity: 0;
+	}
+}
+
+.TAP-icon:hover {
+	opacity: 1;
+}
+
+
+
+
+

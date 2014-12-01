@@ -1,0 +1,167 @@
+<?php
+
+/**
+ * ProcessWire Page Hidden Process
+ *
+ * By Jens Geiling
+ *
+ */
+
+class ProcessPageHidden extends Process {
+	
+
+
+	public static function getModuleInfo() {
+		
+		return array(
+			'title' => __('Page Hide/Unhide', __FILE__),
+			'summary' => __('Adds a "hidden" link to the page list.', __FILE__),
+			'version' => '101',
+			'permanent' => false,
+			'permission' => 'page-hidden',
+			'autoload' => true);
+
+	}
+
+
+
+	protected $permissionNames = array('page-hidden' => 'Hide/Unhide a page');
+	
+	protected $adminUrl = '';
+	
+
+
+	public function init() {
+		
+		parent::init();
+
+	}
+
+
+
+	public function ready() {
+		
+		$process = wire('page')->process; 
+		
+		if ($process == 'ProcessPageList') { 
+			$this->adminUrl = wire('config')->urls->admin;
+			$this->addHookAfter("ProcessPageListRender::getPageActions", $this, 'hookPageListActions'); 
+		}
+
+	}
+
+
+
+	public function hookPageListActions(HookEvent $event) {
+		
+		$page = $event->arguments[0]; 	
+		
+		$actions = $event->return;
+
+		if (!$page->is(Page::statusHidden)) {
+			$this->pageListActionLabel = $this->_('hide');
+		} else {
+			$this->pageListActionLabel = $this->_('unhide');
+		}
+		
+		if ($this->hasPermission($page)) $actions[] = array(
+			'cn' => 'Hidden',
+			'name' => $this->pageListActionLabel,
+			'url' => "{$this->adminUrl}page/hidden/?id={$page->id}");
+		
+		$event->return = $actions;
+	
+	}
+	
+
+
+	public function ___execute() {
+		
+		$page = $this->pages->get((int) $this->input->get->id);
+		
+		if (!$this->hasPermission($page)) throw new WirePermissionException("You are unable to hide/unhide this page!");
+				
+		if (!$page->is(Page::statusHidden)) {
+			$page->addStatus(Page::statusHidden);
+		} else {
+			$page->removeStatus(Page::statusHidden);
+		}
+
+		$page->save();
+
+		$this->session->redirect("../?open={$page}");
+
+	}
+
+
+
+    public function hasPermission(Page $page) {
+		$user = $this->user; 
+
+		if ($page->is(Page::statusSystem) || $page->is(Page::statusSystemID)) return false; 
+		
+		if ($user->isSuperuser()) return true; 
+		
+		if ($user->hasPermission('page-hidden', $page)) return true;
+
+		return false;
+
+	}
+
+
+
+	public function ___install() {
+		
+		$sort = 0;
+		
+		foreach ($this->permissions as $permission) {
+			$permission->sort = $sort; 
+			$permission->save();
+			$sort++; 
+		}
+
+		foreach ($this->permissionNames as $name => $title) {		
+			$p = $this->permissions->add($name); 
+			if(!$p->id) continue; 
+			$p->title = $title;
+			$p->save();
+			$this->message("Added new permission: $name"); 
+		}
+
+		$parent = $this->pages->get($this->config->adminRootPageID)->child('name=page');
+		
+		if(!$parent->id || count($parent->children('name=hidden'))) throw new WireException("Unable to add new page to admin"); 
+
+		$page = new Page(); 
+		$page->template = 'admin';
+		$page->parent = $parent; 
+		$page->name = 'hidden';
+		$page->process = $this; 
+		$page->save();
+		$this->message("Added new page: {$page->path}");
+
+	}
+
+
+
+	public function ___uninstall() {
+		
+		foreach ($this->permissionNames as $name => $title) {
+			$p = $this->permissions->get($name); 
+			if(!$p->id) continue; 
+			$this->permissions->delete($p); 
+			$this->message("Removed permission: $name"); 
+		}
+
+		$page = $this->pages->get($this->config->adminRootPageID)->child("name=page")->child("name=hidden"); 
+		
+		if ($page->id) {
+			$this->message("Removed page: {$page->path}"); 
+			$this->pages->delete($page); 
+		}
+
+	}
+
+
+
+}

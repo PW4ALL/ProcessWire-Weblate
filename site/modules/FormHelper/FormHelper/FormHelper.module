@@ -1,0 +1,303 @@
+ <?php
+/**
+ * Processwire 'FormHelper' module
+ * 
+ * Generate forms from pages, templates or input data
+ * 
+ * @author Sturm88x4, pwFoo
+ * @since 2014-09-13
+ * 
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ *
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ */
+class FormHelper extends WireData implements Module {
+    
+    /** @var object ProcessWire form api object */
+    public $form;
+    
+    /** @var object Page object to work with */
+    public $pageObj = null;
+    
+    /** @var array Uploads via file / image fields */
+    protected  $files;
+   
+    /** @var array config andsetting parameters */
+    protected $cfg = array(
+        'clearValues'       => null,    // true = clear all || array with field names
+        'skipFields'        => null,    // array with field names
+        'unformattedFields' => null,    // true = clear all || array with field names
+        'jquery'            => null,    // null || true
+        'jsconfig'          => null,    // null || true
+        'uploadPath'        => null,    // default: /site/assets/files/.temp/ 
+        // form default settings (and example which array structure needed to build a field from!)
+        'form'              => array(
+            'module'        => 'InputfieldForm',
+            'vars'          => array('method' => 'post', 'action' => ''),
+            'attr'          => array('id+name' => 'formhelper'),
+        ),
+        'submit'            => array(
+            'module'        => 'InputfieldSubmit',
+            'vars'          => array('name' => 'submit'),
+            'attr'          => array ('id' => 'submit', 'name' => 'submit', 'value' => 'Submit'),
+        ),
+        'fields'            => null,    // null || multidimensional array
+    );
+        
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     * @return array
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'FormHelper',
+            'summary' => 'Generate and process forms from page / template object or given field parameters array',
+            'version' => '0.0.6',           
+        );
+    } 
+   
+    /**
+     * module initialization, required by module interface
+     */
+    public function init() {
+        $this->cfg['uploadPath'] = $this->config->paths->assets . "files/.temp/";   // default file upload path
+    }
+    
+    /**
+     * Generate the form object from given fields
+     * @param object|array $src Initial form fields as object instanceof Page | Template or array data.
+     * @param array $cfg Array with additional field data and module options.
+     * @return object Generated form object
+     */
+    public function ___createForm ($src, $cfg = null) {
+        if (is_array($cfg) && !is_null($cfg))   { $this->setCfg($cfg); }
+        
+        // Build fields from data array
+        if (is_array($src) && !is_null($src))   { $fields = $src; }
+        
+        // Fields and fakePage by template object
+        elseif($src instanceof Template) { 
+            $fields = $this->fakePage($src)->getInputfields();
+        }
+        
+        // Get fields from a existing page
+        elseif($src instanceof Page) { 
+            $fields = $src->getInputfields();
+            $this->pageObj = $src;
+        }
+        
+        // Strange input... stop here!
+        else { return false; }
+
+        // create form object
+        $this->form = $this->setObj($this->cfg['form']);
+        
+        // add fields to form
+        foreach ($fields as $field) {
+            $this->field($field);
+        }
+
+        // add submit button at last...
+        $this->field($this->cfg['submit'], 'add', null, true);
+        
+        // Add optional field settings / changes (get by cfg array)
+        if (is_array($this->cfg['fields'])) {
+            foreach ($this->cfg['fields'] as $field) {
+                $this->field($field);
+            }
+        }
+        
+        return $this->form;
+    }
+
+    /**
+     * Parse / prepare and add / insert fields to form object.
+     * @param object|array $field Field object or data array
+     * @param array $option Field add / insert options
+     */
+    public function field($field, $method = 'add', $refObj = null, $bypass = null) {
+        if (is_array($field) && !is_null($field)) {
+            if ($exists = $this->form->get($field['vars']['name'])) {
+                $this->setObjValues($exists, $field);
+                
+                // Field should also be moved...
+                if (is_array($field['pos']) && array_key_exists('method', $field['pos']) && array_key_exists('refObj', $field['pos'])) { 
+                    $method = $field['pos']['method']; 
+                    $refObj = $field['pos']['refObj'];
+                    $field  = $exists;
+                }
+                else { return; }    // Shouldn't move, only updated. All done here
+            }
+            // Doesn't exist? Create a field object
+            elseif($field['vars']['name'] && $field['module']) { 
+                $field = $this->setObj($field); 
+            }
+            else { return false; }    // missing required array data. Skip it!
+        }
+        
+        // prepare field and add/ insert to form
+        if ($field instanceof Inputfield && ($field = $this->prepareField($field, $bypass))) {
+            $this->form->$method($field, $refObj);
+        }
+    }
+    
+    /**
+     * Prepare form fields based on options / settings before added to form object
+     * @param object $field Current field object
+     * @return object Prepared or just untouched field object
+     */
+    protected function ___prepareField($field, $bypass = null) {        
+        // Bypass additional / not required prepare options
+        if ($bypass) return $field;
+        
+        // No (real/ saved) page, skip following preparation based on page / field values
+        elseif (!$this->pageObj) { return $field; }
+        
+        elseif((array_key_exists('skipFields', $this->cfg)) && (!is_null($this->cfg['skipFields'])) && (in_array($field->name, $this->cfg['skipFields']))) { 
+            return null; // remove field
+        }    
+        elseif($this->cfg['clearValues'] === true || (is_array($this->cfg['clearValues']) && in_array($field->name, $this->cfg['clearValues']))) { 
+            $field->value = null; // set value to empty
+        }   
+        elseif ($this->cfg['unformattedFields'] === true || (is_array($this->cfg['unformattedFields']) && in_array($field->name, $this->cfg['unformattedFields']))) {
+            $field->value = $this->pageObj->getUnformatted($field->name);
+        }
+        return $field;
+    }
+    
+    /**
+     * Render the current form
+     * @return string Rendered form as html code
+     */
+    public function ___render() {
+        return $this->form->render();
+    }
+    
+    /**
+     * Process form data if send
+     * @return object Processed form data
+     */
+    public function ___formProcess() {
+        $submit = $this->form->find("type=submit")->first->name;
+        if(!$this->input->post->$submit) { return NULL; }   // form NOT submitted...
+
+        // Image / file upload handling
+        if ($fileFields = $this->form->find("type=file")) {
+            $this->prepareFileFields($fileFields);
+        }
+        
+        $processedForm = $this->form->processInput($this->input->post); // form api process form values
+        
+        return $processedForm;     // form processed
+    }
+    
+    /**
+     * Prepare file / image fields with needed parameters
+     * @param object $fileFields File fields from submitted form
+     */
+    protected function prepareFileFields($fileFields) {
+        if(!is_dir($this->cfg['uploadPath'])) {
+            if(!wireMkdir($this->cfg['uploadPath'])) throw new WireException("No upload path"); 
+        }
+            
+        foreach ($fileFields as $fileField) {
+            $upload = new WireUpload($fileField->name);
+            $upload->setMaxFiles($fileField->maxFiles);
+            $upload->setMaxFiles($fileField->maxFilesize);
+            $upload->setOverwrite($fileField->overwrite);
+            //$upload->setValidExtensions($fileField->extensions);
+            $upload->setValidExtensions(array('jpg', 'jpeg', 'png', 'gif'));
+            $upload->setDestinationPath($this->cfg['uploadPath']);
+
+            $this->files[$fileField->name] = $upload->execute();
+        }
+    }
+            
+    
+    /**
+     * Add image to page and unlink tmp upload
+     * @param object $page Destination page object
+     * @param string $fieldName Current fields name
+     * @return object $page Page object with added files
+     */
+    public function uploadFiles($page, $fieldName) {
+        if (array_key_exists($fieldName, $this->files)) {
+            foreach ($this->files[$fieldName] as $file) {
+                $page->$fieldName->add($this->cfg['uploadPath'] . $file);
+                unlink($this->cfg['uploadPath'] . $file);
+            }
+            unset($this->files[$fieldName]);
+        }
+        return $page;
+    }
+    
+    /**
+     * Generate a field / form object
+     * @param array $arr Needed values to create the object
+     * @return object Generated field object
+     */
+    private function setObj($arr) {
+        $obj = $this->modules->get($arr['module']);
+        $this->setObjValues($obj, $arr);
+        return $obj;
+    }
+
+    /**
+     * Update form / field variables and values
+     * @param object $obj field object by reference
+     * @param array $arr field variables/ properties and attributes
+     */
+    private function setObjValues(&$obj, $arr) {
+        if (array_key_exists('vars', $arr) && is_array($arr['vars'])) {
+            foreach ($arr['vars'] as $key => $value) {
+                $obj->set($key, $value);
+            }    
+        }
+        if (array_key_exists('attr', $arr) && is_array($arr['attr'])) {
+            foreach ($arr['attr'] as $key => $value) {
+                $obj->set($key, $value);
+            }    
+        }
+    }
+    
+    /**
+     * Make fake page and assign needed template
+     * @param string $tpl Template to assign
+     * @return object Generated fake page to work with
+     */
+    public function fakePage($tpl) {
+        $fakePage = new Page();
+        $fakePage->template = $tpl;
+        return $fakePage;
+    } 
+
+    /**
+     * Set / merge module and form variables / options.
+     * @param array $arr Array with module options and form variables
+     */
+    protected function setCfg ($arr) {
+        $this->cfg = array_replace_recursive($this->cfg, $arr);
+    }
+    
+    /**
+     * jsConfig settings needed by wysiwyg editor
+     * @return string Basic JavaScript config
+     */
+    public function ___jsConfig () {
+        $jsConfig = $this->config->js();
+        $jsConfig['debug'] = $this->config->debug;                                                          
+        $jsConfig['urls'] = array(     
+            'root' => $this->config->urls->root,
+            'admin' => $this->config->urls->admin,
+            'modules' => $this->config->urls->modules,                    
+            'core' => $this->config->urls->core,                                
+            'files' => $this->config->urls->files,                     
+            'templates' => $this->config->urls->templates,                                                   
+            'adminTemplates' => $this->config->urls->adminTemplates,             
+        );                                                      
+        return '<script type="text/javascript">var config = ' . json_encode($jsConfig) . '</script>';       
+    }
+}

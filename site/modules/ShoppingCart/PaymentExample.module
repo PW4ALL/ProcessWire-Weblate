@@ -1,0 +1,99 @@
+<?php
+
+require_once(dirname(__FILE__) . '/PaymentAbstract.php');
+
+class PaymentExample extends PaymentAbstract {
+	
+    public static function getModuleInfo()
+	{
+		return array(
+			'title' => 'Example Payment Method',
+			'version' => 001,
+			'summary' => 'Demonstrates how to create payment methods for PW Shop',
+			'singular' => false,
+			'autoload' => false
+		);
+	}
+    public function init() {
+		
+	}
+	
+	/*
+	 *
+	 * returns nothing. You should edit and save $order page. If payment was succesful,
+	 * then do $order->removeStatus(Page::statusUnpublished) and remember to save the order!
+	 *
+	 * If order was also paid, then do $order->sc_paid = time();
+	 *
+	 * If order was not paid, but it was succesful (like invoice, money on delivery etc)
+	 * then just publish the order, but do not set sc_paid value.
+	 *
+	 * After you have manipulated the order, then just to redirect to $this->completedUrl
+	 *
+	 *
+	 * @param Page $order keeps the page object for the order
+	 *
+	 */
+    public function processPayment(Page $order) {
+		if ($this->input->get->ok) {
+			
+			if ($this->input->get->ok == 'fail') {
+				// We don't remove statusUnpublished. That means failed or cancelled payment
+				$this->session->redirect($this->completedUrl);
+			}
+			
+			if ($this->input->get->ok == 'paid') {
+				$order->setOutputFormatting(false);
+				$order->sc_paid = time();
+			}
+			
+			$order->removeStatus(Page::statusUnpublished);
+			$order->save();
+			
+			$this->session->redirect($this->completedUrl);
+			
+			
+		}
+		
+		//  No need to really do anything like this on payment module, this is here just for educational purposes):
+		$out = "<h2>Products ordered</h2>";
+		
+		$out .=	"<ul>";	
+		// Products
+		foreach($order->children('check_access=0') as $p) {
+			$out .= "<li><strong>{$p->title}</strong> {$p->sc_price}€ x {$p->sc_qty} (total: ". $p->sc_qty * $p->sc_price ."€)</li>";
+		}
+		$out .= "</ul>";
+		
+		$out .= "<h2>Shipping details</h2>";
+		
+		$out .=	"<ul>";	
+		$out .= "<li>First name: $order->sc_firstname</li>";
+		$out .= "<li>Last name: $order->sc_lastname</li>";
+		$out .= "<li>Email: $order->email</li>";
+		$out .= "<li>Street address: $order->sc_streetaddress</li>";
+		$out .= "<li>Zip: $order->sc_zip</li>";
+		$out .= "<li>City: $order->sc_city</li>";
+		$out .= "<li>Country: $order->sc_country</li>";
+		$out .= "<li>Username: {$order->sc_customer->name}</li>";
+		$out .= "<li>Email address from user: {$order->sc_customer->email}</li>";
+		$out .= "</ul>";
+		
+		$out .= "<h2>Other interesting stuff</h2>";
+		$out .= "<ul>";
+		$out .= "<li>Current url: {$this->currentUrl}</li>";
+		$out .= "<li>Completed url: {$this->completedUrl}</li>";
+		$out .= "</ul>";
+		
+		// Usually we would use some payment api or send people to 3rd party service like paypal
+		// and process their reply
+		
+		$out .= "<h3>How do we proceed?</h3>";
+		
+		$out .= "<ul><li><a href='./?ok=invoice'>Send me an invoice</a>";
+		$out .= "<li><a href='./?ok=paid'>I pay this with Magic Money&trade;</a>";
+		$out .= "<li><a href='./?ok=fail'>I want to fail this payment</a>";
+		
+		return $out;
+    }
+}
