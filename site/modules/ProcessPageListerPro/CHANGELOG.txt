@@ -1,4 +1,0 @@
-Version 1.0.0 - October 10, 2014
-================================
-- First public beta release
-
